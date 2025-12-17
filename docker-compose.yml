@@ -1,0 +1,94 @@
+version: "3.9"
+
+services:
+  # PostgreSQL 数据库
+  shiyu-postgres:
+    image: postgres:15
+    container_name: shiyu-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shiyu_admin_scaffold
+      POSTGRES_USER: shiyu
+      POSTGRES_PASSWORD: shiyu123
+    ports:
+      - "5432:5432"
+    volumes:
+      - shiyu-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiyu -d shiyu_admin_scaffold"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shiyu-network
+
+  # Redis 缓存
+  shiyu-redis:
+    image: redis:7-alpine
+    container_name: shiyu-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - shiyu-redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shiyu-network
+
+  # 后端服务
+  shiyu-backend:
+    build:
+      context: ./backend/shiyu-admin-backend
+      dockerfile: Dockerfile
+    container_name: shiyu-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/shiyu-admin-backend/configs:/root/configs
+    environment:
+      - TZ=Asia/Shanghai
+      - CONFIG_FILE=configs/config.docker.yaml
+    depends_on:
+      shiyu-postgres:
+        condition: service_healthy
+      shiyu-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v1/system/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - shiyu-network
+
+  # 前端服务
+  shiyu-frontend:
+    build:
+      context: ./frontend/shiyu-admin-web
+      dockerfile: Dockerfile
+    container_name: shiyu-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - shiyu-backend
+    networks:
+      - shiyu-network
+
+networks:
+  shiyu-network:
+    driver: bridge
+
+volumes:
+  shiyu-pg-data:
+    driver: local
+  shiyu-redis-data:
+    driver: local
+

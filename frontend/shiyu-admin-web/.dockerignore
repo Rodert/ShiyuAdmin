@@ -1,0 +1,12 @@
+.git
+.gitignore
+*.md
+node_modules
+dist
+.vscode
+.idea
+test-results
+e2e
+tests
+*.log
+

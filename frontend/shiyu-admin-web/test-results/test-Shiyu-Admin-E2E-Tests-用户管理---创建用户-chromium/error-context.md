@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - img [ref=e8] [cursor=pointer]
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - img "logo" [ref=e16]
+        - generic [ref=e17]: Ant Design
+      - generic [ref=e18]: Ant Design is the most influential web design specification in Xihu district
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - tablist [ref=e22]:
+            - generic [ref=e24]:
+              - tab "Account Login" [selected] [ref=e26] [cursor=pointer]
+              - tab "Phone Login" [ref=e28] [cursor=pointer]
+          - generic:
+            - generic:
+              - tabpanel "Account Login"
+        - generic [ref=e34]:
+          - img "user" [ref=e36]:
+            - img [ref=e37]
+          - 'textbox "Username: admin or user" [ref=e39]'
+        - generic [ref=e46]:
+          - img "lock" [ref=e48]:
+            - img [ref=e49]
+          - 'textbox "Password: ant.design" [ref=e51]'
+          - img "eye-invisible" [ref=e53] [cursor=pointer]:
+            - img [ref=e54]
+        - generic [ref=e57]:
+          - generic [ref=e58] [cursor=pointer]:
+            - checkbox "Remember me" [checked] [ref=e60]
+            - generic [ref=e62]: Remember me
+          - generic [ref=e63] [cursor=pointer]: Forgot Password ?
+        - button "Login" [ref=e64] [cursor=pointer]:
+          - generic [ref=e65]: Login
+      - generic [ref=e66]:
+        - text: "Login with :"
+        - img "alipay-circle" [ref=e67] [cursor=pointer]:
+          - img [ref=e68]
+        - img "taobao-circle" [ref=e70] [cursor=pointer]:
+          - img [ref=e71]
+        - img "weibo-circle" [ref=e73] [cursor=pointer]:
+          - img [ref=e74]
+  - contentinfo [ref=e76]:
+    - generic [ref=e77]:
+      - generic [ref=e78]:
+        - link "Ant Design Pro" [ref=e79] [cursor=pointer]:
+          - /url: https://pro.ant.design
+        - link "github" [ref=e80] [cursor=pointer]:
+          - /url: https://github.com/ant-design/ant-design-pro
+          - img "github" [ref=e81]:
+            - img [ref=e82]
+        - link "Ant Design" [ref=e84] [cursor=pointer]:
+          - /url: https://ant.design
+      - generic [ref=e85]:
+        - img "copyright" [ref=e86]:
+          - img [ref=e87]
+        - text: Powered by Ant Desgin
+```
