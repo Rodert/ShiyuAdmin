@@ -2,7 +2,9 @@
 
 > 作者：王仕宇（JavaPub）  
 > 公式サイト：https://javapub.net.cn/  
-> リポジトリ：https://github.com/Rodert/ShiyuAdmin（予定）
+> リポジトリ：**ShiyuAdmin**（GitHub でオープンソース化、中国国内アクセス用に Gitee ミラーあり）
+> - GitHub（メインリポジトリ）：`https://github.com/Rodert/ShiyuAdmin`  
+> - Gitee（中国ミラー）：`https://gitee.com/rodert/ShiyuAdmin`
 
 ---
 
@@ -46,7 +48,8 @@ ShiyuAdmin は、Go バックエンド + React（Ant Design Pro）フロント�
 手順：
 
 ```bash
-git clone https://github.com/Rodert/ShiyuAdmin.git   # 実際の URL に置き換えてください
+# リポジトリをクローン（フォークした場合は実際の URL に置き換えてください）
+git clone https://github.com/Rodert/ShiyuAdmin.git
 cd ShiyuAdmin
 
 docker-compose up -d
@@ -65,6 +68,8 @@ docker-compose up -d
 
 ## 4. コミュニティ & サポート
 
-- 役に立った場合は GitHub で Star をお願いします
-- Issue / PR でバグ報告や改善提案を歓迎します
-- WeChat 公式アカウント「JavaPub」をフォローすると作者に連絡できます（中国語）
+- **Star をお願いします**：このプロジェクトが役に立った場合は GitHub で Star をお願いします  
+- **バグ報告**：[Issue を作成](https://github.com/Rodert/ShiyuAdmin/issues/new?labels=bug)  
+- **機能要望**：[Issue を作成](https://github.com/Rodert/ShiyuAdmin/issues/new?labels=enhancement)  
+- **PR の提出**：コード改善、新機能、ドキュメント更新を歓迎します  
+- **連絡先**：WeChat 公式アカウント「JavaPub」をフォローすると作者に連絡できます（中国語）

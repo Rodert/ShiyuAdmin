@@ -2,7 +2,9 @@
 
 > Author: Wang Shiyu (JavaPub)  
 > Website: https://javapub.net.cn/  
-> Repository: https://github.com/Rodert/ShiyuAdmin (planned)
+> Repository: **ShiyuAdmin** (open-sourced on GitHub, with Gitee mirror for faster access in China)
+> - GitHub (main repo): `https://github.com/Rodert/ShiyuAdmin`  
+> - Gitee (Chinese mirror): `https://gitee.com/rodert/ShiyuAdmin`
 
 ---
 
@@ -45,7 +47,8 @@ Prerequisites:
 Steps:
 
 ```bash
-git clone https://github.com/Rodert/ShiyuAdmin.git   # replace with real repo URL when available
+# Clone the repository (replace with your actual repository URL if forked)
+git clone https://github.com/Rodert/ShiyuAdmin.git
 cd ShiyuAdmin
 
 docker-compose up -d
@@ -64,6 +67,8 @@ are available in the Chinese `README.md`.
 
 ## 4. Community & support
 
-- Star the repo on GitHub if this project is useful to you
-- Use Issues / PRs for bug reports, feature requests, and documentation improvements
-- Follow the WeChat official account `JavaPub` (in Chinese) to contact the author
+- **Star the repo** on GitHub if this project is useful to you  
+- **Report bugs**: [Create an issue](https://github.com/Rodert/ShiyuAdmin/issues/new?labels=bug)  
+- **Request features**: [Create an issue](https://github.com/Rodert/ShiyuAdmin/issues/new?labels=enhancement)  
+- **Submit PRs**: Code improvements, new features, documentation updates  
+- **Contact**: Follow the WeChat official account `JavaPub` (in Chinese) to contact the author
