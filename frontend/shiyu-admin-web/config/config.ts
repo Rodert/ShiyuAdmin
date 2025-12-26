@@ -7,14 +7,16 @@ import proxy from './proxy';
 
 import routes from './routes';
 
-const { REACT_APP_ENV = 'dev' } = process.env;
+const { REACT_APP_ENV = 'dev', PUBLIC_PATH: ENV_PUBLIC_PATH } = process.env;
 
 /**
  * @name 使用公共路径
  * @description 部署时的路径，如果部署在非根目录下，需要配置这个变量
+ *              默认值为 '/'，以保证本地开发和 docker-compose 部署保持根路径不变。
+ *              在 GitHub Pages 等场景下，可以通过设置环境变量 PUBLIC_PATH 覆盖为 '/ShiyuAdmin/'。
  * @doc https://umijs.org/docs/api/config#publicpath
  */
-const PUBLIC_PATH: string = '/';
+const PUBLIC_PATH: string = ENV_PUBLIC_PATH || '/';
 
 export default defineConfig({
   /**
