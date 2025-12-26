@@ -26,6 +26,13 @@ export default defineConfig({
    */
   hash: true,
 
+  /**
+   * @name 路由与静态资源的基准路径
+   * @description base / publicPath 都使用同一个 PUBLIC_PATH
+   *              本地和 docker-compose 默认是 '/'；
+   *              GitHub Pages 通过环境变量设置为 '/ShiyuAdmin/'。
+   */
+  base: PUBLIC_PATH,
   publicPath: PUBLIC_PATH,
 
   /**

@@ -1,15 +1,40 @@
-# ShiyuAdmin 通用后台管理系统
+<a id="readme-top"></a>
+
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![License][license-shield]][license-url]
+
+<!-- PROJECT HEADER -->
+<br />
+<div align="center">
+  <img src="img/me.jpg" alt="Author: 王仕宇 (JavaPub)" width="96" />
+  <h1>ShiyuAdmin 通用后台管理系统</h1>
+
+  <p align="center">
+    通用后台管理系统 / 脚手架项目 · Go + Gin + Gorm + React + Ant Design Pro + RBAC
+    <br />
+    <br />
+    <a href="#getting-started"><strong>快速开始 »</strong></a>
+    ·
+    <a href="https://github.com/Rodert/ShiyuAdmin/issues">报告 Bug</a>
+    ·
+    <a href="https://github.com/Rodert/ShiyuAdmin/issues">提出新特性</a>
+  </p>
+</div>
 
 > 作者：王仕宇  
 > 出品：仕宇科技 / JavaPub  
 > 官网：https://javapub.net.cn/  
-> 仓库名：**ShiyuAdmin**（计划开源到 GitHub，长期维护）  
+> 仓库名：**ShiyuAdmin**（已开源到 GitHub，并在 Gitee 提供中文镜像仓库，长期维护）  
 > 定位：**通用后台管理系统 / 脚手架项目**  
 > 目标：让小白也能快速上手，基于本项目快速搭建自己的后台管理系统。
 
-> 🏷 仓库地址（预留）：  
-> `https://github.com/Rodert/ShiyuAdmin`  
-> （建好仓库后，把上面链接改成真实地址即可）
+> 🏷 仓库地址：  
+> - GitHub（主仓库，含 GitHub Actions + Pages 部署）：`https://github.com/Rodert/ShiyuAdmin`  
+> - Gitee（中文镜像仓库，国内访问更快）：`https://gitee.com/rodert/ShiyuAdmin`  
 
 ---
 
@@ -21,6 +46,34 @@
 - **Français**: [README.fr.md](./README.fr.md)
 
 ---
+
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>目录 (Table of Contents)</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#project-structure">Project Structure</a></li>
+    <li><a href="#audience">Audience</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#timeline">Timeline</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
+
+---
+
+<!-- ABOUT THE PROJECT -->
+<a id="about-the-project"></a>
 
 ## 1. 项目简介
 
@@ -37,6 +90,9 @@
 - **扩展方便**：系统管理、权限体系已经搭好，往里填自己的业务即可
 
 ---
+
+<!-- BUILT WITH -->
+<a id="built-with"></a>
 
 ## 2. 技术栈
 
@@ -86,6 +142,9 @@
 
 ---
 
+<!-- USAGE -->
+<a id="usage"></a>
+
 ## 3. 功能一览
 
 基于后端 `internal/api/v1/system`，当前提供了一整套系统管理 & 权限能力：
@@ -123,6 +182,9 @@
   - 推荐做法是通过将 `status` 置为 `0` 来锁定账号，而不是直接删除账号记录，便于后续审计与恢复。
 
 ---
+
+<!-- GETTING STARTED -->
+<a id="getting-started"></a>
 
 ## 4. 快速开始（小白也能跑起来）
 
@@ -208,6 +270,8 @@ npm run start:dev   # 或 npm start
 
 ---
 
+<a id="project-structure"></a>
+
 ## 5. 项目结构
 
 ```text
@@ -239,6 +303,8 @@ ShiyuAdmin
 
 ---
 
+<a id="audience"></a>
+
 ## 6.适用人群 & 使用建议
 
 - **适合谁**
@@ -253,6 +319,9 @@ ShiyuAdmin
 
 ---
 
+<!-- ROADMAP -->
+<a id="roadmap"></a>
+
 ## 7. 规划 & 开源共建
 
 这个项目会**长期维护**：
@@ -260,6 +329,11 @@ ShiyuAdmin
 - 持续升级依赖（Go / Gin / Gorm / AntD / Umi）
 - 持续补充通用功能模块（字典、日志、文件、消息等）
 - 持续优化小白上手体验（文档、示例、注释）
+
+---
+
+<a id="contributing"></a>
+## 8. 贡献指南 (Contributing)
 
 欢迎你：
 
@@ -274,11 +348,12 @@ ShiyuAdmin
 - **展示**：我会在本仓库的 README 中标记你的公司名称或 GitHub 账号，作为使用案例。
 - **技术帮助**：在有时间的前提下，我可以针对接入和使用中的问题，提供一定程度的技术支持。
 
-**联系方式**：关注公众号 `JavaPub`，通过公众号留言即可找到我。
+> **联系方式**：关注公众号 `JavaPub`，通过公众号留言即可找到我。
 
 ---
 
-## 8. 开发时间线（Timeline）
+<a id="timeline"></a>
+## 9. 开发时间线（Timeline）
 
 > 用来记录每次开发的进度、改动内容和遗留问题，方便自己回顾，也方便开源用户了解项目演进。
 
@@ -292,5 +367,46 @@ ShiyuAdmin
   - [ ] 登录与注册相关文档待完善
   - [ ] 数据初始化 SQL 示例待补充到 `docs/`
 
-> 约定：每次有比较完整的一次开发，就在这里追加一个日期小节，分别写清：
+> 约定：每次有比较完整的一次开发，就在这里追加一个日期小节，分别写清：  
 > 1）本次**完成了什么**；2）还有哪些**遗留问题 / TODO**（用复选框勾选）。
+
+---
+
+<a id="license"></a>
+## License
+
+本项目的开源协议见根目录 `LICENSE` 文件。
+
+<a id="contact"></a>
+## Contact
+
+- 作者：王仕宇（JavaPub）
+- 出品：仕宇科技 / JavaPub
+- 官网：https://javapub.net.cn/
+- GitHub 仓库：https://github.com/Rodert/ShiyuAdmin
+- Gitee 镜像：https://gitee.com/rodert/ShiyuAdmin
+- 公众号：`JavaPub`（通过公众号留言即可联系）
+
+<a id="acknowledgments"></a>
+## Acknowledgments
+
+感谢以下技术栈和开源项目（不完全列举）：
+
+- Go / Gin / Gorm / Viper / JWT / Redis
+- PostgreSQL / MySQL / SQLite / Docker / Docker Compose
+- React / Umi Max / Ant Design / Ant Design Pro Components
+- 以及所有为本项目提供反馈和贡献的开源社区成员
+
+---
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[contributors-shield]: https://img.shields.io/github/contributors/Rodert/ShiyuAdmin.svg?style=for-the-badge
+[contributors-url]: https://github.com/Rodert/ShiyuAdmin/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Rodert/ShiyuAdmin.svg?style=for-the-badge
+[forks-url]: https://github.com/Rodert/ShiyuAdmin/network/members
+[stars-shield]: https://img.shields.io/github/stars/Rodert/ShiyuAdmin.svg?style=for-the-badge
+[stars-url]: https://github.com/Rodert/ShiyuAdmin/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Rodert/ShiyuAdmin.svg?style=for-the-badge
+[issues-url]: https://github.com/Rodert/ShiyuAdmin/issues
+[license-shield]: https://img.shields.io/github/license/Rodert/ShiyuAdmin.svg?style=for-the-badge
+[license-url]: LICENSE
