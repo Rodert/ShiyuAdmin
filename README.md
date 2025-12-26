@@ -63,7 +63,7 @@
     <li><a href="#audience">适用人群 & 使用建议</a></li>
     <li><a href="#roadmap">规划 & 开源共建</a></li>
     <li><a href="#contributing">贡献指南</a></li>
-    <li><a href="#timeline">开发时间线</a></li>
+    <li><a href="docs/timeline.md">开发时间线</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -353,23 +353,9 @@ ShiyuAdmin
 
 ---
 
-<a id="timeline"></a>
 ## 9. 开发时间线（Timeline）
 
-> 用来记录每次开发的进度、改动内容和遗留问题，方便自己回顾，也方便开源用户了解项目演进。
-
-### 2025-12-16
-
-- **完成**
-  - 初始化项目根目录 `README.md`，补充技术栈、功能说明、快速开始和使用建议
-  - 新增“开发时间线（Timeline）”章节，约定记录格式
-
-- **遗留问题 / TODO**
-  - [ ] 登录与注册相关文档待完善
-  - [ ] 数据初始化 SQL 示例待补充到 `docs/`
-
-> 约定：每次有比较完整的一次开发，就在这里追加一个日期小节，分别写清：  
-> 1）本次**完成了什么**；2）还有哪些**遗留问题 / TODO**（用复选框勾选）。
+项目开发时间线已移至独立文档：[`docs/timeline.md`](docs/timeline.md)
 
 ---
 
