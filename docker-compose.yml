@@ -24,7 +24,7 @@ services:
 
   # Redis 缓存
   shiyu-redis:
-    image: redis:7-alpine
+    image: crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/redis:7
     container_name: shiyu-redis
     restart: unless-stopped
     ports:
