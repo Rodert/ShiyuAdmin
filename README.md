@@ -19,9 +19,9 @@
     <br />
     <a href="#getting-started"><strong>快速开始 »</strong></a>
     ·
-    <a href="https://github.com/Rodert/ShiyuAdmin/issues">报告 Bug</a>
+    <a href="https://github.com/Rodert/ShiyuAdmin/issues/new?labels=bug">报告 Bug</a>
     ·
-    <a href="https://github.com/Rodert/ShiyuAdmin/issues">提出新特性</a>
+    <a href="https://github.com/Rodert/ShiyuAdmin/issues/new?labels=enhancement">提出新特性</a>
   </p>
 </div>
 
@@ -52,18 +52,18 @@
   <summary>目录 (Table of Contents)</summary>
   <ol>
     <li>
-      <a href="#about-the-project">About The Project</a>
+      <a href="#about-the-project">项目简介</a>
       <ul>
-        <li><a href="#built-with">Built With</a></li>
+        <li><a href="#built-with">技术栈</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#getting-started">Getting Started</a></li>
-    <li><a href="#project-structure">Project Structure</a></li>
-    <li><a href="#audience">Audience</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#timeline">Timeline</a></li>
+    <li><a href="#usage">功能一览</a></li>
+    <li><a href="#getting-started">快速开始</a></li>
+    <li><a href="#project-structure">项目结构</a></li>
+    <li><a href="#audience">适用人群 & 使用建议</a></li>
+    <li><a href="#roadmap">规划 & 开源共建</a></li>
+    <li><a href="#contributing">贡献指南</a></li>
+    <li><a href="#timeline">开发时间线</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -197,7 +197,8 @@
 **步骤：**
 
 ```bash
-git clone https://github.com/Rodert/ShiyuAdmin.git  # 换成你的真实仓库地址
+# 克隆仓库（请替换为你的实际仓库地址）
+git clone https://github.com/Rodert/ShiyuAdmin.git
 cd ShiyuAdmin
 
 docker-compose up -d
@@ -305,7 +306,7 @@ ShiyuAdmin
 
 <a id="audience"></a>
 
-## 6.适用人群 & 使用建议
+## 6. 适用人群 & 使用建议
 
 - **适合谁**
   - 想要一个**通用后台脚手架**的个人 / 团队
