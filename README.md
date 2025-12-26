@@ -13,6 +13,15 @@
 
 ---
 
+## 多语言 README
+
+- **简体中文**：当前文档（`README.md`）
+- **English**: [README.en.md](./README.en.md)
+- **日本語**: [README.ja.md](./README.ja.md)
+- **Français**: [README.fr.md](./README.fr.md)
+
+---
+
 ## 1. 项目简介
 
 `ShiyuAdmin` 是一个前后端分离的通用后台管理系统，适合作为：
