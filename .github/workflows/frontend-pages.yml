@@ -49,3 +49,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLIC_PATH: /ShiyuAdmin/
+          REACT_APP_API_BASE_URL: https://shiyuadmin.onrender.com
+          NODE_ENV: production
