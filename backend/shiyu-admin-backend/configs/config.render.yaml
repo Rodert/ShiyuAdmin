@@ -1,0 +1,50 @@
+# Render 平台专用配置文件
+# 此配置通过环境变量自动注入数据库连接信息
+# DATABASE_URL 和 REDIS_URL 由 Render 自动提供
+
+server:
+  port: "${PORT:-8080}"  # Render 会自动设置 PORT 环境变量
+  mode: "release"
+  read_timeout: 60
+  write_timeout: 60
+
+database:
+  driver: "postgres"
+  # 以下配置会被 DATABASE_URL 环境变量自动覆盖
+  # 格式: postgresql://user:password@host:port/dbname?sslmode=require
+  host: "localhost"
+  port: 5432
+  username: "shiyu"
+  password: "shiyu123"
+  database: "shiyu_admin_scaffold"
+  ssl_mode: "require"  # Render PostgreSQL 需要 SSL
+  timezone: "Asia/Shanghai"
+
+redis:
+  # 以下配置会被 REDIS_URL 环境变量自动覆盖
+  # 格式: redis://:password@host:port/db
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+
+auth:
+  use_mock: false
+
+bootstrap:
+  admin_username: "admin"
+  admin_password: "Admin@123"
+  admin_nickname: "超级管理员"
+
+jwt:
+  secret: "${JWT_SECRET}"  # Render 会自动生成，或手动设置
+  expire_time: 7200
+  issuer: "shiyu-admin-scaffold"
+
+log:
+  level: "info"
+  format: "json"
+  retention_days: 3
+  file_path: "/tmp/app.log"
+  max_size_mb: 100
+

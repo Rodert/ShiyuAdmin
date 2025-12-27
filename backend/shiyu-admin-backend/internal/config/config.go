@@ -2,6 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -68,5 +72,87 @@ func Load(path string) (*Config, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
+
+	// 支持 DATABASE_URL 环境变量（通用格式，适用于 Render、Railway 等平台）
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		if err := parseDatabaseURL(dbURL, &cfg); err != nil {
+			return nil, fmt.Errorf("parse DATABASE_URL: %w", err)
+		}
+	}
+
+	// 支持 REDIS_URL 环境变量
+	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+		if err := parseRedisURL(redisURL, &cfg); err != nil {
+			return nil, fmt.Errorf("parse REDIS_URL: %w", err)
+		}
+	}
+
+	// 支持 PORT 环境变量（Render 等平台会设置）
+	if port := os.Getenv("PORT"); port != "" {
+		cfg.Server.Port = port
+	}
+
 	return &cfg, nil
+}
+
+// parseDatabaseURL 解析 DATABASE_URL 格式: postgresql://user:password@host:port/dbname?sslmode=require
+func parseDatabaseURL(dbURL string, cfg *Config) error {
+	u, err := url.Parse(dbURL)
+	if err != nil {
+		return fmt.Errorf("invalid database URL: %w", err)
+	}
+
+	cfg.Database.Driver = "postgres"
+	cfg.Database.Host = u.Hostname()
+	if u.Port() != "" {
+		port, err := strconv.Atoi(u.Port())
+		if err != nil {
+			return fmt.Errorf("invalid port in database URL: %w", err)
+		}
+		cfg.Database.Port = port
+	}
+	cfg.Database.Username = u.User.Username()
+	if password, ok := u.User.Password(); ok {
+		cfg.Database.Password = password
+	}
+	cfg.Database.Database = strings.TrimPrefix(u.Path, "/")
+
+	// 解析查询参数
+	query := u.Query()
+	if sslMode := query.Get("sslmode"); sslMode != "" {
+		cfg.Database.SSLMode = sslMode
+	} else {
+		// 默认使用 require（生产环境安全）
+		cfg.Database.SSLMode = "require"
+	}
+
+	return nil
+}
+
+// parseRedisURL 解析 REDIS_URL 格式: redis://:password@host:port/db 或 redis://host:port/db
+func parseRedisURL(redisURL string, cfg *Config) error {
+	u, err := url.Parse(redisURL)
+	if err != nil {
+		return fmt.Errorf("invalid redis URL: %w", err)
+	}
+
+	cfg.Redis.Host = u.Hostname()
+	if u.Port() != "" {
+		port, err := strconv.Atoi(u.Port())
+		if err != nil {
+			return fmt.Errorf("invalid port in redis URL: %w", err)
+		}
+		cfg.Redis.Port = port
+	}
+	if password, ok := u.User.Password(); ok {
+		cfg.Redis.Password = password
+	}
+	// 解析数据库编号
+	if dbStr := strings.TrimPrefix(u.Path, "/"); dbStr != "" {
+		if db, err := strconv.Atoi(dbStr); err == nil {
+			cfg.Redis.DB = db
+		}
+	}
+
+	return nil
 }

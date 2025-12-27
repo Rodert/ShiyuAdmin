@@ -260,14 +260,41 @@ npm run start:dev   # 或 npm start
 
 ---
 
-### 4.3 方式三：作为脚手架/模块接入你已有项目
+### 4.3 方式三：Render 平台一键部署（免费，适合测试）
+
+**前置：**
+- GitHub 账号（项目已推送到 GitHub）
+- Render 账号（访问 https://render.com 注册，支持 GitHub 登录）
+
+**步骤：**
+
+1. **使用 Blueprint 一键部署**（推荐）
+   - 访问 https://dashboard.render.com
+   - 点击 "New +" → "Blueprint"
+   - 连接 GitHub 仓库，选择包含 `render.yaml` 的仓库
+   - Render 会自动创建所有服务（前端、后端、数据库、Redis）
+
+2. **或手动创建服务**
+   - 详见 [`docs/render-deployment.md`](docs/render-deployment.md)
+
+**特点：**
+- ✅ 完全免费（PostgreSQL 512MB、Redis 25MB、Web Service）
+- ✅ GitHub 推送自动部署
+- ✅ 支持 Docker，无需修改业务代码
+- ⚠️ 免费服务会休眠（15 分钟无活动后），首次访问需要 30-60 秒唤醒
+
+> 📖 详细部署文档：参见 [`docs/render-deployment.md`](docs/render-deployment.md)
+
+---
+
+### 4.4 方式四：作为脚手架/模块接入你已有项目
 
 - **数据库表**：把系统管理相关表结构迁移到你自己的库
 - **后端模块**：集成 `internal/api/v1/system`、`internal/service`、`internal/repository` 等到你原有 Go 项目
 - **认证打通**：统一 JWT 生成 & 解析逻辑，打通你现有登录与本项目权限中间件
 - **前端页面**：如果你本身也是 React + AntD，可以抽取/迁移 `shiyu-admin-web` 里的系统管理页面模块
 
-> 对小白来说，建议先用 Docker 或本地开发模式跑通，再考虑做到“模块化集成”。
+> 对小白来说，建议先用 Docker 或本地开发模式跑通，再考虑做到"模块化集成"。
 
 ---
 

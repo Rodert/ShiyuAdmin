@@ -1,0 +1,59 @@
+# Render 自动部署配置文件
+# 此文件用于在 Render 平台一键部署整个应用栈
+# 文档: https://render.com/docs/blueprint-spec
+
+services:
+  # 后端服务
+  - type: web
+    name: shiyu-admin-backend
+    runtime: docker
+    dockerfilePath: ./backend/shiyu-admin-backend/Dockerfile
+    dockerContext: ./backend/shiyu-admin-backend
+    dockerCommand: ./server
+    envVars:
+      - key: CONFIG_FILE
+        value: configs/config.render.yaml
+      - key: TZ
+        value: Asia/Shanghai
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shiyu-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: shiyu-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true  # Render 会自动生成
+      - key: PORT
+        value: "8080"
+    healthCheckPath: /api/v1/system/health
+    autoDeploy: true  # GitHub 推送自动部署
+
+  # 前端服务
+  - type: web
+    name: shiyu-admin-web
+    runtime: docker
+    dockerfilePath: ./frontend/shiyu-admin-web/Dockerfile
+    dockerContext: ./frontend/shiyu-admin-web
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        fromService:
+          name: shiyu-admin-backend
+          type: web
+          property: host
+    autoDeploy: true  # GitHub 推送自动部署
+
+databases:
+  # PostgreSQL 数据库
+  - name: shiyu-postgres
+    databaseName: shiyu_admin_scaffold
+    user: shiyu
+    plan: free  # 免费计划
+
+  # Redis 缓存
+  - name: shiyu-redis
+    type: redis
+    plan: free  # 免费计划
+
