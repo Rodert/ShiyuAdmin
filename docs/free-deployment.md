@@ -50,20 +50,21 @@
 
 3. **配置部署**
    - **构建方式**：Docker
-   - **Dockerfile 路径**：`backend/shiyu-admin-backend/Dockerfile`
+   - **Dockerfile 路径**：`backend/shiyu-admin-backend/Dockerfile.sqlite`
    - **工作目录**：`backend/shiyu-admin-backend`
    - **启动命令**：`./server`
+   - **自动部署**：✅ 启用（连接 GitHub 后，推送代码会自动触发部署）
 
 4. **配置环境变量**
    ```
    CONFIG_FILE=configs/config.sqlite.yaml
-   DATABASE_URL=sqlite:///data/shiyu_admin.db
-   JWT_SECRET=<生成随机字符串>
+   JWT_SECRET=<生成随机字符串，如: openssl rand -hex 32>
    PORT=8080
    ```
 
 5. **部署**
    - 点击 "部署"，等待完成
+   - **之后**：每次推送代码到 GitHub，ClawCloud Run 会自动检测并重新部署
 
 ### 详细文档
 
@@ -95,19 +96,20 @@
 
 3. **配置部署**
    - **Build Type**：Docker
-   - **Dockerfile Path**：`backend/shiyu-admin-backend/Dockerfile`
+   - **Dockerfile Path**：`backend/shiyu-admin-backend/Dockerfile.sqlite`
    - **Docker Context**：`backend/shiyu-admin-backend`
+   - **Auto-Deploy**：✅ 启用（连接 GitHub 后，推送代码会自动触发部署）
 
 4. **配置环境变量**
    ```
    CONFIG_FILE=configs/config.sqlite.yaml
-   DATABASE_URL=sqlite:///data/shiyu_admin.db
-   JWT_SECRET=<生成随机字符串>
+   JWT_SECRET=<生成随机字符串，如: openssl rand -hex 32>
    PORT=8080
    ```
 
 5. **部署**
    - 点击 "Deploy"，等待完成
+   - **之后**：每次推送代码到 GitHub，Koyeb 会自动检测并重新部署
 
 ---
 
@@ -238,33 +240,43 @@ log:
 
 ### 1. 准备 SQLite 配置
 
-确保已创建 `config.sqlite.yaml`（见上方配置说明）
+✅ 已创建 `config.sqlite.yaml` 和 `Dockerfile.sqlite`，无需修改
 
-### 2. 修改 Dockerfile
-
-使用支持 SQLite 的 Dockerfile（见上方）
-
-### 3. 在 ClawCloud Run 部署
+### 2. 在 ClawCloud Run 部署
 
 1. 访问 https://run.clawcloud.com
 2. 使用 GitHub 登录（账号需注册超过 180 天）
 3. 创建应用，选择 GitHub 仓库
 4. 配置：
    - 构建方式：Docker
-   - Dockerfile：`backend/shiyu-admin-backend/Dockerfile`
+   - Dockerfile：`backend/shiyu-admin-backend/Dockerfile.sqlite`
    - 工作目录：`backend/shiyu-admin-backend`
+   - **自动部署**：✅ 启用（连接 GitHub 后自动启用）
 5. 设置环境变量：
    ```
    CONFIG_FILE=configs/config.sqlite.yaml
-   JWT_SECRET=<随机字符串>
+   JWT_SECRET=<随机字符串，如: openssl rand -hex 32>
    PORT=8080
    ```
 6. 部署
 
-### 4. 配置前端
+### 3. 配置前端
 
-前端使用 GitHub Pages（已配置），设置环境变量：
-- `REACT_APP_API_BASE_URL`: `https://your-app.clawcloud.run`
+前端使用 GitHub Pages（已配置自动部署），设置环境变量：
+- 在 GitHub 仓库 Settings → Secrets and variables → Actions
+- 添加 Secret：`REACT_APP_API_BASE_URL` = `https://your-app.clawcloud.run`
+- 前端会自动使用此环境变量构建
+
+### 4. 自动部署说明
+
+**前端**：
+- ✅ 已配置 GitHub Actions 自动部署
+- 推送代码到 `main` 分支且修改了 `frontend/shiyu-admin-web/**` 时自动部署
+
+**后端**：
+- ✅ ClawCloud Run 支持 GitHub 集成
+- 在平台中连接 GitHub 仓库后，推送代码会自动触发部署
+- 无需额外配置，平台会自动检测代码变更
 
 ---
 
