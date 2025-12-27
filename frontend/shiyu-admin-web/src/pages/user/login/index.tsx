@@ -16,6 +16,7 @@ import {
   FormattedMessage,
   Helmet,
   SelectLang,
+  history,
   useIntl,
   useModel,
 } from '@umijs/max';
@@ -142,7 +143,17 @@ const Login: React.FC = () => {
         message.success(defaultLoginSuccessMessage);
         await fetchUserInfo();
         const urlParams = new URL(window.location.href).searchParams;
-        window.location.href = urlParams.get('redirect') || '/';
+        const redirect = urlParams.get('redirect');
+        // 使用 history.push 而不是 window.location.href，这样会考虑 base 配置
+        if (redirect) {
+          // redirect 可能是绝对路径，需要处理
+          const redirectPath = redirect.startsWith('http') 
+            ? new URL(redirect).pathname 
+            : redirect;
+          history.push(redirectPath);
+        } else {
+          history.push('/welcome');
+        }
         return;
       }
       console.log(msg);
