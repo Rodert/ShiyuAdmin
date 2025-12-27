@@ -115,9 +115,67 @@ env:
 ✅ **全球 CDN**：GitHub Pages 使用全球 CDN，访问速度快  
 ✅ **版本控制**：每次部署都有版本记录
 
+## 测试验证
+
+### 1. 验证后端服务
+
+访问后端健康检查接口：
+```bash
+curl https://shiyuadmin.onrender.com/api/v1/system/ping
+```
+
+预期响应：
+```json
+{
+  "code": 200,
+  "data": {
+    "status": "ok"
+  },
+  "message": "success"
+}
+```
+
+### 2. 验证前端部署
+
+1. 访问前端地址：`https://rodert.github.io/ShiyuAdmin/`
+2. 打开浏览器开发者工具（F12）
+3. 检查 Network 标签，确认 API 请求指向正确的后端地址
+4. 尝试登录功能，验证前后端连接
+
+### 3. 验证 API 连接
+
+在浏览器控制台执行：
+```javascript
+fetch('https://shiyuadmin.onrender.com/api/v1/system/ping')
+  .then(res => res.json())
+  .then(data => console.log('Backend response:', data));
+```
+
 ## 注意事项
 
 ⚠️ **服务休眠**：Render 免费服务在 15 分钟无活动后会休眠，首次访问需要等待 30-60 秒  
 ⚠️ **构建时间**：GitHub Actions 构建通常需要 2-5 分钟  
-⚠️ **更新延迟**：GitHub Pages 更新可能需要 1-2 分钟才能生效
+⚠️ **更新延迟**：GitHub Pages 更新可能需要 1-2 分钟才能生效  
+⚠️ **API 地址**：确保 `REACT_APP_API_BASE_URL` 包含协议（`https://`），不包含尾部斜杠
+
+## 部署架构
+
+```
+┌─────────────────┐         ┌──────────────────┐
+│  GitHub Pages   │  ─────> │  Render Backend  │
+│  (Frontend)     │  HTTPS  │  (API Server)    │
+│                 │         │                  │
+│  rodert.github  │         │ shiyuadmin.on    │
+│  .io/ShiyuAdmin │         │ render.com       │
+└─────────────────┘         └──────────────────┘
+       │                            │
+       │                            │
+       └──────── CORS ───────────────┘
+       (允许所有来源)
+```
+
+## 相关文档
+
+- [Render 后端部署指南](./render-deployment.md)（如果存在）
+- [项目 README](../README.md)
 

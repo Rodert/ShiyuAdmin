@@ -293,7 +293,9 @@ npm run start:dev   # 或 npm start
 - **Koyeb**：完全免费，无需信用卡，支持 Docker
 - **Goorm.io**：免费但会停用（10 分钟不活动）
 
-> 📖 详细部署文档：参见 [`docs/free-deployment.md`](docs/free-deployment.md)
+> 📖 详细部署文档：
+> - 免费部署指南：参见 [`docs/free-deployment.md`](docs/free-deployment.md)
+> - GitHub Pages 前端部署：参见 [`docs/github-pages-deployment.md`](docs/github-pages-deployment.md)
 
 ---
 
