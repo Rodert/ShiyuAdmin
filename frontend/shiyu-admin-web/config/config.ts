@@ -7,7 +7,7 @@ import proxy from './proxy';
 
 import routes from './routes';
 
-const { REACT_APP_ENV = 'dev', PUBLIC_PATH: ENV_PUBLIC_PATH } = process.env;
+const { REACT_APP_ENV = 'dev', PUBLIC_PATH: ENV_PUBLIC_PATH, REACT_APP_API_BASE_URL } = process.env;
 
 /**
  * @name 使用公共路径
@@ -19,6 +19,15 @@ const { REACT_APP_ENV = 'dev', PUBLIC_PATH: ENV_PUBLIC_PATH } = process.env;
 const PUBLIC_PATH: string = ENV_PUBLIC_PATH || '/';
 
 export default defineConfig({
+  /**
+   * @name 定义全局变量
+   * @description 在构建时注入环境变量，可以在代码中使用 process.env.REACT_APP_API_BASE_URL
+   * @doc https://umijs.org/docs/api/config#define
+   */
+  define: {
+    'process.env.REACT_APP_API_BASE_URL': REACT_APP_API_BASE_URL || '',
+    'process.env.NODE_ENV': process.env.NODE_ENV || 'development',
+  },
   /**
    * @name 开启 hash 模式
    * @description 让 build 之后的产物包含 hash 后缀。通常用于增量发布和避免浏览器加载缓存。
