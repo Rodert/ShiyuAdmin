@@ -54,6 +54,31 @@
 
 ---
 
+## 2025-12-27（续）
+
+- **完成**
+  - 切换到 Fly.io 平台部署方案（替代 Render）
+    - Render 需要银行卡验证，Fly.io 只需信用卡验证（不扣费）
+    - 创建 `fly.toml`：Fly.io 应用配置文件
+    - 创建 `backend/shiyu-admin-backend/configs/config.fly.yaml`：Fly.io 专用配置
+    - 创建 `docs/fly-deployment.md`：详细的 Fly.io 部署指南
+    - 创建 `.github/workflows/fly-deploy.yml`：GitHub Actions 自动部署工作流
+  - 更新 `README.md`，将推荐部署方式改为 Fly.io
+  - Fly.io 优势：
+    - 无需银行卡（只需信用卡验证，不扣费）
+    - 免费额度充足（3 个共享 CPU、256MB RAM、3GB 存储）
+    - 不会休眠，24/7 运行，响应速度快
+    - 支持 Docker，无需修改业务代码
+    - 自动 HTTPS，全球边缘节点
+
+- **遗留问题 / TODO**
+  - [ ] 登录与注册相关文档待完善
+  - [ ] 数据初始化 SQL 示例待补充到 `docs/`
+  - [ ] 测试 Fly.io 平台实际部署流程，验证配置正确性
+  - [ ] 如果 Fly.io 也需要银行卡，考虑使用 SQLite + Vercel/Netlify Functions 方案
+
+---
+
 ## 使用约定
 
 - 每次有**重要变更**（例如：架构调整、部署方式变化、核心功能上线、重大 bug 修复），在对应日期下追加一条记录。

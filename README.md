@@ -260,30 +260,39 @@ npm run start:dev   # 或 npm start
 
 ---
 
-### 4.3 方式三：Render 平台一键部署（免费，适合测试）
+### 4.3 方式三：Fly.io 平台部署（免费，推荐）
 
 **前置：**
 - GitHub 账号（项目已推送到 GitHub）
-- Render 账号（访问 https://render.com 注册，支持 GitHub 登录）
+- Fly.io 账号（访问 https://fly.io 注册，支持 GitHub 登录）
+- 信用卡验证（不扣费，仅用于身份验证）
 
 **步骤：**
 
-1. **使用 Blueprint 一键部署**（推荐）
-   - 访问 https://dashboard.render.com
-   - 点击 "New +" → "Blueprint"
-   - 连接 GitHub 仓库，选择包含 `render.yaml` 的仓库
-   - Render 会自动创建所有服务（前端、后端、数据库、Redis）
+1. **安装 flyctl CLI**
+   ```bash
+   # macOS
+   brew install flyctl
+   ```
 
-2. **或手动创建服务**
-   - 详见 [`docs/render-deployment.md`](docs/render-deployment.md)
+2. **登录和部署**
+   ```bash
+   fly auth login
+   fly launch --name shiyu-admin-backend --region hkg
+   fly deploy
+   ```
+
+3. **详细步骤**
+   - 详见 [`docs/fly-deployment.md`](docs/fly-deployment.md)
 
 **特点：**
-- ✅ 完全免费（PostgreSQL 512MB、Redis 25MB、Web Service）
-- ✅ GitHub 推送自动部署
+- ✅ 完全免费（3 个共享 CPU、256MB RAM、3GB 存储）
+- ✅ 无需银行卡（只需信用卡验证，不扣费）
 - ✅ 支持 Docker，无需修改业务代码
-- ⚠️ 免费服务会休眠（15 分钟无活动后），首次访问需要 30-60 秒唤醒
+- ✅ 不会休眠，24/7 运行，响应速度快
+- ✅ 自动 HTTPS，全球边缘节点
 
-> 📖 详细部署文档：参见 [`docs/render-deployment.md`](docs/render-deployment.md)
+> 📖 详细部署文档：参见 [`docs/fly-deployment.md`](docs/fly-deployment.md)
 
 ---
 
