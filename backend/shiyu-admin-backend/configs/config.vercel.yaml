@@ -1,0 +1,45 @@
+# Vercel/Netlify 平台专用配置文件
+# 使用 SQLite 文件数据库，无需单独的数据库服务
+
+server:
+  port: "${PORT:-8080}"  # Vercel/Netlify 会自动设置 PORT 环境变量
+  mode: "release"
+  read_timeout: 60
+  write_timeout: 60
+
+database:
+  driver: "sqlite"
+  # SQLite 文件路径（使用持久化存储）
+  # Vercel: /tmp 目录是临时存储，需要使用 /var/task 或其他持久化路径
+  # Netlify: 类似
+  # 注意：Serverless 环境可能需要使用外部存储（如 S3）来持久化 SQLite 文件
+  database: "/tmp/shiyu_admin.db"  # 临时存储，重启会丢失
+  # 生产环境建议使用: /var/task/data/shiyu_admin.db 或外部存储
+
+redis:
+  # Serverless 环境通常不需要 Redis，可以去掉或使用内存缓存
+  host: ""
+  port: 6379
+  password: ""
+  db: 0
+
+auth:
+  use_mock: false
+
+bootstrap:
+  admin_username: "admin"
+  admin_password: "Admin@123"
+  admin_nickname: "超级管理员"
+
+jwt:
+  secret: "${JWT_SECRET}"  # 在平台中设置环境变量
+  expire_time: 7200
+  issuer: "shiyu-admin-scaffold"
+
+log:
+  level: "info"
+  format: "json"
+  retention_days: 3
+  file_path: "/tmp/app.log"
+  max_size_mb: 100
+

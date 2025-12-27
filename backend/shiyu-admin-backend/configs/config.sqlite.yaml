@@ -1,0 +1,44 @@
+# SQLite 配置文件
+# 适用于完全免费且无需信用卡的平台（ClawCloud Run、Koyeb 等）
+
+server:
+  port: "${PORT:-8080}"  # 平台会自动设置 PORT 环境变量
+  mode: "release"
+  read_timeout: 60
+  write_timeout: 60
+
+database:
+  driver: "sqlite"
+  # SQLite 文件路径（使用持久化存储目录）
+  # 确保平台支持持久化存储，数据保存在 /data 目录
+  database: "/data/shiyu_admin.db"
+  # 如果平台不支持持久化，可以使用临时目录（重启会丢失数据）
+  # database: "/tmp/shiyu_admin.db"
+
+redis:
+  # 免费平台通常不需要 Redis，可以去掉或使用内存缓存
+  host: ""
+  port: 6379
+  password: ""
+  db: 0
+
+auth:
+  use_mock: false
+
+bootstrap:
+  admin_username: "admin"
+  admin_password: "Admin@123"
+  admin_nickname: "超级管理员"
+
+jwt:
+  secret: "${JWT_SECRET}"  # 在平台中设置环境变量
+  expire_time: 7200
+  issuer: "shiyu-admin-scaffold"
+
+log:
+  level: "info"
+  format: "json"
+  retention_days: 3
+  file_path: "/tmp/app.log"
+  max_size_mb: 100
+

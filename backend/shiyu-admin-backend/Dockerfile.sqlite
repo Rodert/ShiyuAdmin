@@ -1,0 +1,45 @@
+# 支持 SQLite 的 Dockerfile
+# 用于完全免费且无需信用卡的平台（ClawCloud Run、Koyeb 等）
+
+# 构建阶段
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+# 安装 SQLite 依赖（SQLite 需要 CGO）
+RUN apk add --no-cache sqlite-dev gcc musl-dev
+
+# 复制 go mod 文件
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 复制源代码
+COPY . .
+
+# 构建应用（启用 CGO，SQLite 需要）
+RUN CGO_ENABLED=1 GOOS=linux go build -o server ./cmd/server
+
+# 运行阶段
+FROM alpine:latest
+
+# 安装 SQLite 运行时
+RUN apk --no-cache add ca-certificates tzdata sqlite
+
+ENV TZ=Asia/Shanghai
+
+WORKDIR /root/
+
+# 从构建阶段复制二进制文件
+COPY --from=builder /app/server .
+COPY --from=builder /app/configs ./configs
+
+# 创建数据目录（用于 SQLite 文件持久化）
+RUN mkdir -p /data
+
+EXPOSE 8080
+
+# 使用环境变量指定配置文件
+ENV CONFIG_FILE=configs/config.sqlite.yaml
+
+CMD ["./server"]
+
