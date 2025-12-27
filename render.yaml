@@ -19,11 +19,10 @@ services:
         fromDatabase:
           name: shiyu-postgres
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: shiyu-redis
-          type: redis
-          property: connectionString
+      # Redis URL - 需要手动创建 Redis 服务后设置
+      # 在 Render Dashboard 创建 Redis 后，复制 Internal Redis URL 并设置为环境变量
+      # - key: REDIS_URL
+      #   value: redis://:password@host:port/0
       - key: JWT_SECRET
         generateValue: true  # Render 会自动生成
       - key: PORT
@@ -52,8 +51,7 @@ databases:
     user: shiyu
     plan: free  # 免费计划
 
-  # Redis 缓存
-  - name: shiyu-redis
-    type: redis
-    plan: free  # 免费计划
+# 注意：Redis 不支持在 Blueprint 中自动创建
+# 需要在 Render Dashboard 中手动创建 Redis 服务
+# 创建后，REDIS_URL 环境变量会自动注入到后端服务中
 

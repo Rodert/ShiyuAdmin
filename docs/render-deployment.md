@@ -61,6 +61,13 @@ Redis (Render Redis - 免费，可选)
 5. Render 会自动识别 `render.yaml` 并创建所有服务
 6. 点击 **"Apply"** 开始部署
 
+**重要提示**：
+- Blueprint 会自动创建 PostgreSQL 数据库、前端和后端服务
+- **Redis 需要手动创建**（Render Blueprint 不支持自动创建 Redis）
+  - 部署完成后，在 Render Dashboard 手动创建 Redis 服务
+  - 创建后，在后端服务的环境变量中设置 `REDIS_URL`（使用 Internal Redis URL）
+  - 或者，如果不需要 Redis，可以暂时不创建（后端代码已支持 Redis 可选）
+
 等待 5-10 分钟，所有服务部署完成后即可访问。
 
 ### 方式二：手动创建服务
