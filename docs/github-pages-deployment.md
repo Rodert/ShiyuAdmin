@@ -51,9 +51,11 @@ Workflow 已配置以下环境变量：
 ### API 地址配置
 
 前端通过 `REACT_APP_API_BASE_URL` 环境变量配置后端 API 地址：
-- 构建时注入到前端代码中
+- 构建时通过 UmiJS 的 `define` 配置注入到前端代码中
 - 生产环境使用：`https://shiyuadmin.onrender.com`
 - 开发环境使用代理（`config/proxy.ts`）
+
+**重要**：UmiJS 需要在 `config/config.ts` 中使用 `define` 配置来注入环境变量，否则环境变量在运行时无法访问。
 
 ### 路径配置
 
