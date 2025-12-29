@@ -1,5 +1,5 @@
 # 构建阶段
-FROM golang:1.23-alpine AS builder
+FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
 # 运行阶段
-FROM alpine:latest
+FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/alpine:latest
 
 RUN apk --no-cache add ca-certificates tzdata
 ENV TZ=Asia/Shanghai

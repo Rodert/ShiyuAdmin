@@ -1,13 +1,25 @@
 # 构建阶段
-FROM node:20-alpine AS builder
+FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/node:20-alpine AS builder
 
 WORKDIR /app
+
+# 配置 npm 镜像源和优化设置（国内加速）
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fetch-retries 3 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 60000 && \
+    npm config set maxsockets 5
 
 # 复制 package 文件
 COPY package*.json ./
 
 # 安装依赖
-RUN npm install --legacy-peer-deps
+# --legacy-peer-deps 解决依赖冲突问题
+# --prefer-offline 优先使用缓存
+# --no-audit 跳过安全审计以加快速度
+# --loglevel=error 减少日志输出
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit --loglevel=error
 
 # 复制源代码
 COPY . .
@@ -18,7 +30,7 @@ ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 RUN npm run build
 
 # 运行阶段
-FROM nginx:alpine
+FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/nginx:alpine
 
 # 安装 envsubst 用于替换环境变量
 RUN apk add --no-cache gettext

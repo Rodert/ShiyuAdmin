@@ -3,7 +3,7 @@ version: "3.9"
 services:
   # PostgreSQL 数据库
   shiyu-postgres:
-    image: postgres:15
+    image: crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/postgres:15
     container_name: shiyu-postgres
     restart: unless-stopped
     environment:
