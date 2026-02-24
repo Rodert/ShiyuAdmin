@@ -20,6 +20,7 @@ import {
   useIntl,
   useModel,
 } from '@umijs/max';
+import type { MenuDataItem } from '@ant-design/pro-components';
 import { Alert, App, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
@@ -27,6 +28,7 @@ import { flushSync } from 'react-dom';
 import { Footer } from '@/components';
 import { login } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
+import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';
 import Settings from '../../../../config/defaultSettings';
 
 const useStyles = createStyles(({ token }) => {
@@ -119,16 +121,39 @@ const Login: React.FC = () => {
   const { message } = App.useApp();
   const intl = useIntl();
 
-  const fetchUserInfo = async () => {
+  const buildMenuData = (menus: APIMenu[]): MenuDataItem[] => {
+    return (menus || [])
+      .filter((m) => m.status === 1 && m.menu_type !== 'F')
+      .map((m) => ({
+        name: m.menu_name,
+        path: m.path || `/${m.menu_code}`,
+        children: m.children ? buildMenuData(m.children) : undefined,
+      }));
+  };
+
+  const fetchUserInfoAndMenu = async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
-      flushSync(() => {
-        setInitialState((s) => ({
-          ...s,
-          currentUser: userInfo,
-        }));
-      });
+    if (!userInfo) {
+      return;
     }
+
+    let menuData: MenuDataItem[] = [];
+    try {
+      const menuRes = await getMenuTree();
+      if (menuRes.code === 200 && Array.isArray(menuRes.data)) {
+        menuData = buildMenuData(menuRes.data);
+      }
+    } catch (_error) {
+      menuData = [];
+    }
+
+    flushSync(() => {
+      setInitialState((s) => ({
+        ...s,
+        currentUser: userInfo,
+        menuData,
+      }));
+    });
   };
 
   const handleSubmit = async (values: API.LoginParams) => {
@@ -141,7 +166,7 @@ const Login: React.FC = () => {
           defaultMessage: '登录成功！',
         });
         message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
+        await fetchUserInfoAndMenu();
         const urlParams = new URL(window.location.href).searchParams;
         const redirect = urlParams.get('redirect');
         // 使用 history.push 而不是 window.location.href，这样会考虑 base 配置
