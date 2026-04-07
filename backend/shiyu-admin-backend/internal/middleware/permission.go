@@ -39,6 +39,11 @@ func RequirePermission(permissionSvc interfaces.PermissionService, perms string)
 			c.Next()
 			return
 		}
+		if permissionSvc == nil {
+			response.Error(c, http.StatusServiceUnavailable, "权限服务不可用")
+			c.Abort()
+			return
+		}
 
 		// Check permission
 		hasPerm, err := permissionSvc.CheckPermission(c.Request.Context(), claims.UserCode, perms)
@@ -53,6 +58,31 @@ func RequirePermission(permissionSvc interfaces.PermissionService, perms string)
 			return
 		}
 
+		c.Next()
+	}
+}
+
+// RequireSuperAdmin allows only super admin users.
+func RequireSuperAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		claimsVal, exists := c.Get(CurrentUserCtxKey)
+		if !exists {
+			response.Error(c, http.StatusUnauthorized, "未授权")
+			c.Abort()
+			return
+		}
+
+		claims, ok := claimsVal.(*jwtutil.Claims)
+		if !ok || claims == nil {
+			response.Error(c, http.StatusUnauthorized, "无效的用户信息")
+			c.Abort()
+			return
+		}
+		if !claims.IsSuperAdmin {
+			response.Error(c, http.StatusForbidden, "仅超级管理员可访问")
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }
@@ -168,4 +198,3 @@ func ExtractPermissionFromPath(path string) string {
 	}
 	return ""
 }
-

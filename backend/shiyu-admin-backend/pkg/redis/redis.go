@@ -78,8 +78,30 @@ func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
 	return c.rdb.Keys(ctx, pattern).Result()
 }
 
+// ScanKeys incrementally scans keys by pattern to avoid blocking Redis.
+func (c *Client) ScanKeys(ctx context.Context, pattern string, count int64) ([]string, error) {
+	if count <= 0 {
+		count = 200
+	}
+
+	cursor := uint64(0)
+	result := make([]string, 0, 64)
+	for {
+		keys, nextCursor, err := c.rdb.Scan(ctx, cursor, pattern, count).Result()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, keys...)
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return result, nil
+}
+
 // Close closes redis connection.
 func (c *Client) Close() error {
 	return c.rdb.Close()
 }
-

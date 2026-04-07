@@ -14,26 +14,26 @@ import (
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerMenuRoutes(rg *gin.RouterGroup, menuSvc interfaces.MenuService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService) {
+func registerMenuRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, menuSvc interfaces.MenuService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService) {
 	if menuSvc == nil {
 		return
 	}
-	rg.GET("/menus", func(c *gin.Context) {
+	rg.GET("/menus", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		listMenus(c, menuSvc)
 	})
-	rg.GET("/menus/tree", func(c *gin.Context) {
+	rg.GET("/menus/tree", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		listMenuTree(c, menuSvc, userRoleSvc, roleMenuSvc)
 	})
-	rg.GET("/menus/:code", func(c *gin.Context) {
+	rg.GET("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		getMenu(c, menuSvc)
 	})
-	rg.POST("/menus", func(c *gin.Context) {
+	rg.POST("/menus", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		createMenu(c, menuSvc)
 	})
-	rg.PUT("/menus/:code", func(c *gin.Context) {
+	rg.PUT("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		updateMenu(c, menuSvc)
 	})
-	rg.DELETE("/menus/:code", func(c *gin.Context) {
+	rg.DELETE("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		deleteMenu(c, menuSvc)
 	})
 }

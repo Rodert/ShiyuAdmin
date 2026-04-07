@@ -5,29 +5,30 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerRoleRoutes(rg *gin.RouterGroup, roleSvc interfaces.RoleService) {
+func registerRoleRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, roleSvc interfaces.RoleService) {
 	if roleSvc == nil {
 		return
 	}
-	rg.GET("/roles", func(c *gin.Context) {
+	rg.GET("/roles", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		listRoles(c, roleSvc)
 	})
-	rg.GET("/roles/:code", func(c *gin.Context) {
+	rg.GET("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		getRole(c, roleSvc)
 	})
-	rg.POST("/roles", func(c *gin.Context) {
+	rg.POST("/roles", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		createRole(c, roleSvc)
 	})
-	rg.PUT("/roles/:code", func(c *gin.Context) {
+	rg.PUT("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		updateRole(c, roleSvc)
 	})
-	rg.DELETE("/roles/:code", func(c *gin.Context) {
+	rg.DELETE("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		deleteRole(c, roleSvc)
 	})
 }

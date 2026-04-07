@@ -5,26 +5,27 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerUserRoutes(rg *gin.RouterGroup, userSvc interfaces.UserService) {
+func registerUserRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, userSvc interfaces.UserService) {
 	if userSvc == nil {
 		return
 	}
-	rg.GET("/users", func(c *gin.Context) {
+	rg.GET("/users", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		listUsers(c, userSvc)
 	})
-	rg.POST("/users", func(c *gin.Context) {
+	rg.POST("/users", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		createUser(c, userSvc)
 	})
-	rg.PUT("/users/:code", func(c *gin.Context) {
+	rg.PUT("/users/:code", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		updateUser(c, userSvc)
 	})
-	rg.DELETE("/users/:code", func(c *gin.Context) {
+	rg.DELETE("/users/:code", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		deleteUser(c, userSvc)
 	})
 }

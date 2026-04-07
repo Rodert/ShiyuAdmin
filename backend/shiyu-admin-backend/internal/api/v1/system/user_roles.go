@@ -5,23 +5,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerUserRoleRoutes(rg *gin.RouterGroup, userRoleSvc interfaces.UserRoleService) {
+func registerUserRoleRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, userRoleSvc interfaces.UserRoleService) {
 	if userRoleSvc == nil {
 		return
 	}
-	rg.GET("/users/:code/roles", func(c *gin.Context) {
+	rg.GET("/users/:code/roles", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		getUserRoles(c, userRoleSvc)
 	})
-	rg.PUT("/users/:code/roles", func(c *gin.Context) {
+	rg.PUT("/users/:code/roles", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		setUserRoles(c, userRoleSvc)
 	})
-	rg.GET("/roles/:code/users", func(c *gin.Context) {
+	rg.GET("/roles/:code/users", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		getRoleUsers(c, userRoleSvc)
 	})
 }
@@ -64,4 +65,3 @@ func getRoleUsers(c *gin.Context, svc interfaces.UserRoleService) {
 	}
 	response.Success(c, items)
 }
-

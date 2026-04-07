@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
@@ -18,17 +19,17 @@ func registerDataManageRoutes(rg *gin.RouterGroup, svc interfaces.DataManageServ
 	}
 
 	// 列出所有表
-	rg.GET("/data/tables", func(c *gin.Context) {
+	rg.GET("/data/tables", middleware.RequireSuperAdmin(), func(c *gin.Context) {
 		listTables(c, svc)
 	})
 
 	// 列出指定表的字段
-	rg.GET("/data/tables/:table/columns", func(c *gin.Context) {
+	rg.GET("/data/tables/:table/columns", middleware.RequireSuperAdmin(), func(c *gin.Context) {
 		listTableColumns(c, svc)
 	})
 
 	// 分页查询指定表的数据
-	rg.GET("/data/tables/:table/rows", func(c *gin.Context) {
+	rg.GET("/data/tables/:table/rows", middleware.RequireSuperAdmin(), func(c *gin.Context) {
 		listTableRows(c, svc)
 	})
 }

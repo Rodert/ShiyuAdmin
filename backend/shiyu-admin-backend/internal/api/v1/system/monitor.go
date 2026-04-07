@@ -5,23 +5,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerMonitorRoutes(rg *gin.RouterGroup, monitorSvc interfaces.MonitorService) {
+func registerMonitorRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, monitorSvc interfaces.MonitorService) {
 	if monitorSvc == nil {
 		return
 	}
 
 	// 缓存监控
-	rg.GET("/monitor/cache", func(c *gin.Context) {
+	rg.GET("/monitor/cache", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
 		getCacheStats(c, monitorSvc)
 	})
 
 	// 在线用户
-	rg.GET("/monitor/online-users", func(c *gin.Context) {
+	rg.GET("/monitor/online-users", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
 		listOnlineUsers(c, monitorSvc)
 	})
 }

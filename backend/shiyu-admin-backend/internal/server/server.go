@@ -18,15 +18,16 @@ import (
 	authsvc "shiyu-admin-backend/internal/service/auth"
 	dataManageSvc "shiyu-admin-backend/internal/service/data_manage"
 	deptsvc "shiyu-admin-backend/internal/service/dept"
+	serviceInterfaces "shiyu-admin-backend/internal/service/interfaces"
 	menusvc "shiyu-admin-backend/internal/service/menu"
 	monitorsvc "shiyu-admin-backend/internal/service/monitor"
 	operationlogsvc "shiyu-admin-backend/internal/service/operation_log"
+	permissionsvc "shiyu-admin-backend/internal/service/permission"
+	rolesvc "shiyu-admin-backend/internal/service/role"
 	roleDeptSvc "shiyu-admin-backend/internal/service/role_dept"
 	roleMenuSvc "shiyu-admin-backend/internal/service/role_menu"
-	serviceInterfaces "shiyu-admin-backend/internal/service/interfaces"
-	rolesvc "shiyu-admin-backend/internal/service/role"
-	userRoleSvc "shiyu-admin-backend/internal/service/user_role"
 	usersvc "shiyu-admin-backend/internal/service/user"
+	userRoleSvc "shiyu-admin-backend/internal/service/user_role"
 	"shiyu-admin-backend/pkg/database"
 	"shiyu-admin-backend/pkg/logger"
 	redisclient "shiyu-admin-backend/pkg/redis"
@@ -68,7 +69,10 @@ func Run(cfg *config.Config) error {
 			return err
 		}
 		// Initialize Redis client for monitoring and caching (optional).
-		redisClient, _ = redisclient.NewClient(cfg)
+		redisClient, err = redisclient.NewClient(cfg)
+		if err != nil {
+			logger.Warn(nil, "redis init failed, monitor features disabled", "error", err.Error())
+		}
 	}
 
 	var authRepo repoInterfaces.AuthRepository
@@ -137,12 +141,16 @@ func Run(cfg *config.Config) error {
 		// Online user considered online if active within last 10 minutes.
 		monitorSvcVar = monitorsvc.New(redisClient, 10*time.Minute)
 	}
+	var permissionSvcVar serviceInterfaces.PermissionService
+	if userRoleRepo != nil && roleMenuRepo != nil {
+		permissionSvcVar = permissionsvc.New(userRoleRepo, roleMenuRepo)
+	}
 
 	authMiddleware := middleware.Auth(cfg.JWT.Secret)
 
 	api := engine.Group("/api/v1")
 	{
-		system.RegisterRoutes(api, authSvc, authMiddleware, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar)
+		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar)
 	}
 
 	port := cfg.Server.Port

@@ -13,6 +13,8 @@ import (
 	"shiyu-admin-backend/pkg/jwtutil"
 )
 
+var operationLogWorkers = make(chan struct{}, 256)
+
 // OperationLogger records write operations (POST/PUT/PATCH/DELETE) to operation logs.
 func OperationLogger(logSvc interfaces.OperationLogService) gin.HandlerFunc {
 	if logSvc == nil {
@@ -75,9 +77,15 @@ func OperationLogger(logSvc interfaces.OperationLogService) gin.HandlerFunc {
 		}
 
 		ctx := context.WithoutCancel(c.Request.Context())
-		go func(ctx context.Context, entry *entity.OperationLog) {
-			_ = logSvc.Create(ctx, entry)
-		}(ctx, logEntry)
+		select {
+		case operationLogWorkers <- struct{}{}:
+			go func(ctx context.Context, entry *entity.OperationLog) {
+				defer func() { <-operationLogWorkers }()
+				_ = logSvc.Create(ctx, entry)
+			}(ctx, logEntry)
+		default:
+			// Drop async write when worker slots are saturated to protect request path.
+		}
 	}
 }
 

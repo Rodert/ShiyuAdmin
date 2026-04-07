@@ -5,32 +5,33 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerDeptRoutes(rg *gin.RouterGroup, deptSvc interfaces.DeptService) {
+func registerDeptRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, deptSvc interfaces.DeptService) {
 	if deptSvc == nil {
 		return
 	}
-	rg.GET("/depts", func(c *gin.Context) {
+	rg.GET("/depts", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		listDepts(c, deptSvc)
 	})
-	rg.GET("/depts/tree", func(c *gin.Context) {
+	rg.GET("/depts/tree", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		listDeptTree(c, deptSvc)
 	})
-	rg.GET("/depts/:code", func(c *gin.Context) {
+	rg.GET("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		getDept(c, deptSvc)
 	})
-	rg.POST("/depts", func(c *gin.Context) {
+	rg.POST("/depts", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		createDept(c, deptSvc)
 	})
-	rg.PUT("/depts/:code", func(c *gin.Context) {
+	rg.PUT("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		updateDept(c, deptSvc)
 	})
-	rg.DELETE("/depts/:code", func(c *gin.Context) {
+	rg.DELETE("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		deleteDept(c, deptSvc)
 	})
 }
@@ -110,4 +111,3 @@ func deleteDept(c *gin.Context, svc interfaces.DeptService) {
 	}
 	response.Success(c, gin.H{"deleted": true})
 }
-

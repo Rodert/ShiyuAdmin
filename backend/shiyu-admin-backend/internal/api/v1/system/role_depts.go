@@ -5,20 +5,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerRoleDeptRoutes(rg *gin.RouterGroup, roleDeptSvc interfaces.RoleDeptService) {
+func registerRoleDeptRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, roleDeptSvc interfaces.RoleDeptService) {
 	if roleDeptSvc == nil {
 		return
 	}
-	rg.GET("/roles/:code/depts", func(c *gin.Context) {
+	rg.GET("/roles/:code/depts", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		getRoleDepts(c, roleDeptSvc)
 	})
-	rg.PUT("/roles/:code/depts", func(c *gin.Context) {
+	rg.PUT("/roles/:code/depts", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		setRoleDepts(c, roleDeptSvc)
 	})
 }
@@ -48,4 +49,3 @@ func setRoleDepts(c *gin.Context, svc interfaces.RoleDeptService) {
 	}
 	response.Success(c, gin.H{"updated": true})
 }
-

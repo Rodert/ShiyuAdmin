@@ -65,7 +65,7 @@ func (s *Service) ListOnlineUsers(ctx context.Context) ([]*vo.OnlineUserVO, erro
 		return []*vo.OnlineUserVO{}, nil
 	}
 
-	keys, err := s.redisClient.Keys(ctx, "online:user:*")
+	keys, err := s.redisClient.ScanKeys(ctx, "online:user:*", 200)
 	if err != nil {
 		return nil, err
 	}

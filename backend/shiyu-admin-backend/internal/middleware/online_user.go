@@ -9,6 +9,8 @@ import (
 	"shiyu-admin-backend/pkg/jwtutil"
 )
 
+var onlineUserWorkers = make(chan struct{}, 512)
+
 // OnlineUserTracker updates online user heartbeat information for authenticated requests.
 func OnlineUserTracker(monitorSvc interfaces.MonitorService) gin.HandlerFunc {
 	if monitorSvc == nil {
@@ -24,9 +26,15 @@ func OnlineUserTracker(monitorSvc interfaces.MonitorService) gin.HandlerFunc {
 				ip := c.ClientIP()
 				ua := c.Request.UserAgent()
 				// Use background context to avoid coupling to request lifetime.
-				go func(userCode, username, ip, userAgent string) {
-					_ = monitorSvc.UpdateOnlineUser(context.Background(), userCode, username, ip, userAgent)
-				}(claims.UserCode, claims.Username, ip, ua)
+				select {
+				case onlineUserWorkers <- struct{}{}:
+					go func(userCode, username, ip, userAgent string) {
+						defer func() { <-onlineUserWorkers }()
+						_ = monitorSvc.UpdateOnlineUser(context.Background(), userCode, username, ip, userAgent)
+					}(claims.UserCode, claims.Username, ip, ua)
+				default:
+					// Skip heartbeat update when system is overloaded.
+				}
 			}
 		}
 		c.Next()

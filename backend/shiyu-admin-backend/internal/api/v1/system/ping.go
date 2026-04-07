@@ -13,7 +13,7 @@ import (
 )
 
 // RegisterRoutes wires system routes under /system.
-func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService) {
+func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService) {
 	r := rg.Group("/system")
 	r.GET("/ping", ping)
 	r.GET("/health", health)
@@ -33,15 +33,15 @@ func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMid
 			protected.Use(middleware.OnlineUserTracker(monitorSvc))
 		}
 		protected.GET("/profile", profile)
-		registerUserRoutes(protected, userSvc)
-		registerRoleRoutes(protected, roleSvc)
-		registerMenuRoutes(protected, menuSvc, userRoleSvc, roleMenuSvc)
-		registerDeptRoutes(protected, deptSvc)
-		registerUserRoleRoutes(protected, userRoleSvc)
-		registerRoleMenuRoutes(protected, roleMenuSvc)
-		registerRoleDeptRoutes(protected, roleDeptSvc)
-		registerOperationLogRoutes(protected, operationLogSvc)
-		registerMonitorRoutes(protected, monitorSvc)
+		registerUserRoutes(protected, permissionSvc, userSvc)
+		registerRoleRoutes(protected, permissionSvc, roleSvc)
+		registerMenuRoutes(protected, permissionSvc, menuSvc, userRoleSvc, roleMenuSvc)
+		registerDeptRoutes(protected, permissionSvc, deptSvc)
+		registerUserRoleRoutes(protected, permissionSvc, userRoleSvc)
+		registerRoleMenuRoutes(protected, permissionSvc, roleMenuSvc)
+		registerRoleDeptRoutes(protected, permissionSvc, roleDeptSvc)
+		registerOperationLogRoutes(protected, permissionSvc, operationLogSvc)
+		registerMonitorRoutes(protected, permissionSvc, monitorSvc)
 		registerDataManageRoutes(protected, dataManageSvc)
 	}
 }
