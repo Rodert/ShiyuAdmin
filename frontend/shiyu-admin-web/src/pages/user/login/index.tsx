@@ -15,7 +15,6 @@ import {
 import {
   FormattedMessage,
   Helmet,
-  SelectLang,
   history,
   useIntl,
   useModel,
@@ -25,7 +24,7 @@ import { Alert, App, Tabs } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Footer } from '@/components';
+import { Footer, SelectLang } from '@/components';
 import { login } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';

@@ -3,6 +3,9 @@ FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/gol
 
 WORKDIR /app
 
+# 国内/受限网络下默认 proxy.golang.org 常不可用，使用国内镜像加速拉取模块
+ENV GOPROXY=https://goproxy.cn,direct
+
 # 复制 go mod 文件
 COPY go.mod go.sum ./
 RUN go mod download

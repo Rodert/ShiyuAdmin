@@ -3,14 +3,16 @@
 
 set -e
 
-# 如果设置了 BACKEND_URL，替换 nginx 配置模板中的变量
-if [ -n "$BACKEND_URL" ]; then
-    echo "Using BACKEND_URL: $BACKEND_URL"
-    envsubst '${BACKEND_URL}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/conf.d/default.conf
-else
-    echo "BACKEND_URL not set, using default nginx.conf"
-    cp /etc/nginx/templates/nginx.conf.default /etc/nginx/conf.d/default.conf
-fi
+# nginx 镜像约定的模板目录
+template="/etc/nginx/templates/default.conf.template"
+output="/etc/nginx/conf.d/default.conf"
+
+# 为 docker-compose 场景提供默认后端地址（容器内通过服务名访问）
+BACKEND_URL="${BACKEND_URL:-http://shiyu-backend:8080}"
+export BACKEND_URL
+echo "Using BACKEND_URL: $BACKEND_URL"
+
+envsubst '${BACKEND_URL}' < "$template" > "$output"
 
 # 执行 nginx
 exec nginx -g 'daemon off;'

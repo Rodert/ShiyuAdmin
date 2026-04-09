@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: shiyu
       POSTGRES_PASSWORD: shiyu123
     ports:
-      - "5432:5432"
+      - "15432:5432"
     volumes:
       - shiyu-pg-data:/var/lib/postgresql/data
     healthcheck:
@@ -28,7 +28,7 @@ services:
     container_name: shiyu-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - shiyu-redis-data:/data
     command: redis-server --appendonly yes
@@ -48,7 +48,7 @@ services:
     container_name: shiyu-backend
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "18080:8080"
     volumes:
       - ./backend/shiyu-admin-backend/configs:/root/configs
     environment:
@@ -76,7 +76,7 @@ services:
     container_name: shiyu-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "18000:80"
     depends_on:
       - shiyu-backend
     networks:
