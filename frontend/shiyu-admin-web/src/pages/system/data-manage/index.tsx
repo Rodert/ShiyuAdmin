@@ -1,5 +1,6 @@
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
+import { Button, Modal } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import type { TableMeta, ColumnMeta } from '@/services/shiyu-api/data_manage';
 import { getTables, getTableColumns, getTableRows } from '@/services/shiyu-api/data_manage';
@@ -7,14 +8,26 @@ import { getTables, getTableColumns, getTableRows } from '@/services/shiyu-api/d
 const DataManagePage: React.FC = () => {
   const [currentTable, setCurrentTable] = useState<string | undefined>();
   const [columnsMeta, setColumnsMeta] = useState<ColumnMeta[]>([]);
+  const [dataModalOpen, setDataModalOpen] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const columnsActionRef = useRef<ActionType>();
   const rowsActionRef = useRef<ActionType>();
 
   useEffect(() => {
     columnsActionRef.current?.reload();
-    rowsActionRef.current?.reload();
   }, [currentTable]);
+
+  useEffect(() => {
+    if (dataModalOpen) {
+      rowsActionRef.current?.reload();
+    }
+  }, [currentTable, dataModalOpen]);
+
+  const openDataModal = (tableName: string) => {
+    setCurrentTable(tableName);
+    setSelectedRowKeys([tableName]);
+    setDataModalOpen(true);
+  };
 
   const tableColumns: ProColumns<TableMeta>[] = [
     {
@@ -26,6 +39,23 @@ const DataManagePage: React.FC = () => {
       title: '类型',
       dataIndex: 'table_type',
       key: 'table_type',
+    },
+    {
+      title: '操作',
+      key: 'option',
+      valueType: 'option',
+      render: (_, record) => [
+        <Button
+          key="preview"
+          type="link"
+          onClick={(event) => {
+            event.stopPropagation();
+            openDataModal(record.table_name);
+          }}
+        >
+          查看数据
+        </Button>,
+      ],
     },
   ];
 
@@ -106,7 +136,16 @@ const DataManagePage: React.FC = () => {
             }}
           />
         </ProCard>
-        <ProCard title={currentTable ? `表信息（${currentTable}）` : '表信息'} split="horizontal">
+        <ProCard
+          title={currentTable ? `表信息（${currentTable}）` : '表信息'}
+          extra={
+            currentTable ? (
+              <Button type="primary" onClick={() => openDataModal(currentTable)}>
+                查看数据
+              </Button>
+            ) : undefined
+          }
+        >
           <ProCard title="字段">
             <ProTable<ColumnMeta>
               actionRef={columnsActionRef}
@@ -140,68 +179,75 @@ const DataManagePage: React.FC = () => {
               columns={columnColumns}
             />
           </ProCard>
-          <ProCard title="数据">
-            <ProTable<Record<string, any>>
-              actionRef={rowsActionRef}
-              rowKey="_row_key"
-              search={false}
-              pagination={{
-                defaultPageSize: 10,
-              }}
-              toolBarRender={false}
-              params={{ tableName: currentTable }}
-              request={async (params) => {
-                if (!currentTable) {
-                  return {
-                    data: [],
-                    success: true,
-                    total: 0,
-                  };
-                }
-                const res = await getTableRows(currentTable, {
-                  page: params.current || 1,
-                  page_size: params.pageSize || 10,
-                });
-                if (res.code === 200 && res.data) {
-                  const itemsWithKey = (res.data.items || []).map((row, index) => ({
-                    _row_key:
-                      row.id !== undefined && row.id !== null
-                        ? String(row.id)
-                        : `${res.data.page}-${index}`,
-                    ...row,
-                  }));
-                  return {
-                    data: itemsWithKey,
-                    success: true,
-                    total: res.data.total,
-                  };
-                }
-                return {
-                  data: [],
-                  success: false,
-                  total: 0,
-                };
-              }}
-              columns={
-                columnsMeta.length > 0
-                  ? (columnsMeta.map((col) => ({
-                      title: col.column_name,
-                      dataIndex: col.column_name,
-                      key: col.column_name,
-                      ellipsis: true,
-                    })) as ProColumns<Record<string, any>>[])
-                  : [
-                      {
-                        title: '无字段信息',
-                        dataIndex: '_',
-                        render: () => '-',
-                      } as ProColumns<Record<string, any>>,
-                    ]
-              }
-            />
-          </ProCard>
         </ProCard>
       </ProCard>
+      <Modal
+        title={currentTable ? `表数据预览（${currentTable}）` : '表数据预览'}
+        open={dataModalOpen}
+        width={1100}
+        footer={null}
+        destroyOnClose
+        onCancel={() => setDataModalOpen(false)}
+      >
+        <ProTable<Record<string, any>>
+          actionRef={rowsActionRef}
+          rowKey="_row_key"
+          search={false}
+          pagination={{
+            defaultPageSize: 10,
+          }}
+          toolBarRender={false}
+          params={{ tableName: currentTable }}
+          request={async (params) => {
+            if (!currentTable) {
+              return {
+                data: [],
+                success: true,
+                total: 0,
+              };
+            }
+            const res = await getTableRows(currentTable, {
+              page: params.current || 1,
+              page_size: params.pageSize || 10,
+            });
+            if (res.code === 200 && res.data) {
+              const itemsWithKey = (res.data.items || []).map((row, index) => ({
+                _row_key:
+                  row.id !== undefined && row.id !== null
+                    ? String(row.id)
+                    : `${res.data.page}-${index}`,
+                ...row,
+              }));
+              return {
+                data: itemsWithKey,
+                success: true,
+                total: res.data.total,
+              };
+            }
+            return {
+              data: [],
+              success: false,
+              total: 0,
+            };
+          }}
+          columns={
+            columnsMeta.length > 0
+              ? (columnsMeta.map((col) => ({
+                  title: col.column_name,
+                  dataIndex: col.column_name,
+                  key: col.column_name,
+                  ellipsis: true,
+                })) as ProColumns<Record<string, any>>[])
+              : [
+                  {
+                    title: '无字段信息',
+                    dataIndex: '_',
+                    render: () => '-',
+                  } as ProColumns<Record<string, any>>,
+                ]
+          }
+        />
+      </Modal>
     </PageContainer>
   );
 };
