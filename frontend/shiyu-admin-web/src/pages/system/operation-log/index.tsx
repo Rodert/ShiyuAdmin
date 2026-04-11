@@ -131,6 +131,7 @@ const OperationLogPage: React.FC = () => {
       title: '操作',
       key: 'option',
       width: 100,
+      fixed: 'right',
       valueType: 'option',
       render: (_: any, record: OperationLog) => [
         <Button
@@ -185,6 +186,7 @@ const OperationLogPage: React.FC = () => {
           };
         }}
         columns={columns}
+        scroll={{ x: 1600 }}
       />
 
       <Modal
