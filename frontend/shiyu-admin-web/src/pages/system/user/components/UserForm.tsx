@@ -1,15 +1,22 @@
-import { ProForm, ProFormText, ProFormSelect, ProFormDigit } from '@ant-design/pro-components';
+import { ProForm, ProFormText, ProFormSelect, ProFormTreeSelect } from '@ant-design/pro-components';
 import type { ProFormInstance } from '@ant-design/pro-components';
 import { Button, Modal, message } from 'antd';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CreateUserRequest, UpdateUserRequest, User } from '@/services/shiyu-api/user';
 import { getUserRoles, setUserRoles } from '@/services/shiyu-api/user';
 import { getRoleList, type Role } from '@/services/shiyu-api/role';
+import { getDeptTree, type Dept } from '@/services/shiyu-api/dept';
+
+type TreeOption = {
+  title: string;
+  value: string;
+  children?: TreeOption[];
+};
 
 interface UserFormProps {
   visible: boolean;
   onCancel: () => void;
-  onSubmit: (values: CreateUserRequest | UpdateUserRequest) => Promise<void>;
+  onSubmit: (values: CreateUserRequest | UpdateUserRequest) => Promise<User | undefined>;
   title: string;
   initialValues?: User;
 }
@@ -23,19 +30,34 @@ const UserForm: React.FC<UserFormProps> = ({
 }) => {
   const isEdit = !!initialValues;
   const [roleOptions, setRoleOptions] = useState<{ label: string; value: string }[]>([]);
+  const [deptTreeOptions, setDeptTreeOptions] = useState<TreeOption[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const formRef = useRef<ProFormInstance>(null);
+  const memoizedInitialValues = useMemo(
+    () => (initialValues ? { ...initialValues, dept_code: initialValues.dept_code || undefined } : undefined),
+    [initialValues],
+  );
 
   // 加载角色列表
   useEffect(() => {
-    if (visible) {
-      loadRoles();
-      if (isEdit && initialValues?.user_code) {
-        loadUserRoles(initialValues.user_code);
-      } else {
-        setSelectedRoles([]);
-        formRef.current?.setFieldsValue({ role_codes: [] });
-      }
+    if (!visible) {
+      formRef.current?.resetFields();
+      setSelectedRoles([]);
+      return;
+    }
+
+    formRef.current?.resetFields();
+    if (memoizedInitialValues) {
+      formRef.current?.setFieldsValue(memoizedInitialValues);
+    }
+
+    loadRoles();
+    loadDepts();
+    if (isEdit && initialValues?.user_code) {
+      loadUserRoles(initialValues.user_code);
+    } else {
+      setSelectedRoles([]);
+      formRef.current?.setFieldsValue({ role_codes: [] });
     }
   }, [visible, isEdit, initialValues?.user_code]);
 
@@ -67,6 +89,25 @@ const UserForm: React.FC<UserFormProps> = ({
     }
   };
 
+  const loadDepts = async () => {
+    try {
+      const res = await getDeptTree();
+      if (res.code === 200 && res.data) {
+        setDeptTreeOptions(convertDeptToOptions(res.data));
+      }
+    } catch (error) {
+      console.error('加载部门树失败:', error);
+    }
+  };
+
+  const convertDeptToOptions = (depts: Dept[]): TreeOption[] => {
+    return depts.map((dept) => ({
+      title: `${dept.dept_name} (${dept.dept_code})`,
+      value: dept.dept_code,
+      children: dept.children ? convertDeptToOptions(dept.children) : undefined,
+    }));
+  };
+
   return (
     <Modal
       title={title}
@@ -74,19 +115,21 @@ const UserForm: React.FC<UserFormProps> = ({
       onCancel={onCancel}
       footer={null}
       width={600}
+      destroyOnHidden
     >
       <ProForm
         formRef={formRef}
-        initialValues={initialValues}
+        key={isEdit ? initialValues?.user_code : 'create'}
+        initialValues={memoizedInitialValues}
         onFinish={async (values) => {
           try {
             // 先提交用户信息
-            await onSubmit(values as CreateUserRequest | UpdateUserRequest);
+            const savedUser = await onSubmit(values as CreateUserRequest | UpdateUserRequest);
             
             // 获取用户编码（新建时从表单值获取，编辑时从 initialValues 获取）
             const userCode = isEdit 
               ? initialValues?.user_code 
-              : (values as CreateUserRequest).user_code;
+              : savedUser?.user_code;
             
             // 设置用户角色
             if (userCode && selectedRoles.length >= 0) {
@@ -121,14 +164,14 @@ const UserForm: React.FC<UserFormProps> = ({
         {!isEdit && (
           <>
             <ProFormText
-              name="user_code"
-              label="用户编码"
-              rules={[{ required: true, message: '请输入用户编码' }]}
-            />
-            <ProFormText
               name="username"
               label="用户名"
-              rules={[{ required: true, message: '请输入用户名' }]}
+              extra="需唯一，仅允许字母、数字、点、下划线或中划线"
+              fieldProps={{ maxLength: 64, showCount: true }}
+              rules={[
+                { required: true, whitespace: true, message: '请输入用户名' },
+                { pattern: /^[A-Za-z0-9._-]+$/, message: '用户名格式不正确' },
+              ]}
             />
             <ProFormText.Password
               name="password"
@@ -140,7 +183,16 @@ const UserForm: React.FC<UserFormProps> = ({
         <ProFormText name="nickname" label="昵称" />
         <ProFormText name="email" label="邮箱" />
         <ProFormText name="phone" label="手机号" />
-        <ProFormText name="dept_code" label="部门编码" />
+        <ProFormTreeSelect
+          name="dept_code"
+          label="所属部门"
+          fieldProps={{
+            treeData: deptTreeOptions,
+            allowClear: true,
+            treeDefaultExpandAll: true,
+            placeholder: '请选择所属部门',
+          }}
+        />
         <ProFormSelect
           name="status"
           label="状态"

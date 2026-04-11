@@ -40,7 +40,7 @@ func setupRouter() *gin.Engine {
 	authMiddleware := middleware.Auth(cfg.JWT.Secret)
 
 	api := router.Group("/api/v1")
-	system.RegisterRoutes(api, authSvc, authMiddleware, nil, nil, nil, nil, nil, nil, nil)
+	system.RegisterRoutes(api, authSvc, authMiddleware, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	return router
 }
@@ -136,4 +136,3 @@ func TestProfileWithAuth(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, float64(200), response["code"])
 }
-

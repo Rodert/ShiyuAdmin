@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS sys_roles (
   deleted_at DATETIME DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uk_sys_roles_role_code (role_code),
+  UNIQUE KEY uk_sys_roles_role_key (role_key),
   KEY idx_sys_roles_deleted_at (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

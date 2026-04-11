@@ -4,19 +4,12 @@ import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import React from 'react';
-import {
-  AvatarDropdown,
-  AvatarName,
-  Footer,
-  Question,
-  SelectLang,
-} from '@/components';
+import { AvatarDropdown, AvatarName, Footer, Question } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';
 import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 import '@ant-design/v5-patch-for-react-19';
-
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 
@@ -39,7 +32,6 @@ export async function getInitialState(): Promise<{
         children: m.children ? buildMenuData(m.children) : undefined,
       }));
   };
-
   const fetchMenuData = async () => {
     try {
       const res = await getMenuTree();
@@ -51,7 +43,6 @@ export async function getInitialState(): Promise<{
     }
     return [];
   };
-
   const fetchUserInfo = async () => {
     try {
       const msg = await queryCurrentUser({
@@ -65,11 +56,7 @@ export async function getInitialState(): Promise<{
   };
   // 如果不是登录页面，执行
   const { location } = history;
-  if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
-      location.pathname,
-    )
-  ) {
+  if (![loginPath, '/user/register', '/user/register-result'].includes(location.pathname)) {
     const currentUser = await fetchUserInfo();
     const menuData = await fetchMenuData();
     return {
@@ -86,15 +73,9 @@ export async function getInitialState(): Promise<{
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({
-  initialState,
-  setInitialState,
-}) => {
+export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    actionsRender: () => [
-      <Question key="doc" />,
-      <SelectLang key="SelectLang" />,
-    ],
+    actionsRender: () => [<Question key="doc" />],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,

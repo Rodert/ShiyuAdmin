@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS sys_roles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   role_code TEXT NOT NULL UNIQUE,
   role_name TEXT NOT NULL,
-  role_key TEXT NOT NULL,
+  role_key TEXT NOT NULL UNIQUE,
   data_scope TEXT NOT NULL,
   status INTEGER NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL DEFAULT (datetime('now')),

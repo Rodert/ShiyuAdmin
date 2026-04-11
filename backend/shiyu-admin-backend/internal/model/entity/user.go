@@ -21,7 +21,7 @@ type User struct {
 	// DeptCode 部门编码，关联部门表
 	DeptCode string `json:"dept_code" gorm:"size:32;comment:部门编码，关联部门表"`
 	// Status 状态：1=启用，0=禁用
-	Status int `json:"status" gorm:"comment:状态：1=启用，0=禁用"`
+	Status       int  `json:"status" gorm:"comment:状态：1=启用，0=禁用"`
 	IsSuperAdmin bool `json:"is_super_admin" gorm:"column:is_super_admin;not null;default:false"`
 	// CreatedAt 创建时间
 	CreatedAt time.Time `json:"created_at" gorm:"comment:创建时间"`
@@ -40,7 +40,7 @@ type Role struct {
 	// RoleName 角色名称，显示名称
 	RoleName string `json:"role_name" gorm:"size:64;comment:角色名称，显示名称"`
 	// RoleKey 角色标识，权限判断使用，如：admin、user
-	RoleKey string `json:"role_key" gorm:"size:64;comment:角色标识，权限判断使用，如：admin、user"`
+	RoleKey string `json:"role_key" gorm:"size:64;uniqueIndex;comment:角色标识，权限判断使用，如：admin、user"`
 	// DataScope 数据权限范围：all=全部数据，dept=部门数据，deptAndChild=部门及以下数据，self=仅本人数据
 	DataScope string `json:"data_scope" gorm:"size:32;comment:数据权限范围：all=全部数据，dept=部门数据，deptAndChild=部门及以下数据，self=仅本人数据"`
 	// Status 状态：1=启用，0=禁用

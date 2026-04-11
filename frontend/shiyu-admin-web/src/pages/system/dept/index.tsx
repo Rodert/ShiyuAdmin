@@ -20,6 +20,10 @@ const DeptManagement: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<Dept | null>(null);
   const actionRef = useRef<ActionType>();
 
+  const countDepts = (depts: Dept[]): number => {
+    return depts.reduce((total, dept) => total + 1 + countDepts(dept.children || []), 0);
+  };
+
   const handleCreate = async (values: CreateDeptRequest) => {
     try {
       const res = await createDept(values);
@@ -27,12 +31,8 @@ const DeptManagement: React.FC = () => {
         message.success('创建成功');
         setCreateModalVisible(false);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '创建失败');
       }
-    } catch (error) {
-      message.error('创建失败');
-    }
+    } catch (error) {}
   };
 
   const handleUpdate = async (values: UpdateDeptRequest) => {
@@ -44,12 +44,8 @@ const DeptManagement: React.FC = () => {
         setUpdateModalVisible(false);
         setEditingRecord(null);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '更新失败');
       }
-    } catch (error) {
-      message.error('更新失败');
-    }
+    } catch (error) {}
   };
 
   const handleDelete = (record: Dept) => {
@@ -62,12 +58,8 @@ const DeptManagement: React.FC = () => {
           if (res.code === 200) {
             message.success('删除成功');
             actionRef.current?.reload();
-          } else {
-            message.error(res.message || '删除失败');
           }
-        } catch (error) {
-          message.error('删除失败');
-        }
+        } catch (error) {}
       },
     });
   };
@@ -152,21 +144,10 @@ const DeptManagement: React.FC = () => {
         request={async () => {
           const res = await getDeptTree();
           if (res.code === 200 && res.data) {
-            // Flatten tree for table display
-            const flatten = (depts: Dept[]): Dept[] => {
-              const result: Dept[] = [];
-              depts.forEach((dept) => {
-                result.push(dept);
-                if (dept.children && dept.children.length > 0) {
-                  result.push(...flatten(dept.children));
-                }
-              });
-              return result;
-            };
             return {
-              data: flatten(res.data),
+              data: res.data,
               success: true,
-              total: flatten(res.data).length,
+              total: countDepts(res.data),
             };
           }
           return {
@@ -177,6 +158,7 @@ const DeptManagement: React.FC = () => {
         }}
         columns={columns}
         pagination={false}
+        expandable={{ defaultExpandAllRows: false }}
       />
 
       <DeptForm

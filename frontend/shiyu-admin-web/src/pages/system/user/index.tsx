@@ -20,24 +20,21 @@ const UserManagement: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<User | null>(null);
   const actionRef = useRef<ActionType>();
 
-  const handleCreate = async (values: CreateUserRequest): Promise<void> => {
+  const handleCreate = async (values: CreateUserRequest): Promise<User | undefined> => {
     try {
       const res = await createUser(values);
       if (res.code === 200) {
         message.success('创建成功');
         setCreateModalVisible(false);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '创建失败');
-        throw new Error(res.message || '创建失败');
+        return res.data;
       }
     } catch (error) {
-      message.error('创建失败');
       throw error;
     }
   };
 
-  const handleUpdate = async (values: UpdateUserRequest): Promise<void> => {
+  const handleUpdate = async (values: UpdateUserRequest): Promise<User | undefined> => {
     if (!editingRecord) return;
     try {
       const res = await updateUser(editingRecord.user_code, values);
@@ -46,12 +43,9 @@ const UserManagement: React.FC = () => {
         setUpdateModalVisible(false);
         setEditingRecord(null);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '更新失败');
-        throw new Error(res.message || '更新失败');
+        return res.data;
       }
     } catch (error) {
-      message.error('更新失败');
       throw error;
     }
   };
@@ -66,12 +60,8 @@ const UserManagement: React.FC = () => {
           if (res.code === 200) {
             message.success('删除成功');
             actionRef.current?.reload();
-          } else {
-            message.error(res.message || '删除失败');
           }
-        } catch (error) {
-          message.error('删除失败');
-        }
+        } catch (error) {}
       },
     });
   };

@@ -32,7 +32,7 @@ async function login(page: any) {
       await usernameInput.waitFor({ timeout: 5000, state: 'visible' });
       break;
     } catch {
-      continue;
+      // try next selector
     }
   }
   
@@ -55,7 +55,7 @@ async function login(page: any) {
       await passwordInput.waitFor({ timeout: 5000, state: 'visible' });
       break;
     } catch {
-      continue;
+      // try next selector
     }
   }
   
@@ -82,7 +82,7 @@ async function login(page: any) {
       await submitButton.waitFor({ timeout: 5000, state: 'visible' });
       break;
     } catch {
-      continue;
+      // try next selector
     }
   }
   

@@ -70,7 +70,7 @@ func createUser(c *gin.Context, userSvc interfaces.UserService) {
 	}
 	user, err := userSvc.Create(c, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, vo.BuildUserVO(user))
@@ -85,7 +85,7 @@ func updateUser(c *gin.Context, userSvc interfaces.UserService) {
 	}
 	user, err := userSvc.Update(c, code, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	if user == nil {

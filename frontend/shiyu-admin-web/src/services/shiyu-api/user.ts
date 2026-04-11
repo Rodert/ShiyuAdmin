@@ -18,7 +18,6 @@ export interface UserListResponse {
 }
 
 export interface CreateUserRequest {
-  user_code: string;
   username: string;
   password: string;
   nickname?: string;

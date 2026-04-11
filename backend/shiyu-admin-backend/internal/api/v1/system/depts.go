@@ -80,7 +80,7 @@ func createDept(c *gin.Context, svc interfaces.DeptService) {
 	}
 	dept, err := svc.Create(c, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, vo.BuildDeptVO(dept))
@@ -94,7 +94,7 @@ func updateDept(c *gin.Context, svc interfaces.DeptService) {
 	}
 	dept, err := svc.Update(c, c.Param("code"), &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	if dept == nil {

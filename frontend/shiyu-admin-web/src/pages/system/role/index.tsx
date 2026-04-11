@@ -27,12 +27,8 @@ const RoleManagement: React.FC = () => {
         message.success('创建成功');
         setCreateModalVisible(false);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '创建失败');
-        throw new Error(res.message || '创建失败');
       }
     } catch (error) {
-      message.error('创建失败');
       throw error;
     }
   };
@@ -46,12 +42,8 @@ const RoleManagement: React.FC = () => {
         setUpdateModalVisible(false);
         setEditingRecord(null);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '更新失败');
-        throw new Error(res.message || '更新失败');
       }
     } catch (error) {
-      message.error('更新失败');
       throw error;
     }
   };
@@ -66,12 +58,8 @@ const RoleManagement: React.FC = () => {
           if (res.code === 200) {
             message.success('删除成功');
             actionRef.current?.reload();
-          } else {
-            message.error(res.message || '删除失败');
           }
-        } catch (error) {
-          message.error('删除失败');
-        }
+        } catch (error) {}
       },
     });
   };

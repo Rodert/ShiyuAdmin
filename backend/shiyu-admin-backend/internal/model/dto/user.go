@@ -8,7 +8,6 @@ type ListUserRequest struct {
 
 // CreateUserRequest defines user creation payload.
 type CreateUserRequest struct {
-	UserCode string `json:"user_code" binding:"required"`
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Nickname string `json:"nickname"`

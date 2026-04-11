@@ -1,12 +1,20 @@
-import type { ProColumns } from '@ant-design/pro-components';
+import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { TableMeta, ColumnMeta } from '@/services/shiyu-api/data_manage';
 import { getTables, getTableColumns, getTableRows } from '@/services/shiyu-api/data_manage';
 
 const DataManagePage: React.FC = () => {
   const [currentTable, setCurrentTable] = useState<string | undefined>();
   const [columnsMeta, setColumnsMeta] = useState<ColumnMeta[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const columnsActionRef = useRef<ActionType>();
+  const rowsActionRef = useRef<ActionType>();
+
+  useEffect(() => {
+    columnsActionRef.current?.reload();
+    rowsActionRef.current?.reload();
+  }, [currentTable]);
 
   const tableColumns: ProColumns<TableMeta>[] = [
     {
@@ -66,7 +74,9 @@ const DataManagePage: React.FC = () => {
               const res = await getTables();
               if (res.code === 200 && res.data) {
                 if (!currentTable && res.data.length > 0) {
-                  setCurrentTable(res.data[0].table_name);
+                  const firstTable = res.data[0].table_name;
+                  setCurrentTable(firstTable);
+                  setSelectedRowKeys([firstTable]);
                 }
                 return {
                   data: res.data,
@@ -79,10 +89,18 @@ const DataManagePage: React.FC = () => {
               };
             }}
             columns={tableColumns}
+            rowSelection={{
+              type: 'radio',
+              selectedRowKeys,
+              onChange: (keys) => {
+                setSelectedRowKeys(keys);
+              },
+            }}
             onRow={(record: TableMeta) => {
               return {
                 onClick: () => {
                   setCurrentTable(record.table_name);
+                  setSelectedRowKeys([record.table_name]);
                 },
               };
             }}
@@ -91,10 +109,12 @@ const DataManagePage: React.FC = () => {
         <ProCard title={currentTable ? `表信息（${currentTable}）` : '表信息'} split="horizontal">
           <ProCard title="字段">
             <ProTable<ColumnMeta>
+              actionRef={columnsActionRef}
               rowKey="column_name"
               search={false}
               pagination={false}
               toolBarRender={false}
+              params={{ tableName: currentTable }}
               request={async () => {
                 if (!currentTable) {
                   setColumnsMeta([]);
@@ -122,12 +142,14 @@ const DataManagePage: React.FC = () => {
           </ProCard>
           <ProCard title="数据">
             <ProTable<Record<string, any>>
+              actionRef={rowsActionRef}
               rowKey="_row_key"
               search={false}
               pagination={{
                 defaultPageSize: 10,
               }}
               toolBarRender={false}
+              params={{ tableName: currentTable }}
               request={async (params) => {
                 if (!currentTable) {
                   return {

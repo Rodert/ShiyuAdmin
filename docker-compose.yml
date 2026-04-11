@@ -82,6 +82,21 @@ services:
     networks:
       - shiyu-network
 
+  # 前端 CI / 本地校验：不随 up 启动（profile: ci）。在仓库根目录执行例如：
+  #   docker compose --profile ci run --rm shiyu-frontend-ci sh -lc "npm install --legacy-peer-deps && npm run lint"
+  #   docker compose --profile ci run --rm shiyu-frontend-ci sh -lc "npm install --legacy-peer-deps && npm run build"
+  # 若本机已有与 Linux 兼容的 node_modules，可省略 install，直接 npm run lint。
+  shiyu-frontend-ci:
+    profiles: ["ci"]
+    image: node:20-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ./frontend/shiyu-admin-web:/app
+    environment:
+      NPM_CONFIG_REGISTRY: https://registry.npmmirror.com
+    networks:
+      - shiyu-network
+
 networks:
   shiyu-network:
     driver: bridge

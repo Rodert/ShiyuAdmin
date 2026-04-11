@@ -2,7 +2,9 @@ package menu
 
 import (
 	"context"
+	"strings"
 
+	"shiyu-admin-backend/internal/apperrors"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/entity"
 	repoInterfaces "shiyu-admin-backend/internal/repository/interfaces"
@@ -31,18 +33,33 @@ func (s *Service) ListTree(ctx context.Context) ([]*entity.Menu, error) {
 }
 
 func (s *Service) Create(ctx context.Context, req *dto.CreateMenuRequest) (*entity.Menu, error) {
+	menuCode := strings.TrimSpace(req.MenuCode)
+	perms := strings.TrimSpace(req.Perms)
+	if existing, err := s.repo.GetByCode(ctx, menuCode); err != nil {
+		return nil, err
+	} else if existing != nil {
+		return nil, apperrors.NewConflict("duplicate_menu_code", "菜单编码已存在，请更换后重试。")
+	}
+	if perms != "" {
+		if existing, err := s.repo.GetByPerms(ctx, perms); err != nil {
+			return nil, err
+		} else if existing != nil {
+			return nil, apperrors.NewConflict("duplicate_permission_key", "权限标识已存在，请更换后重试。")
+		}
+	}
+
 	menu := &entity.Menu{
-		MenuCode:   req.MenuCode,
-		ParentCode: req.ParentCode,
-		MenuType:   req.MenuType,
-		MenuName:   req.MenuName,
-		Perms:      req.Perms,
-		Path:       req.Path,
-		Component:  req.Component,
+		MenuCode:   menuCode,
+		ParentCode: strings.TrimSpace(req.ParentCode),
+		MenuType:   strings.TrimSpace(req.MenuType),
+		MenuName:   strings.TrimSpace(req.MenuName),
+		Perms:      perms,
+		Path:       strings.TrimSpace(req.Path),
+		Component:  strings.TrimSpace(req.Component),
 		Status:     req.Status,
 	}
 	if err := s.repo.Create(ctx, menu); err != nil {
-		return nil, err
+		return nil, apperrors.WrapUniqueConstraint(err, "menu_creation_conflict", "菜单编码已存在，请更换后重试。")
 	}
 	return menu, nil
 }
@@ -56,28 +73,38 @@ func (s *Service) Update(ctx context.Context, menuCode string, req *dto.UpdateMe
 		return nil, nil
 	}
 	if req.ParentCode != nil {
-		menu.ParentCode = *req.ParentCode
+		menu.ParentCode = strings.TrimSpace(*req.ParentCode)
 	}
 	if req.MenuType != nil {
-		menu.MenuType = *req.MenuType
+		menu.MenuType = strings.TrimSpace(*req.MenuType)
 	}
 	if req.MenuName != nil {
-		menu.MenuName = *req.MenuName
+		menu.MenuName = strings.TrimSpace(*req.MenuName)
 	}
 	if req.Perms != nil {
-		menu.Perms = *req.Perms
+		perms := strings.TrimSpace(*req.Perms)
+		if perms != "" && perms != menu.Perms {
+			existing, err := s.repo.GetByPerms(ctx, perms)
+			if err != nil {
+				return nil, err
+			}
+			if existing != nil && existing.MenuCode != menu.MenuCode {
+				return nil, apperrors.NewConflict("duplicate_permission_key", "权限标识已存在，请更换后重试。")
+			}
+		}
+		menu.Perms = perms
 	}
 	if req.Path != nil {
-		menu.Path = *req.Path
+		menu.Path = strings.TrimSpace(*req.Path)
 	}
 	if req.Component != nil {
-		menu.Component = *req.Component
+		menu.Component = strings.TrimSpace(*req.Component)
 	}
 	if req.Status != nil {
 		menu.Status = *req.Status
 	}
 	if err := s.repo.Update(ctx, menu); err != nil {
-		return nil, err
+		return nil, apperrors.WrapUniqueConstraint(err, "menu_update_conflict", "菜单编码已存在，请更换后重试。")
 	}
 	return menu, nil
 }
@@ -85,4 +112,3 @@ func (s *Service) Update(ctx context.Context, menuCode string, req *dto.UpdateMe
 func (s *Service) Delete(ctx context.Context, menuCode string) error {
 	return s.repo.DeleteByCode(ctx, menuCode)
 }
-

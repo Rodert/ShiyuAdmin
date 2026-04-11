@@ -1,6 +1,7 @@
 import { ProForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
+import type { ProFormInstance } from '@ant-design/pro-components';
 import { Button, Modal, message, Tree } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CreateRoleRequest, Role, UpdateRoleRequest } from '@/services/shiyu-api/role';
 import { getRoleMenus, setRoleMenus } from '@/services/shiyu-api/role';
 import { getMenuTree, type Menu } from '@/services/shiyu-api/menu';
@@ -24,18 +25,30 @@ const RoleForm: React.FC<RoleFormProps> = ({
   const isEdit = !!initialValues;
   const [menuTree, setMenuTree] = useState<DataNode[]>([]);
   const [selectedMenuKeys, setSelectedMenuKeys] = useState<React.Key[]>([]);
+  const formRef = useRef<ProFormInstance>(null);
+  const memoizedInitialValues = useMemo(
+    () => (initialValues ? { ...initialValues } : undefined),
+    [initialValues],
+  );
 
   // 加载菜单树
   useEffect(() => {
-    if (visible) {
-      loadMenuTree();
-      if (isEdit && initialValues?.role_code) {
-        loadRoleMenus(initialValues.role_code);
-      } else {
-        setSelectedMenuKeys([]);
-      }
+    if (!visible) {
+      formRef.current?.resetFields();
+      setSelectedMenuKeys([]);
+      return;
     }
-  }, [visible, isEdit, initialValues?.role_code]);
+
+    loadMenuTree();
+    if (isEdit && initialValues?.role_code) {
+      formRef.current?.resetFields();
+      formRef.current?.setFieldsValue(memoizedInitialValues);
+      loadRoleMenus(initialValues.role_code);
+    } else {
+      formRef.current?.resetFields();
+      setSelectedMenuKeys([]);
+    }
+  }, [visible, isEdit, initialValues?.role_code, memoizedInitialValues]);
 
   const loadMenuTree = async () => {
     try {
@@ -77,9 +90,12 @@ const RoleForm: React.FC<RoleFormProps> = ({
       onCancel={onCancel}
       footer={null}
       width={600}
+      destroyOnHidden
     >
       <ProForm
-        initialValues={initialValues}
+        formRef={formRef}
+        key={isEdit ? initialValues?.role_code : 'create'}
+        initialValues={memoizedInitialValues}
         onFinish={async (values) => {
           try {
             // 先提交角色信息
@@ -126,24 +142,40 @@ const RoleForm: React.FC<RoleFormProps> = ({
             <ProFormText
               name="role_code"
               label="角色编码"
-              rules={[{ required: true, message: '请输入角色编码' }]}
+              extra="需唯一，仅允许字母、数字、下划线或中划线"
+              fieldProps={{ maxLength: 32, showCount: true }}
+              rules={[
+                { required: true, whitespace: true, message: '请输入角色编码' },
+                { pattern: /^[A-Za-z0-9_-]+$/, message: '角色编码格式不正确' },
+              ]}
             />
             <ProFormText
               name="role_name"
               label="角色名称"
-              rules={[{ required: true, message: '请输入角色名称' }]}
+              rules={[{ required: true, whitespace: true, message: '请输入角色名称' }]}
             />
             <ProFormText
               name="role_key"
               label="角色标识"
-              rules={[{ required: true, message: '请输入角色标识' }]}
+              extra="需唯一，仅允许字母、数字、冒号、下划线或中划线"
+              fieldProps={{ maxLength: 64, showCount: true }}
+              rules={[
+                { required: true, whitespace: true, message: '请输入角色标识' },
+                { pattern: /^[A-Za-z0-9:_-]+$/, message: '角色标识格式不正确' },
+              ]}
             />
           </>
         )}
         {isEdit && (
           <>
             <ProFormText name="role_name" label="角色名称" />
-            <ProFormText name="role_key" label="角色标识" />
+            <ProFormText
+              name="role_key"
+              label="角色标识"
+              extra="需唯一，仅允许字母、数字、冒号、下划线或中划线"
+              fieldProps={{ maxLength: 64, showCount: true }}
+              rules={[{ pattern: /^[A-Za-z0-9:_-]+$/, message: '角色标识格式不正确' }]}
+            />
           </>
         )}
         <ProFormSelect

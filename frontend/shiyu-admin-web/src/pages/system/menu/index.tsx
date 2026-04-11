@@ -20,6 +20,10 @@ const MenuManagement: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<Menu | null>(null);
   const actionRef = useRef<ActionType>();
 
+  const countMenus = (menus: Menu[]): number => {
+    return menus.reduce((total, menu) => total + 1 + countMenus(menu.children || []), 0);
+  };
+
   const handleCreate = async (values: CreateMenuRequest) => {
     try {
       const res = await createMenu(values);
@@ -27,12 +31,8 @@ const MenuManagement: React.FC = () => {
         message.success('创建成功');
         setCreateModalVisible(false);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '创建失败');
       }
-    } catch (error) {
-      message.error('创建失败');
-    }
+    } catch (error) {}
   };
 
   const handleUpdate = async (values: UpdateMenuRequest) => {
@@ -44,12 +44,8 @@ const MenuManagement: React.FC = () => {
         setUpdateModalVisible(false);
         setEditingRecord(null);
         actionRef.current?.reload();
-      } else {
-        message.error(res.message || '更新失败');
       }
-    } catch (error) {
-      message.error('更新失败');
-    }
+    } catch (error) {}
   };
 
   const handleDelete = (record: Menu) => {
@@ -62,12 +58,8 @@ const MenuManagement: React.FC = () => {
           if (res.code === 200) {
             message.success('删除成功');
             actionRef.current?.reload();
-          } else {
-            message.error(res.message || '删除失败');
           }
-        } catch (error) {
-          message.error('删除失败');
-        }
+        } catch (error) {}
       },
     });
   };
@@ -175,21 +167,10 @@ const MenuManagement: React.FC = () => {
         request={async () => {
           const res = await getMenuTree();
           if (res.code === 200 && res.data) {
-            // Flatten tree for table display
-            const flatten = (menus: Menu[]): Menu[] => {
-              const result: Menu[] = [];
-              menus.forEach((menu) => {
-                result.push(menu);
-                if (menu.children && menu.children.length > 0) {
-                  result.push(...flatten(menu.children));
-                }
-              });
-              return result;
-            };
             return {
-              data: flatten(res.data),
+              data: res.data,
               success: true,
-              total: flatten(res.data).length,
+              total: countMenus(res.data),
             };
           }
           return {
@@ -200,6 +181,7 @@ const MenuManagement: React.FC = () => {
         }}
         columns={columns}
         pagination={false}
+        expandable={{ defaultExpandAllRows: false }}
       />
 
       <MenuForm

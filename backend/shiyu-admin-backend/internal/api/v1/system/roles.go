@@ -85,7 +85,7 @@ func createRole(c *gin.Context, svc interfaces.RoleService) {
 	}
 	role, err := svc.Create(c, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, vo.BuildRoleVO(role))
@@ -99,7 +99,7 @@ func updateRole(c *gin.Context, svc interfaces.RoleService) {
 	}
 	role, err := svc.Update(c, c.Param("code"), &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	if role == nil {

@@ -2,7 +2,9 @@ package dept
 
 import (
 	"context"
+	"strings"
 
+	"shiyu-admin-backend/internal/apperrors"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/entity"
 	repoInterfaces "shiyu-admin-backend/internal/repository/interfaces"
@@ -31,14 +33,21 @@ func (s *Service) ListTree(ctx context.Context) ([]*entity.Dept, error) {
 }
 
 func (s *Service) Create(ctx context.Context, req *dto.CreateDeptRequest) (*entity.Dept, error) {
+	deptCode := strings.TrimSpace(req.DeptCode)
+	if existing, err := s.repo.GetByCode(ctx, deptCode); err != nil {
+		return nil, err
+	} else if existing != nil {
+		return nil, apperrors.NewConflict("duplicate_department_code", "部门编码已存在，请更换后重试。")
+	}
+
 	dept := &entity.Dept{
-		DeptCode:   req.DeptCode,
-		ParentCode: req.ParentCode,
-		DeptName:   req.DeptName,
+		DeptCode:   deptCode,
+		ParentCode: strings.TrimSpace(req.ParentCode),
+		DeptName:   strings.TrimSpace(req.DeptName),
 		Status:     req.Status,
 	}
 	if err := s.repo.Create(ctx, dept); err != nil {
-		return nil, err
+		return nil, apperrors.WrapUniqueConstraint(err, "department_creation_conflict", "部门编码已存在，请更换后重试。")
 	}
 	return dept, nil
 }
@@ -52,16 +61,16 @@ func (s *Service) Update(ctx context.Context, deptCode string, req *dto.UpdateDe
 		return nil, nil
 	}
 	if req.ParentCode != nil {
-		dept.ParentCode = *req.ParentCode
+		dept.ParentCode = strings.TrimSpace(*req.ParentCode)
 	}
 	if req.DeptName != nil {
-		dept.DeptName = *req.DeptName
+		dept.DeptName = strings.TrimSpace(*req.DeptName)
 	}
 	if req.Status != nil {
 		dept.Status = *req.Status
 	}
 	if err := s.repo.Update(ctx, dept); err != nil {
-		return nil, err
+		return nil, apperrors.WrapUniqueConstraint(err, "department_update_conflict", "部门编码已存在，请更换后重试。")
 	}
 	return dept, nil
 }
@@ -69,4 +78,3 @@ func (s *Service) Update(ctx context.Context, deptCode string, req *dto.UpdateDe
 func (s *Service) Delete(ctx context.Context, deptCode string) error {
 	return s.repo.DeleteByCode(ctx, deptCode)
 }
-

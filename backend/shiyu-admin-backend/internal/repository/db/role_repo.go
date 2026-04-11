@@ -47,6 +47,19 @@ func (r *RoleRepository) GetByCode(ctx context.Context, roleCode string) (*entit
 	return &role, nil
 }
 
+func (r *RoleRepository) GetByKey(ctx context.Context, roleKey string) (*entity.Role, error) {
+	var role entity.Role
+	if err := r.db.WithContext(ctx).
+		Where("role_key = ?", roleKey).
+		First(&role).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &role, nil
+}
+
 func (r *RoleRepository) Create(ctx context.Context, role *entity.Role) error {
 	return r.db.WithContext(ctx).Create(role).Error
 }

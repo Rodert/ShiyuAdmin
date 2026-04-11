@@ -107,7 +107,7 @@ func createMenu(c *gin.Context, svc interfaces.MenuService) {
 	}
 	menu, err := svc.Create(c, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, vo.BuildMenuVO(menu))
@@ -121,7 +121,7 @@ func updateMenu(c *gin.Context, svc interfaces.MenuService) {
 	}
 	menu, err := svc.Update(c, c.Param("code"), &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	if menu == nil {

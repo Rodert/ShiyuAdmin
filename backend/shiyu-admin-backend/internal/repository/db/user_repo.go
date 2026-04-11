@@ -30,6 +30,19 @@ func (r *UserRepository) GetByCode(ctx context.Context, userCode string) (*entit
 	return &user, nil
 }
 
+func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
+	var user entity.User
+	if err := r.db.WithContext(ctx).
+		Where("username = ?", username).
+		First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *UserRepository) List(ctx context.Context, page, pageSize int) ([]*entity.User, int64, error) {
 	var users []*entity.User
 	var total int64
