@@ -17,7 +17,7 @@
   </p>
 
   <p>
-    <a href="https://rodert.github.io/ShiyuAdmin/"><strong>在线体验</strong></a>
+    <a href="https://rodert.github.io/ShiyuAdmin/"><strong>项目主页</strong></a>
     ·
     <a href="#quick-start"><strong>开箱即用</strong></a>
     ·
@@ -42,16 +42,15 @@
 - **开箱即用**：Docker Compose 一条命令启动前端、后端、PostgreSQL、Redis。
 - **权限完整**：内置用户、角色、菜单、部门、动态菜单和接口权限控制。
 - **前后端分离**：后端 Go + Gin + Gorm，前端 React + Umi Max + Ant Design Pro。
-- **部署友好**：前端支持 GitHub Pages，后端可部署到 Render / Fly.io / Docker 环境。
+- **部署友好**：项目介绍页支持 GitHub Pages，服务端可部署到 Docker / Fly.io / Render 等环境。
 
-## 在线体验
+## 项目主页
 
-- GitHub Pages 前端面板：<https://rodert.github.io/ShiyuAdmin/>
-- 后端默认示例地址：<https://shiyuadmin.onrender.com>
+- GitHub Pages 项目介绍页：<https://rodert.github.io/ShiyuAdmin/>
 - GitHub 主仓库：<https://github.com/Rodert/ShiyuAdmin>
 - Gitee 镜像：<https://gitee.com/rodert/ShiyuAdmin>
 
-> Render 免费服务可能会休眠，首次登录如果较慢，等待 30-60 秒后重试即可。
+> 当前不提供在线登录演示。需要体验完整后台，请按“开箱即用”在本地启动。
 
 ## 项目预览
 
@@ -107,23 +106,22 @@ npm run start:dev
 | 管理员 | `admin` | `Admin@123` | 全部菜单和接口权限 |
 | 普通用户 | `user` | `User@123` | 仅欢迎页 |
 
-## GitHub Pages 部署
+## GitHub Pages 项目主页
 
-前端已配置 GitHub Actions 自动部署到 GitHub Pages。
+项目介绍页放在独立的 `site/` 目录，已配置 GitHub Actions 自动部署到 GitHub Pages，不和后台前端耦合。
 
 1. 进入仓库 `Settings` -> `Pages`。
 2. Source 选择 `Deploy from a branch`。
 3. Branch 选择 `gh-pages`，目录选择 `/ (root)`。
-4. 推送 `main` 分支后，工作流会自动构建并发布前端。
+4. 推送 `main` 分支后，工作流会自动发布 `site/` 静态页。
 
 关键配置：
 
 - Workflow：`.github/workflows/frontend-pages.yml`
-- 前端构建目录：`frontend/shiyu-admin-web`
+- 静态页目录：`site/`
 - GitHub Pages 子路径：`/ShiyuAdmin/`
-- 后端 API 地址：`REACT_APP_API_BASE_URL=https://shiyuadmin.onrender.com`
 
-详细说明见：[GitHub Pages 前端部署指南](./docs/github-pages-deployment.md)。
+详细说明见：[GitHub Pages 项目主页部署指南](./docs/github-pages-deployment.md)。
 
 ## 功能模块
 
@@ -149,6 +147,7 @@ npm run start:dev
 ShiyuAdmin
 ├── backend/shiyu-admin-backend     # Go 后端
 ├── frontend/shiyu-admin-web        # React 前端
+├── site                            # GitHub Pages 项目介绍页
 ├── docs                            # 部署与设计文档
 ├── img                             # README 预览图
 ├── docker-compose.yml              # 本地一键启动
@@ -157,7 +156,7 @@ ShiyuAdmin
 
 ## 更多文档
 
-- [GitHub Pages 前端部署](./docs/github-pages-deployment.md)
+- [GitHub Pages 项目主页部署](./docs/github-pages-deployment.md)
 - [免费部署指南](./docs/free-deployment.md)
 - [Render 部署指南](./docs/render-deployment.md)
 - [本地数据库启动指南](./docs/本地数据库启动指南.md)

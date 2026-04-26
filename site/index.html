@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Shiyu Admin 是一个开源的通用后台管理系统，适合作为中后台项目脚手架。"
+    />
+    <title>Shiyu Admin 仕宇通用管理后台</title>
+    <link rel="icon" href="./assets/logo.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="hero__content">
+          <img class="logo" src="./assets/logo.png" alt="Shiyu Admin Logo" />
+          <p class="eyebrow">开源通用后台管理系统</p>
+          <h1>Shiyu Admin 仕宇通用管理后台</h1>
+          <p class="lead">
+            基于 Go、Gin、Gorm、React、Ant Design Pro 和 RBAC 的前后端分离后台脚手架，
+            适合快速搭建管理端、学习权限模型或作为新业务系统起点。
+          </p>
+          <div class="actions">
+            <a class="button button--primary" href="https://github.com/Rodert/ShiyuAdmin">
+              查看 GitHub
+            </a>
+            <a class="button" href="https://github.com/Rodert/ShiyuAdmin#开箱即用">
+              本地启动
+            </a>
+          </div>
+        </div>
+        <div class="hero__panel">
+          <img src="./assets/home-img.png" alt="Shiyu Admin 后台首页截图" />
+        </div>
+      </section>
+
+      <section class="section grid">
+        <article class="card">
+          <span>01</span>
+          <h2>开箱即用</h2>
+          <p>Docker Compose 一条命令启动前端、后端、PostgreSQL 和 Redis。</p>
+        </article>
+        <article class="card">
+          <span>02</span>
+          <h2>权限完整</h2>
+          <p>内置用户、角色、菜单、部门、动态菜单和接口权限控制。</p>
+        </article>
+        <article class="card">
+          <span>03</span>
+          <h2>低耦合</h2>
+          <p>项目介绍页独立在 site 目录，后台系统仍保留在 frontend 目录。</p>
+        </article>
+      </section>
+
+      <section class="section split">
+        <div>
+          <p class="eyebrow">Local Quick Start</p>
+          <h2>本地启动</h2>
+          <p>克隆仓库后，在项目根目录执行 Docker Compose，即可启动完整开发环境。</p>
+        </div>
+        <pre><code>git clone https://github.com/Rodert/ShiyuAdmin.git
+cd ShiyuAdmin
+docker compose up -d</code></pre>
+      </section>
+
+      <section class="section preview">
+        <div>
+          <p class="eyebrow">Preview</p>
+          <h2>界面预览</h2>
+        </div>
+        <div class="screens">
+          <figure>
+            <img src="./assets/login-img.png" alt="登录页截图" />
+            <figcaption>登录页</figcaption>
+          </figure>
+          <figure>
+            <img src="./assets/home-img.png" alt="后台首页截图" />
+            <figcaption>后台首页</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section stack">
+        <p class="eyebrow">Tech Stack</p>
+        <h2>技术栈</h2>
+        <div class="tags">
+          <span>Go</span>
+          <span>Gin</span>
+          <span>Gorm</span>
+          <span>PostgreSQL</span>
+          <span>Redis</span>
+          <span>React</span>
+          <span>Umi Max</span>
+          <span>Ant Design Pro</span>
+          <span>Docker Compose</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Apache-2.0 License</span>
+      <a href="https://github.com/Rodert/ShiyuAdmin">GitHub 开源</a>
+      <a href="https://javapub.net.cn/">JavaPub</a>
+    </footer>
+  </body>
+</html>

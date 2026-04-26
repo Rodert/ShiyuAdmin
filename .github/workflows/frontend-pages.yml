@@ -1,11 +1,13 @@
-name: Deploy Frontend to GitHub Pages
+name: Deploy Site to GitHub Pages
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'frontend/shiyu-admin-web/**'
+      - 'site/**'
+      - 'img/**'
+      - 'frontend/shiyu-admin-web/public/logo.png'
       - '.github/workflows/frontend-pages.yml'
   workflow_dispatch:
 
@@ -13,24 +15,12 @@ permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: frontend/shiyu-admin-web
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
 
       - name: Configure git user
         run: |
@@ -44,10 +34,20 @@ jobs:
         run: |
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-      - name: Build & Deploy to gh-pages
-        run: npm run deploy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLIC_PATH: /ShiyuAdmin/
-          REACT_APP_API_BASE_URL: https://shiyuadmin.onrender.com
-          NODE_ENV: production
+      - name: Prepare static site
+        run: |
+          rm -rf site-dist
+          mkdir -p site-dist/assets
+          cp site/index.html site-dist/index.html
+          cp site/styles.css site-dist/styles.css
+          cp frontend/shiyu-admin-web/public/logo.png site-dist/assets/logo.png
+          cp img/login-img.png site-dist/assets/login-img.png
+          cp img/home-img.png site-dist/assets/home-img.png
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site-dist
+          publish_branch: gh-pages
+          force_orphan: true
