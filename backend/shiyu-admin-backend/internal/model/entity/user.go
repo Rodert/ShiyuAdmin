@@ -21,8 +21,9 @@ type User struct {
 	// DeptCode 部门编码，关联部门表
 	DeptCode string `json:"dept_code" gorm:"size:32;comment:部门编码，关联部门表"`
 	// Status 状态：1=启用，0=禁用
-	Status       int  `json:"status" gorm:"comment:状态：1=启用，0=禁用"`
-	IsSuperAdmin bool `json:"is_super_admin" gorm:"column:is_super_admin;not null;default:false"`
+	Status int `json:"status" gorm:"comment:状态：1=启用，0=禁用"`
+	// IsSuperAdmin 是否超级管理员：true=是，false=否
+	IsSuperAdmin bool `json:"is_super_admin" gorm:"column:is_super_admin;not null;default:false;comment:是否超级管理员：true=是，false=否"`
 	// CreatedAt 创建时间
 	CreatedAt time.Time `json:"created_at" gorm:"comment:创建时间"`
 	// UpdatedAt 更新时间

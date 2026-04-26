@@ -13,6 +13,12 @@ import (
 	"shiyu-admin-backend/internal/model/entity"
 )
 
+const (
+	defaultViewerUsername = "user"
+	defaultViewerPassword = "User@123"
+	defaultViewerRoleCode = "ROLE_VIEWER"
+)
+
 // AutoMigrate runs gorm automigrations for core RBAC tables.
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
@@ -80,29 +86,40 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 		Status:    1,
 	}
 
-	var storedRole entity.Role
-	if err := db.WithContext(ctx).
-		Where("role_code = ?", adminRole.RoleCode).
-		First(&storedRole).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if err := db.WithContext(ctx).Create(&adminRole).Error; err != nil {
-				return fmt.Errorf("seed role failed: %w", err)
-			}
-			storedRole = adminRole
-		} else {
-			return fmt.Errorf("query role failed: %w", err)
-		}
+	storedRole, err := ensureRole(ctx, db, adminRole)
+	if err != nil {
+		return err
+	}
+
+	viewerRole, err := ensureRole(ctx, db, entity.Role{
+		RoleCode:  defaultViewerRoleCode,
+		RoleName:  "普通用户",
+		RoleKey:   "viewer",
+		DataScope: "self",
+		Status:    1,
+	})
+	if err != nil {
+		return err
+	}
+
+	viewerUser, err := ensureDefaultViewerUser(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	if err := ensureUserRole(ctx, db, viewerUser.UserCode, viewerRole.RoleCode); err != nil {
+		return err
 	}
 
 	menus := []entity.Menu{
 		{
-			MenuCode: "welcome",
-			MenuName: "欢迎",
-			MenuType: "C",
-			Path:     "/welcome",
-			Component:"/welcome",
-			Perms:    "welcome:view",
-			Status:   1,
+			MenuCode:  "welcome",
+			MenuName:  "欢迎",
+			MenuType:  "C",
+			Path:      "/welcome",
+			Component: "/welcome",
+			Perms:     "welcome:view",
+			Status:    1,
 		},
 		{
 			MenuCode: "system",
@@ -197,48 +214,111 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 		}
 	}
 
-	// Link role to menus
+	// Link admin role to all seeded menus.
 	for _, m := range menus {
-		var count int64
-		if err := db.WithContext(ctx).
-			Model(&entity.RoleMenu{}).
-			Where("role_code = ? AND menu_code = ?", storedRole.RoleCode, m.MenuCode).
-			Count(&count).Error; err != nil {
-			return fmt.Errorf("query role_menu for %s failed: %w", m.MenuCode, err)
-		}
-		if count == 0 {
-			if err := db.WithContext(ctx).Create(&entity.RoleMenu{
-				RoleCode: storedRole.RoleCode,
-				MenuCode: m.MenuCode,
-			}).Error; err != nil {
-				return fmt.Errorf("link role_menu %s failed: %w", m.MenuCode, err)
-			}
+		if err := ensureRoleMenu(ctx, db, storedRole.RoleCode, m.MenuCode); err != nil {
+			return err
 		}
 	}
 
-	// Link admin user to admin role
+	// Link ordinary viewer role only to the welcome page.
+	if err := ensureRoleMenu(ctx, db, viewerRole.RoleCode, "welcome"); err != nil {
+		return err
+	}
+
+	// Link admin user to admin role.
 	if cfg != nil && cfg.Bootstrap.AdminUsername != "" {
 		var adminUser entity.User
 		if err := db.WithContext(ctx).
 			Where("username = ?", cfg.Bootstrap.AdminUsername).
 			First(&adminUser).Error; err == nil && adminUser.UserCode != "" {
-			var count int64
-			if err := db.WithContext(ctx).
-				Model(&entity.UserRole{}).
-				Where("user_code = ? AND role_code = ?", adminUser.UserCode, storedRole.RoleCode).
-				Count(&count).Error; err != nil {
-				return fmt.Errorf("query user_role failed: %w", err)
-			}
-			if count == 0 {
-				if err := db.WithContext(ctx).Create(&entity.UserRole{
-					UserCode: adminUser.UserCode,
-					RoleCode: storedRole.RoleCode,
-				}).Error; err != nil {
-					return fmt.Errorf("link user_role failed: %w", err)
-				}
+			if err := ensureUserRole(ctx, db, adminUser.UserCode, storedRole.RoleCode); err != nil {
+				return err
 			}
 		}
 	}
 
+	return nil
+}
+
+func ensureRole(ctx context.Context, db *gorm.DB, role entity.Role) (entity.Role, error) {
+	var storedRole entity.Role
+	if err := db.WithContext(ctx).
+		Where("role_code = ?", role.RoleCode).
+		First(&storedRole).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := db.WithContext(ctx).Create(&role).Error; err != nil {
+				return entity.Role{}, fmt.Errorf("seed role failed: %w", err)
+			}
+			return role, nil
+		} else {
+			return entity.Role{}, fmt.Errorf("query role failed: %w", err)
+		}
+	}
+	return storedRole, nil
+}
+
+func ensureDefaultViewerUser(ctx context.Context, db *gorm.DB) (entity.User, error) {
+	var user entity.User
+	if err := db.WithContext(ctx).
+		Where("username = ?", defaultViewerUsername).
+		First(&user).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return entity.User{}, fmt.Errorf("query default viewer user failed: %w", err)
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(defaultViewerPassword), bcrypt.DefaultCost)
+		if err != nil {
+			return entity.User{}, err
+		}
+		user = entity.User{
+			UserCode: fmt.Sprintf("USR-%d", time.Now().UnixNano()),
+			Username: defaultViewerUsername,
+			Nickname: "普通用户",
+			Password: string(hash),
+			Status:   1,
+		}
+		if err := db.WithContext(ctx).Create(&user).Error; err != nil {
+			return entity.User{}, fmt.Errorf("seed default viewer user failed: %w", err)
+		}
+	}
+	return user, nil
+}
+
+func ensureRoleMenu(ctx context.Context, db *gorm.DB, roleCode string, menuCode string) error {
+	var count int64
+	if err := db.WithContext(ctx).
+		Model(&entity.RoleMenu{}).
+		Where("role_code = ? AND menu_code = ?", roleCode, menuCode).
+		Count(&count).Error; err != nil {
+		return fmt.Errorf("query role_menu for %s failed: %w", menuCode, err)
+	}
+	if count == 0 {
+		if err := db.WithContext(ctx).Create(&entity.RoleMenu{
+			RoleCode: roleCode,
+			MenuCode: menuCode,
+		}).Error; err != nil {
+			return fmt.Errorf("link role_menu %s failed: %w", menuCode, err)
+		}
+	}
+	return nil
+}
+
+func ensureUserRole(ctx context.Context, db *gorm.DB, userCode string, roleCode string) error {
+	var count int64
+	if err := db.WithContext(ctx).
+		Model(&entity.UserRole{}).
+		Where("user_code = ? AND role_code = ?", userCode, roleCode).
+		Count(&count).Error; err != nil {
+		return fmt.Errorf("query user_role failed: %w", err)
+	}
+	if count == 0 {
+		if err := db.WithContext(ctx).Create(&entity.UserRole{
+			UserCode: userCode,
+			RoleCode: roleCode,
+		}).Error; err != nil {
+			return fmt.Errorf("link user_role failed: %w", err)
+		}
+	}
 	return nil
 }

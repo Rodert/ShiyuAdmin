@@ -1,6 +1,7 @@
 {
-  "name": "Ant Design Pro",
-  "short_name": "Ant Design Pro",
+  "name": "Shiyu Admin",
+  "short_name": "Shiyu Admin",
+  "description": "Shiyu Admin 是一个开源的通用后台管理系统。",
   "display": "standalone",
   "start_url": "./?utm_source=homescreen",
   "theme_color": "#002140",

@@ -6,7 +6,7 @@ import type { OperationLog } from '@/services/shiyu-api/operation_log';
 import { getOperationLogList } from '@/services/shiyu-api/operation_log';
 
 const OperationLogPage: React.FC = () => {
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [currentLog, setCurrentLog] = useState<OperationLog | null>(null);
 

@@ -18,34 +18,34 @@ const DeptManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Dept | null>(null);
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
 
   const countDepts = (depts: Dept[]): number => {
     return depts.reduce((total, dept) => total + 1 + countDepts(dept.children || []), 0);
   };
 
-  const handleCreate = async (values: CreateDeptRequest) => {
+  const handleCreate = async (values: CreateDeptRequest | UpdateDeptRequest) => {
     try {
-      const res = await createDept(values);
+      const res = await createDept(values as CreateDeptRequest);
       if (res.code === 200) {
         message.success('创建成功');
         setCreateModalVisible(false);
         actionRef.current?.reload();
       }
-    } catch (error) {}
+    } catch (_error) {}
   };
 
-  const handleUpdate = async (values: UpdateDeptRequest) => {
+  const handleUpdate = async (values: CreateDeptRequest | UpdateDeptRequest) => {
     if (!editingRecord) return;
     try {
-      const res = await updateDept(editingRecord.dept_code, values);
+      const res = await updateDept(editingRecord.dept_code, values as UpdateDeptRequest);
       if (res.code === 200) {
         message.success('更新成功');
         setUpdateModalVisible(false);
         setEditingRecord(null);
         actionRef.current?.reload();
       }
-    } catch (error) {}
+    } catch (_error) {}
   };
 
   const handleDelete = (record: Dept) => {
@@ -59,7 +59,7 @@ const DeptManagement: React.FC = () => {
             message.success('删除成功');
             actionRef.current?.reload();
           }
-        } catch (error) {}
+        } catch (_error) {}
       },
     });
   };

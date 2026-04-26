@@ -21,6 +21,11 @@ func registerMonitorRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permiss
 		getCacheStats(c, monitorSvc)
 	})
 
+	// 数据库监控
+	rg.GET("/monitor/database", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
+		getDatabaseStats(c, monitorSvc)
+	})
+
 	// 在线用户
 	rg.GET("/monitor/online-users", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
 		listOnlineUsers(c, monitorSvc)
@@ -36,6 +41,19 @@ func getCacheStats(c *gin.Context, monitorSvc interfaces.MonitorService) {
 	}
 	if stats == nil {
 		stats = &vo.CacheStatsVO{}
+	}
+	response.Success(c, stats)
+}
+
+// getDatabaseStats returns basic database statistics.
+func getDatabaseStats(c *gin.Context, monitorSvc interfaces.MonitorService) {
+	stats, err := monitorSvc.GetDatabaseStats(c)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if stats == nil {
+		stats = &vo.DatabaseStatsVO{}
 	}
 	response.Success(c, stats)
 }

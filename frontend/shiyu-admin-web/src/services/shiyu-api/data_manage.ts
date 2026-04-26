@@ -3,6 +3,7 @@ import { request } from '@umijs/max';
 export interface TableMeta {
   table_name: string;
   table_type: string;
+  table_comment?: string;
 }
 
 export interface ColumnMeta {
@@ -11,6 +12,7 @@ export interface ColumnMeta {
   is_nullable: boolean;
   max_length?: number;
   column_default?: string;
+  column_comment?: string;
 }
 
 export interface TableDataPage {

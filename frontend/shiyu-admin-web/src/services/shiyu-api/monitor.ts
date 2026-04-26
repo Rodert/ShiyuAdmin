@@ -20,6 +20,17 @@ export interface OnlineUser {
   last_active: number;
 }
 
+export interface DatabaseStats {
+  status?: string;
+  driver?: string;
+  database?: string;
+  version?: string;
+  table_count?: number;
+  open_connections?: number;
+  in_use?: number;
+  idle?: number;
+}
+
 /** 获取缓存监控数据 */
 export async function getCacheStats() {
   return request<{
@@ -27,6 +38,17 @@ export async function getCacheStats() {
     data: CacheStats;
     message?: string;
   }>('/api/v1/system/monitor/cache', {
+    method: 'GET',
+  });
+}
+
+/** 获取数据库监控数据 */
+export async function getDatabaseStats() {
+  return request<{
+    code: number;
+    data: DatabaseStats;
+    message?: string;
+  }>('/api/v1/system/monitor/database', {
     method: 'GET',
   });
 }

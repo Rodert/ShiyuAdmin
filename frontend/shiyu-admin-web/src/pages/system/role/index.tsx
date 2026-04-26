@@ -18,33 +18,25 @@ const RoleManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Role | null>(null);
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
 
-  const handleCreate = async (values: CreateRoleRequest): Promise<void> => {
-    try {
-      const res = await createRole(values);
-      if (res.code === 200) {
-        message.success('创建成功');
-        setCreateModalVisible(false);
-        actionRef.current?.reload();
-      }
-    } catch (error) {
-      throw error;
+  const handleCreate = async (values: CreateRoleRequest | UpdateRoleRequest): Promise<void> => {
+    const res = await createRole(values as CreateRoleRequest);
+    if (res.code === 200) {
+      message.success('创建成功');
+      setCreateModalVisible(false);
+      actionRef.current?.reload();
     }
   };
 
-  const handleUpdate = async (values: UpdateRoleRequest): Promise<void> => {
+  const handleUpdate = async (values: CreateRoleRequest | UpdateRoleRequest): Promise<void> => {
     if (!editingRecord) return;
-    try {
-      const res = await updateRole(editingRecord.role_code, values);
-      if (res.code === 200) {
-        message.success('更新成功');
-        setUpdateModalVisible(false);
-        setEditingRecord(null);
-        actionRef.current?.reload();
-      }
-    } catch (error) {
-      throw error;
+    const res = await updateRole(editingRecord.role_code, values as UpdateRoleRequest);
+    if (res.code === 200) {
+      message.success('更新成功');
+      setUpdateModalVisible(false);
+      setEditingRecord(null);
+      actionRef.current?.reload();
     }
   };
 
@@ -59,7 +51,7 @@ const RoleManagement: React.FC = () => {
             message.success('删除成功');
             actionRef.current?.reload();
           }
-        } catch (error) {}
+        } catch (_error) {}
       },
     });
   };

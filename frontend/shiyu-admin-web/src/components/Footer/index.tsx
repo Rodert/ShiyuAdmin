@@ -1,36 +1,26 @@
-import { GithubOutlined } from '@ant-design/icons';
-import { DefaultFooter } from '@ant-design/pro-components';
 import React from 'react';
 
-const Footer: React.FC = () => {
-  return (
-    <DefaultFooter
+const Footer: React.FC = () => (
+  <footer
+    style={{
+      padding: '12px 0 20px',
+      textAlign: 'center',
+      fontSize: 12,
+      color: 'rgba(0, 0, 0, 0.35)',
+    }}
+  >
+    项目来源：
+    <a
+      href="https://github.com/Rodert/ShiyuAdmin"
+      target="_blank"
+      rel="noreferrer"
       style={{
-        background: 'none',
+        color: 'rgba(0, 0, 0, 0.45)',
       }}
-      copyright="Powered by Ant Desgin"
-      links={[
-        {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro',
-          href: 'https://pro.ant.design',
-          blankTarget: true,
-        },
-        {
-          key: 'github',
-          title: <GithubOutlined />,
-          href: 'https://github.com/ant-design/ant-design-pro',
-          blankTarget: true,
-        },
-        {
-          key: 'Ant Design',
-          title: 'Ant Design',
-          href: 'https://ant.design',
-          blankTarget: true,
-        },
-      ]}
-    />
-  );
-};
+    >
+      GitHub
+    </a>
+  </footer>
+);
 
 export default Footer;

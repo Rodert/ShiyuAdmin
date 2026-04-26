@@ -97,7 +97,28 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'Ant Design Pro',
+  title: 'Shiyu Admin',
+  metas: [
+    {
+      name: 'description',
+      content: 'Shiyu Admin 是一个开源的通用后台管理系统。',
+    },
+    {
+      name: 'keywords',
+      content: 'Shiyu Admin,通用后台管理系统,开源后台,管理后台',
+    },
+  ],
+  links: [
+    {
+      rel: 'icon',
+      type: 'image/png',
+      href: join(PUBLIC_PATH, 'favicon.png'),
+    },
+    {
+      rel: 'apple-touch-icon',
+      href: join(PUBLIC_PATH, 'icons/icon-192x192.png'),
+    },
+  ],
   layout: {
     locale: false,
     ...defaultSettings,

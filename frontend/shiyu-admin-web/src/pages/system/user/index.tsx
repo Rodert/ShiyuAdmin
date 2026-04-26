@@ -18,36 +18,34 @@ const UserManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<User | null>(null);
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
 
-  const handleCreate = async (values: CreateUserRequest): Promise<User | undefined> => {
-    try {
-      const res = await createUser(values);
-      if (res.code === 200) {
-        message.success('创建成功');
-        setCreateModalVisible(false);
-        actionRef.current?.reload();
-        return res.data;
-      }
-    } catch (error) {
-      throw error;
+  const handleCreate = async (
+    values: CreateUserRequest | UpdateUserRequest,
+  ): Promise<User | undefined> => {
+    const res = await createUser(values as CreateUserRequest);
+    if (res.code === 200) {
+      message.success('创建成功');
+      setCreateModalVisible(false);
+      actionRef.current?.reload();
+      return res.data;
     }
+    return undefined;
   };
 
-  const handleUpdate = async (values: UpdateUserRequest): Promise<User | undefined> => {
-    if (!editingRecord) return;
-    try {
-      const res = await updateUser(editingRecord.user_code, values);
-      if (res.code === 200) {
-        message.success('更新成功');
-        setUpdateModalVisible(false);
-        setEditingRecord(null);
-        actionRef.current?.reload();
-        return res.data;
-      }
-    } catch (error) {
-      throw error;
+  const handleUpdate = async (
+    values: CreateUserRequest | UpdateUserRequest,
+  ): Promise<User | undefined> => {
+    if (!editingRecord) return undefined;
+    const res = await updateUser(editingRecord.user_code, values as UpdateUserRequest);
+    if (res.code === 200) {
+      message.success('更新成功');
+      setUpdateModalVisible(false);
+      setEditingRecord(null);
+      actionRef.current?.reload();
+      return res.data;
     }
+    return undefined;
   };
 
   const handleDelete = (record: User) => {
@@ -61,7 +59,7 @@ const UserManagement: React.FC = () => {
             message.success('删除成功');
             actionRef.current?.reload();
           }
-        } catch (error) {}
+        } catch (_error) {}
       },
     });
   };

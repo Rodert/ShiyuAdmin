@@ -4,7 +4,7 @@ import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import React from 'react';
-import { AvatarDropdown, AvatarName, Footer, Question } from '@/components';
+import { AvatarDropdown, AvatarName, Footer } from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';
 import defaultSettings from '../config/defaultSettings';
@@ -38,7 +38,7 @@ export async function getInitialState(): Promise<{
       if (res.code === 200 && Array.isArray(res.data)) {
         return buildMenuData(res.data);
       }
-    } catch (e) {
+    } catch (_e) {
       // ignore and fallback to static menu
     }
     return [];
@@ -75,7 +75,7 @@ export async function getInitialState(): Promise<{
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    actionsRender: () => [<Question key="doc" />],
+    actionsRender: () => [],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
@@ -123,7 +123,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
         ]
       : [],
     menuHeaderRender: undefined,
-    menuDataRender: (menuData) => {
+    menuDataRender: (_menuData) => {
       if (initialState?.menuData && initialState.menuData.length > 0) {
         return initialState.menuData;
       }

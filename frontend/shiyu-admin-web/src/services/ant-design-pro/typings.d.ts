@@ -21,6 +21,8 @@ declare namespace API {
     };
     address?: string;
     phone?: string;
+    isSuperAdmin?: boolean;
+    loginAt?: number;
   };
 
   type LoginResult = {

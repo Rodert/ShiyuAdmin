@@ -26,8 +26,9 @@ func (s *Service) ListTables(ctx context.Context) ([]*vo.TableMetaVO, error) {
 	result := make([]*vo.TableMetaVO, 0, len(tables))
 	for _, t := range tables {
 		result = append(result, &vo.TableMetaVO{
-			TableName: t.TableName,
-			TableType: t.TableType,
+			TableName:    t.TableName,
+			TableType:    t.TableType,
+			TableComment: t.TableComment,
 		})
 	}
 	return result, nil
@@ -86,6 +87,7 @@ func (s *Service) ListColumns(ctx context.Context, tableName string) ([]*vo.Colu
 			IsNullable:    nullable,
 			MaxLength:     c.MaxLength,
 			ColumnDefault: c.ColumnDefault,
+			ColumnComment: c.ColumnComment,
 		})
 	}
 	return result, nil

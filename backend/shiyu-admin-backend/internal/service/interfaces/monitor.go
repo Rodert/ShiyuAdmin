@@ -9,6 +9,7 @@ import (
 // MonitorService defines system monitoring operations (cache, online users).
 type MonitorService interface {
 	GetCacheStats(ctx context.Context) (*vo.CacheStatsVO, error)
+	GetDatabaseStats(ctx context.Context) (*vo.DatabaseStatsVO, error)
 	ListOnlineUsers(ctx context.Context) ([]*vo.OnlineUserVO, error)
 	UpdateOnlineUser(ctx context.Context, userCode, username, ip, userAgent string) error
 }

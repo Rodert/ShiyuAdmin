@@ -3,8 +3,9 @@ package interfaces
 import "context"
 
 type TableMeta struct {
-	TableName string
-	TableType string
+	TableName    string
+	TableType    string
+	TableComment string
 }
 
 type ColumnMeta struct {
@@ -13,6 +14,7 @@ type ColumnMeta struct {
 	IsNullable    string
 	MaxLength     *int64
 	ColumnDefault *string
+	ColumnComment string
 }
 
 type DBMetaRepository interface {

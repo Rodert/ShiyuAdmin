@@ -1,62 +1,202 @@
-import {
-  AlipayCircleOutlined,
-  LockOutlined,
-  MobileOutlined,
-  TaobaoCircleOutlined,
-  UserOutlined,
-  WeiboCircleOutlined,
-} from '@ant-design/icons';
-import {
-  LoginForm,
-  ProFormCaptcha,
-  ProFormCheckbox,
-  ProFormText,
-} from '@ant-design/pro-components';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { ProForm, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Helmet, history, useModel } from '@umijs/max';
 import type { MenuDataItem } from '@ant-design/pro-components';
-import { Alert, App, Tabs } from 'antd';
+import { Alert, App, Button } from 'antd';
 import { createStyles } from 'antd-style';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Footer } from '@/components';
 import { login } from '@/services/ant-design-pro/api';
-import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';
 import Settings from '../../../../config/defaultSettings';
-const useStyles = createStyles(({ token }) => {
+const useStyles = createStyles(() => {
   return {
-    action: {
-      marginLeft: '8px',
-      color: 'rgba(0, 0, 0, 0.2)',
-      fontSize: '24px',
-      verticalAlign: 'middle',
-      cursor: 'pointer',
-      transition: 'color 0.3s',
-      '&:hover': {
-        color: token.colorPrimaryActive,
-      },
-    },
     container: {
       display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
+      minHeight: '100vh',
       overflow: 'auto',
-      backgroundImage:
-        "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
-      backgroundSize: '100% 100%',
+      color: '#e5edf7',
+      background:
+        'radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.22), transparent 28%), linear-gradient(135deg, #111827 0%, #020617 100%)',
+      '@media (max-width: 768px)': {
+        display: 'block',
+      },
+    },
+    infoPanel: {
+      position: 'relative',
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      padding: '80px clamp(48px, 7vw, 96px)',
+      borderRight: '1px solid rgba(148, 163, 184, 0.12)',
+      overflow: 'hidden',
+      '&::after': {
+        position: 'absolute',
+        right: '-120px',
+        bottom: '-120px',
+        width: 320,
+        height: 320,
+        content: '""',
+        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(14, 165, 233, 0.08))',
+        borderRadius: '50%',
+        filter: 'blur(2px)',
+      },
+      '@media (max-width: 768px)': {
+        display: 'none',
+      },
+    },
+    heroEyebrow: {
+      marginBottom: 20,
+      color: '#60a5fa',
+      fontSize: 13,
+      fontWeight: 700,
+      letterSpacing: 2,
+      textTransform: 'uppercase',
+    },
+    heroTitle: {
+      maxWidth: 560,
+      margin: 0,
+      color: '#f8fafc',
+      fontSize: 'clamp(36px, 5vw, 58px)',
+      fontWeight: 800,
+      lineHeight: 1.08,
+    },
+    heroDesc: {
+      maxWidth: 460,
+      marginTop: 24,
+      color: '#94a3b8',
+      fontSize: 17,
+      lineHeight: 1.8,
+    },
+    features: {
+      display: 'grid',
+      gap: 14,
+      marginTop: 42,
+      padding: 0,
+      color: '#cbd5e1',
+      listStyle: 'none',
+      '& li': {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      },
+      '& li::before': {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 22,
+        height: 22,
+        color: '#bfdbfe',
+        fontWeight: 800,
+        content: '"✓"',
+        background: 'rgba(37, 99, 235, 0.22)',
+        border: '1px solid rgba(96, 165, 250, 0.28)',
+        borderRadius: 999,
+      },
+    },
+    loginPanel: {
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 40,
+      '@media (max-width: 768px)': {
+        minHeight: '100vh',
+        padding: 20,
+      },
+    },
+    loginCard: {
+      width: '100%',
+      maxWidth: 420,
+      padding: 32,
+      background: 'rgba(15, 23, 42, 0.72)',
+      border: '1px solid rgba(148, 163, 184, 0.18)',
+      borderRadius: 22,
+      boxShadow: '0 24px 80px rgba(2, 6, 23, 0.45)',
+      backdropFilter: 'blur(18px)',
+      '@media (max-width: 768px)': {
+        padding: 24,
+      },
+    },
+    brand: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      marginBottom: 34,
+    },
+    logo: {
+      width: 48,
+      height: 48,
+      padding: 6,
+      objectFit: 'contain',
+      background: '#f8fafc',
+      borderRadius: 14,
+      boxShadow: '0 12px 28px rgba(37, 99, 235, 0.24)',
+    },
+    brandTitle: {
+      margin: 0,
+      color: '#f8fafc',
+      fontSize: 24,
+      fontWeight: 800,
+      lineHeight: 1.1,
+    },
+    brandSubtitle: {
+      marginTop: 6,
+      color: '#94a3b8',
+      fontSize: 13,
+    },
+    loginForm: {
+      '& .ant-form-item': {
+        marginBottom: 18,
+      },
+      '& .ant-input-affix-wrapper': {
+        padding: '12px 14px',
+        color: '#e5edf7',
+        background: '#111827',
+        borderColor: '#334155',
+        borderRadius: 12,
+      },
+      '& .ant-input-affix-wrapper-focused': {
+        borderColor: '#3b82f6',
+        boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.16)',
+      },
+      '& .ant-input': {
+        color: '#e5edf7',
+        background: 'transparent',
+      },
+      '& .ant-input::placeholder': {
+        color: '#64748b',
+      },
+      '& .anticon': {
+        color: '#64748b',
+      },
+      '& .ant-checkbox-wrapper': {
+        color: '#94a3b8',
+      },
+    },
+    submitButton: {
+      height: 46,
+      marginTop: 4,
+      fontWeight: 700,
+      background: '#2563eb',
+      borderRadius: 12,
+      boxShadow: '0 14px 30px rgba(37, 99, 235, 0.28)',
+    },
+    copyright: {
+      marginTop: 22,
+      color: '#64748b',
+      fontSize: 12,
+      textAlign: 'center',
+      '& a': {
+        color: '#93c5fd',
+      },
+      '& a:hover': {
+        color: '#bfdbfe',
+      },
     },
   };
 });
-const ActionIcons = () => {
-  const { styles } = useStyles();
-  return (
-    <>
-      <AlipayCircleOutlined key="AlipayCircleOutlined" className={styles.action} />
-      <TaobaoCircleOutlined key="TaobaoCircleOutlined" className={styles.action} />
-      <WeiboCircleOutlined key="WeiboCircleOutlined" className={styles.action} />
-    </>
-  );
-};
 const LoginMessage: React.FC<{
   content: string;
 }> = ({ content }) => {
@@ -73,7 +213,6 @@ const LoginMessage: React.FC<{
 };
 const Login: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
-  const [type, setType] = useState<string>('account');
   const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
   const { message } = App.useApp();
@@ -113,7 +252,7 @@ const Login: React.FC = () => {
       // 登录
       const msg = await login({
         ...values,
-        type,
+        type: 'account',
       });
       if (msg.status === 'ok') {
         const defaultLoginSuccessMessage = '登录成功！';
@@ -140,7 +279,7 @@ const Login: React.FC = () => {
       message.error(defaultLoginFailureMessage);
     }
   };
-  const { status, type: loginType } = userLoginState;
+  const { status } = userLoginState;
   return (
     <div className={styles.container}>
       <Helmet>
@@ -149,154 +288,99 @@ const Login: React.FC = () => {
           {Settings.title && ` - ${Settings.title}`}
         </title>
       </Helmet>
-      <div
-        style={{
-          flex: '1',
-          padding: '32px 0',
-        }}
-      >
-        <LoginForm
-          contentStyle={{
-            minWidth: 280,
-            maxWidth: '75vw',
-          }}
-          logo={<img alt="logo" src="/logo.svg" />}
-          title="Ant Design"
-          subTitle={'Ant Design 是西湖区最具影响力的 Web 设计规范'}
-          initialValues={{
-            autoLogin: true,
-          }}
-          actions={['其他登录方式 :', <ActionIcons key="icons" />]}
-          onFinish={async (values) => {
-            await handleSubmit(values as API.LoginParams);
-          }}
-        >
-          <Tabs
-            activeKey={type}
-            onChange={setType}
-            centered
-            items={[
-              {
-                key: 'account',
-                label: '账户密码登录',
-              },
-              {
-                key: 'mobile',
-                label: '手机号登录',
-              },
-            ]}
-          />
+      <section className={styles.infoPanel}>
+        <div className={styles.heroEyebrow}>Open Source Admin</div>
+        <h1 className={styles.heroTitle}>
+          Shiyu Admin
+          <br />
+          构建下一代后台
+        </h1>
+        <p className={styles.heroDesc}>
+          一款极简、高效的开源通用后台管理系统，内置用户、角色、菜单、部门和操作日志能力，适合作为业务中后台的起点。
+        </p>
+        <ul className={styles.features}>
+          <li>极简美学，专注核心业务</li>
+          <li>高性能架构，响应迅速</li>
+          <li>完善的权限管理，安全可靠</li>
+        </ul>
+      </section>
 
-          {status === 'error' && loginType === 'account' && (
-            <LoginMessage content={'错误的用户名和密码(admin/ant.design)'} />
+      <section className={styles.loginPanel}>
+        <div className={styles.loginCard}>
+          <div className={styles.brand}>
+            <img className={styles.logo} alt="Shiyu Admin logo" src="/logo.png" />
+            <div>
+              <h2 className={styles.brandTitle}>Shiyu Admin</h2>
+              <div className={styles.brandSubtitle}>仕宇通用管理后台</div>
+            </div>
+          </div>
+          {status === 'error' && (
+            <LoginMessage content={'错误的用户名或密码'} />
           )}
-          {type === 'account' && (
-            <>
-              <ProFormText
-                name="username"
-                fieldProps={{
-                  size: 'large',
-                  prefix: <UserOutlined />,
-                }}
-                placeholder={'用户名: admin or user'}
-                rules={[
-                  {
-                    required: true,
-                    message: '用户名是必填项！',
-                  },
-                ]}
-              />
-              <ProFormText.Password
-                name="password"
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined />,
-                }}
-                placeholder={'密码: ant.design'}
-                rules={[
-                  {
-                    required: true,
-                    message: '密码是必填项！',
-                  },
-                ]}
-              />
-            </>
-          )}
-
-          {status === 'error' && loginType === 'mobile' && <LoginMessage content="验证码错误" />}
-          {type === 'mobile' && (
-            <>
-              <ProFormText
-                fieldProps={{
-                  size: 'large',
-                  prefix: <MobileOutlined />,
-                }}
-                name="mobile"
-                placeholder={'请输入手机号！'}
-                rules={[
-                  {
-                    required: true,
-                    message: '手机号是必填项！',
-                  },
-                  {
-                    pattern: /^1\d{10}$/,
-                    message: '不合法的手机号！',
-                  },
-                ]}
-              />
-              <ProFormCaptcha
-                fieldProps={{
-                  size: 'large',
-                  prefix: <LockOutlined />,
-                }}
-                captchaProps={{
-                  size: 'large',
-                }}
-                placeholder={'请输入验证码！'}
-                captchaTextRender={(timing, count) => {
-                  if (timing) {
-                    return `${count} ${'秒后重新获取'}`;
-                  }
-                  return '获取验证码';
-                }}
-                name="captcha"
-                rules={[
-                  {
-                    required: true,
-                    message: '验证码是必填项！',
-                  },
-                ]}
-                onGetCaptcha={async (phone) => {
-                  const result = await getFakeCaptcha({
-                    phone,
-                  });
-                  if (!result) {
-                    return;
-                  }
-                  message.success('获取验证码成功！验证码为：1234');
-                }}
-              />
-            </>
-          )}
-          <div
-            style={{
-              marginBottom: 24,
+          <ProForm
+            className={styles.loginForm}
+            initialValues={{
+              username: 'admin',
+              password: 'Admin@123',
+              autoLogin: true,
+            }}
+            submitter={{
+              render: (_, doms) => (
+                <Button
+                  className={styles.submitButton}
+                  type="primary"
+                  htmlType="submit"
+                  block
+                  loading={doms?.[1]?.props?.loading}
+                >
+                  进入控制台
+                </Button>
+              ),
+            }}
+            onFinish={async (values) => {
+              await handleSubmit(values as API.LoginParams);
             }}
           >
+            <ProFormText
+              name="username"
+              fieldProps={{
+                size: 'large',
+                prefix: <UserOutlined />,
+              }}
+              placeholder={'用户名'}
+              rules={[
+                {
+                  required: true,
+                  message: '用户名是必填项！',
+                },
+              ]}
+            />
+            <ProFormText.Password
+              name="password"
+              fieldProps={{
+                size: 'large',
+                prefix: <LockOutlined />,
+              }}
+              placeholder={'密码'}
+              rules={[
+                {
+                  required: true,
+                  message: '密码是必填项！',
+                },
+              ]}
+            />
             <ProFormCheckbox noStyle name="autoLogin">
               自动登录
             </ProFormCheckbox>
-            <a
-              style={{
-                float: 'right',
-              }}
-            >
-              忘记密码 ?
+          </ProForm>
+          <div className={styles.copyright}>
+            © 2026 Shiyu Platform |{' '}
+            <a href="https://github.com/Rodert/ShiyuAdmin" target="_blank" rel="noreferrer">
+              GitHub 开源
             </a>
           </div>
-        </LoginForm>
-      </div>
-      <Footer />
+        </div>
+      </section>
     </div>
   );
 };

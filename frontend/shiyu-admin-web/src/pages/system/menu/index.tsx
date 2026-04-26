@@ -18,34 +18,34 @@ const MenuManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Menu | null>(null);
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType>(null);
 
   const countMenus = (menus: Menu[]): number => {
     return menus.reduce((total, menu) => total + 1 + countMenus(menu.children || []), 0);
   };
 
-  const handleCreate = async (values: CreateMenuRequest) => {
+  const handleCreate = async (values: CreateMenuRequest | UpdateMenuRequest) => {
     try {
-      const res = await createMenu(values);
+      const res = await createMenu(values as CreateMenuRequest);
       if (res.code === 200) {
         message.success('创建成功');
         setCreateModalVisible(false);
         actionRef.current?.reload();
       }
-    } catch (error) {}
+    } catch (_error) {}
   };
 
-  const handleUpdate = async (values: UpdateMenuRequest) => {
+  const handleUpdate = async (values: CreateMenuRequest | UpdateMenuRequest) => {
     if (!editingRecord) return;
     try {
-      const res = await updateMenu(editingRecord.menu_code, values);
+      const res = await updateMenu(editingRecord.menu_code, values as UpdateMenuRequest);
       if (res.code === 200) {
         message.success('更新成功');
         setUpdateModalVisible(false);
         setEditingRecord(null);
         actionRef.current?.reload();
       }
-    } catch (error) {}
+    } catch (_error) {}
   };
 
   const handleDelete = (record: Menu) => {
@@ -59,7 +59,7 @@ const MenuManagement: React.FC = () => {
             message.success('删除成功');
             actionRef.current?.reload();
           }
-        } catch (error) {}
+        } catch (_error) {}
       },
     });
   };

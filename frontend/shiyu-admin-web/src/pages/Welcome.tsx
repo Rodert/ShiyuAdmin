@@ -1,164 +1,206 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { useModel } from '@umijs/max';
-import { Card, theme } from 'antd';
-import React from 'react';
+import type { MenuDataItem } from '@ant-design/pro-components';
+import { request, useModel } from '@umijs/max';
+import { Card, Col, Row, Space, Tag, Typography, theme } from 'antd';
+import React, { useEffect, useState } from 'react';
 
-/**
- * 每个单独的卡片，为了复用样式抽成了组件
- * @param param0
- * @returns
- */
-const InfoCard: React.FC<{
-  title: string;
-  index: number;
-  desc: string;
-  href: string;
-}> = ({ title, href, index, desc }) => {
-  const { useToken } = theme;
+type SystemStatus = 'normal' | 'abnormal' | 'checking';
 
-  const { token } = useToken();
+interface WelcomeItem {
+  key: string;
+  label: string;
+  value: React.ReactNode;
+  description?: React.ReactNode;
+  status?: SystemStatus;
+}
+
+interface SystemHealthResponse {
+  code: number;
+  data?: {
+    status?: string;
+    time?: number;
+  };
+}
+
+const formatTime = (timestamp?: number) => {
+  if (!timestamp) {
+    return '暂无记录';
+  }
+  return new Date(timestamp * 1000).toLocaleString();
+};
+
+const countMenuItems = (menus?: MenuDataItem[]): number => {
+  if (!menus?.length) {
+    return 0;
+  }
+  return menus.reduce((total, item) => total + 1 + countMenuItems(item.children), 0);
+};
+
+const getSystemStatusText = (status: SystemStatus) => {
+  if (status === 'checking') {
+    return '检测中';
+  }
+  return status === 'normal' ? '正常' : '异常';
+};
+
+const getStatusColor = (status?: SystemStatus) => {
+  if (status === 'normal') {
+    return 'success';
+  }
+  if (status === 'abnormal') {
+    return 'error';
+  }
+  return 'processing';
+};
+
+const fetchSystemStatus = async (): Promise<SystemStatus> => {
+  try {
+    const res = await request<SystemHealthResponse>('/api/v1/system/health', {
+      method: 'GET',
+      skipErrorHandler: true,
+    });
+    return res.code === 200 && res.data?.status === 'ok' ? 'normal' : 'abnormal';
+  } catch (_error) {
+    return 'abnormal';
+  }
+};
+
+const buildWelcomeItems = (
+  currentUser: API.CurrentUser | undefined,
+  menuData: MenuDataItem[] | undefined,
+  systemStatus: SystemStatus,
+): WelcomeItem[] => {
+  const isSuperAdmin = Boolean(currentUser?.isSuperAdmin);
+  const permissionCount = countMenuItems(menuData);
+  const roleName = isSuperAdmin ? '超级管理员' : currentUser?.access || '普通用户';
+  const permissionText = isSuperAdmin ? '全部权限' : `菜单权限 ${permissionCount} 项`;
+
+  return [
+    {
+      key: 'role',
+      label: '当前角色 / 权限',
+      value: roleName,
+      description: permissionText,
+    },
+    {
+      key: 'systemStatus',
+      label: '系统状态',
+      value: getSystemStatusText(systemStatus),
+      description: systemStatus === 'normal' ? '核心服务响应正常' : '核心服务检测未通过',
+      status: systemStatus,
+    },
+    {
+      key: 'lastLogin',
+      label: '最近登录时间',
+      value: formatTime(currentUser?.loginAt),
+      description: '基于当前登录令牌签发时间',
+    },
+  ];
+};
+
+const OverviewCard: React.FC<{ item: WelcomeItem }> = ({ item }) => {
+  const { token } = theme.useToken();
 
   return (
-    <div
+    <Card
+      bordered={false}
+      styles={{
+        body: {
+          minHeight: 132,
+          padding: 20,
+        },
+      }}
       style={{
-        backgroundColor: token.colorBgContainer,
-        boxShadow: token.boxShadow,
-        borderRadius: '8px',
-        fontSize: '14px',
-        color: token.colorTextSecondary,
-        lineHeight: '22px',
-        padding: '16px 19px',
-        minWidth: '220px',
-        flex: 1,
+        height: '100%',
+        borderRadius: 14,
+        boxShadow: token.boxShadowTertiary,
       }}
     >
+      <Typography.Text type="secondary">{item.label}</Typography.Text>
       <div
         style={{
-          display: 'flex',
-          gap: '4px',
-          alignItems: 'center',
-        }}
-      >
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            lineHeight: '22px',
-            backgroundSize: '100%',
-            textAlign: 'center',
-            padding: '8px 16px 16px 12px',
-            color: '#FFF',
-            fontWeight: 'bold',
-            backgroundImage:
-              "url('https://gw.alipayobjects.com/zos/bmw-prod/daaf8d50-8e6d-4251-905d-676a24ddfa12.svg')",
-          }}
-        >
-          {index}
-        </div>
-        <div
-          style={{
-            fontSize: '16px',
-            color: token.colorText,
-            paddingBottom: 8,
-          }}
-        >
-          {title}
-        </div>
-      </div>
-      <div
-        style={{
-          fontSize: '14px',
-          color: token.colorTextSecondary,
-          textAlign: 'justify',
-          lineHeight: '22px',
+          marginTop: 14,
           marginBottom: 8,
+          color: token.colorTextHeading,
+          fontSize: 24,
+          fontWeight: 600,
+          lineHeight: 1.25,
         }}
       >
-        {desc}
+        {item.status ? <Tag color={getStatusColor(item.status)}>{item.value}</Tag> : item.value}
       </div>
-      <a href={href} target="_blank" rel="noreferrer">
-        了解更多 {'>'}
-      </a>
-    </div>
+      {item.description && (
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+          {item.description}
+        </Typography.Text>
+      )}
+    </Card>
   );
 };
 
 const Welcome: React.FC = () => {
   const { token } = theme.useToken();
   const { initialState } = useModel('@@initialState');
+  const [systemStatus, setSystemStatus] = useState<SystemStatus>('checking');
+
+  useEffect(() => {
+    let mounted = true;
+    fetchSystemStatus().then((status) => {
+      if (mounted) {
+        setSystemStatus(status);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const currentUser = initialState?.currentUser;
+  const userName = currentUser?.name || '管理员';
+  const overviewItems = buildWelcomeItems(currentUser, initialState?.menuData, systemStatus);
+
   return (
     <PageContainer>
-      <Card
-        style={{
-          borderRadius: 8,
-        }}
-        styles={{
-          body: {
-            backgroundImage:
-              initialState?.settings?.navTheme === 'realDark'
-                ? 'background-image: linear-gradient(75deg, #1A1B1F 0%, #191C1F 100%)'
-                : 'background-image: linear-gradient(75deg, #FBFDFF 0%, #F5F7FF 100%)',
-          },
-        }}
-      >
-        <div
+      <Space direction="vertical" size={20} style={{ width: '100%' }}>
+        <Card
+          bordered={false}
           style={{
-            backgroundPosition: '100% -30%',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '274px auto',
-            backgroundImage:
-              "url('https://gw.alipayobjects.com/mdn/rms_a9745b/afts/img/A*BuFmQqsB2iAAAAAAAAAAAAAAARQnAQ')",
+            borderRadius: 18,
+            overflow: 'hidden',
+            background:
+              initialState?.settings?.navTheme === 'realDark'
+                ? 'linear-gradient(135deg, #151922 0%, #202633 100%)'
+                : 'linear-gradient(135deg, #f7fbff 0%, #eef4ff 48%, #fffaf1 100%)',
+          }}
+          styles={{
+            body: {
+              padding: 28,
+            },
           }}
         >
-          <div
+          <Typography.Title level={2} style={{ marginBottom: 12 }}>
+            {userName}，欢迎使用 Shiyu Admin
+          </Typography.Title>
+          <Typography.Paragraph
             style={{
-              fontSize: '20px',
-              color: token.colorTextHeading,
-            }}
-          >
-            欢迎使用 Ant Design Pro
-          </div>
-          <p
-            style={{
-              fontSize: '14px',
+              maxWidth: 720,
               color: token.colorTextSecondary,
-              lineHeight: '22px',
-              marginTop: 16,
-              marginBottom: 32,
-              width: '65%',
+              fontSize: 15,
+              marginBottom: 0,
             }}
           >
-            Ant Design Pro 是一个整合了 umi，Ant Design 和 ProComponents
-            的脚手架方案。致力于在设计规范和基础组件的基础上，继续向上构建，提炼出典型模板/业务组件/配套设计资源，进一步提升企业级中后台产品设计研发过程中的『用户』和『设计者』的体验。
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 16,
-            }}
-          >
-            <InfoCard
-              index={1}
-              href="https://umijs.org/docs/introduce/introduce"
-              title="了解 umi"
-              desc="umi 是一个可扩展的企业级前端应用框架,umi 以路由为基础的，同时支持配置式路由和约定式路由，保证路由的功能完备，并以此进行功能扩展。"
-            />
-            <InfoCard
-              index={2}
-              title="了解 ant design"
-              href="https://ant.design"
-              desc="antd 是基于 Ant Design 设计体系的 React UI 组件库，主要用于研发企业级中后台产品。"
-            />
-            <InfoCard
-              index={3}
-              title="了解 Pro Components"
-              href="https://procomponents.ant.design"
-              desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
-            />
-          </div>
-        </div>
-      </Card>
+            仕宇通用管理后台提供用户、角色、菜单、部门、日志、监控等常用后台管理能力。
+          </Typography.Paragraph>
+        </Card>
+
+        <Row gutter={[16, 16]}>
+          {overviewItems.map((item) => (
+            <Col key={item.key} xs={24} md={8}>
+              <OverviewCard item={item} />
+            </Col>
+          ))}
+        </Row>
+      </Space>
     </PageContainer>
   );
 };

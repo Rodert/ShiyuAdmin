@@ -9,6 +9,8 @@ export async function currentUser(options?: { [key: string]: any }) {
     data?: {
       user_code?: string;
       username?: string;
+      is_super_admin?: boolean;
+      iat?: number;
     };
     message?: string;
   }>('/api/v1/system/profile', {
@@ -23,7 +25,9 @@ export async function currentUser(options?: { [key: string]: any }) {
   const user: API.CurrentUser = {
     name: res.data.username,
     userid: res.data.user_code,
-    access: 'admin',
+    access: res.data.is_super_admin ? 'admin' : 'user',
+    isSuperAdmin: res.data.is_super_admin,
+    loginAt: res.data.iat,
   };
 
   return { data: user };

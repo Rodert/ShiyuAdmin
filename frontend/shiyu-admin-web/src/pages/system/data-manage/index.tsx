@@ -4,14 +4,15 @@ import { Button, Modal } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import type { TableMeta, ColumnMeta } from '@/services/shiyu-api/data_manage';
 import { getTables, getTableColumns, getTableRows } from '@/services/shiyu-api/data_manage';
+import { renderCellText } from '@/utils/tableRender';
 
 const DataManagePage: React.FC = () => {
   const [currentTable, setCurrentTable] = useState<string | undefined>();
   const [columnsMeta, setColumnsMeta] = useState<ColumnMeta[]>([]);
   const [dataModalOpen, setDataModalOpen] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const columnsActionRef = useRef<ActionType>();
-  const rowsActionRef = useRef<ActionType>();
+  const columnsActionRef = useRef<ActionType>(null);
+  const rowsActionRef = useRef<ActionType>(null);
 
   useEffect(() => {
     columnsActionRef.current?.reload();
@@ -39,6 +40,16 @@ const DataManagePage: React.FC = () => {
       title: '类型',
       dataIndex: 'table_type',
       key: 'table_type',
+    },
+    {
+      title: '表注释',
+      dataIndex: 'table_comment',
+      key: 'table_comment',
+      ellipsis: true,
+      render: renderCellText<TableMeta, 'table_comment'>(
+        'table_comment',
+        (value) => value || '-',
+      ),
     },
     {
       title: '操作',
@@ -74,20 +85,37 @@ const DataManagePage: React.FC = () => {
       title: '可为空',
       dataIndex: 'is_nullable',
       key: 'is_nullable',
-      render: (value: boolean | undefined) => (value ? '是' : '否'),
+      render: renderCellText<ColumnMeta, 'is_nullable'>('is_nullable', (value) =>
+        value ? '是' : '否',
+      ),
     },
     {
       title: '最大长度',
       dataIndex: 'max_length',
       key: 'max_length',
-      render: (value: number | undefined) => (value != null ? value : '-'),
+      render: renderCellText<ColumnMeta, 'max_length'>('max_length', (value) =>
+        value != null ? value : '-',
+      ),
     },
     {
       title: '默认值',
       dataIndex: 'column_default',
       key: 'column_default',
       ellipsis: true,
-      render: (value: string | undefined) => value || '-',
+      render: renderCellText<ColumnMeta, 'column_default'>(
+        'column_default',
+        (value) => value || '-',
+      ),
+    },
+    {
+      title: '字段注释',
+      dataIndex: 'column_comment',
+      key: 'column_comment',
+      ellipsis: true,
+      render: renderCellText<ColumnMeta, 'column_comment'>(
+        'column_comment',
+        (value) => value || '-',
+      ),
     },
   ];
 

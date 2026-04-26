@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
+
 	"shiyu-admin-backend/internal/model/vo"
 	monitorinterfaces "shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/redis"
@@ -14,14 +16,16 @@ import (
 
 // Service implements MonitorService.
 type Service struct {
+	db          *gorm.DB
 	redisClient *redis.Client
 	// onlineTTL defines how long a user is considered online since last activity.
 	onlineTTL time.Duration
 }
 
 // New creates a new MonitorService.
-func New(redisClient *redis.Client, onlineTTL time.Duration) monitorinterfaces.MonitorService {
+func New(redisClient *redis.Client, onlineTTL time.Duration, db *gorm.DB) monitorinterfaces.MonitorService {
 	return &Service{
+		db:          db,
 		redisClient: redisClient,
 		onlineTTL:   onlineTTL,
 	}
@@ -57,6 +61,39 @@ func (s *Service) GetCacheStats(ctx context.Context) (*vo.CacheStatsVO, error) {
 	}
 
 	return &stats, nil
+}
+
+// GetDatabaseStats returns basic database health and schema statistics.
+func (s *Service) GetDatabaseStats(ctx context.Context) (*vo.DatabaseStatsVO, error) {
+	if s.db == nil {
+		return &vo.DatabaseStatsVO{Status: "disabled"}, nil
+	}
+
+	sqlDB, err := s.db.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &vo.DatabaseStatsVO{
+		Status: "normal",
+		Driver: s.db.Dialector.Name(),
+	}
+
+	if err := sqlDB.PingContext(ctx); err != nil {
+		stats.Status = "abnormal"
+		return stats, nil
+	}
+
+	poolStats := sqlDB.Stats()
+	stats.OpenConnections = poolStats.OpenConnections
+	stats.InUse = poolStats.InUse
+	stats.Idle = poolStats.Idle
+
+	_ = s.db.WithContext(ctx).Raw(databaseNameSQL(stats.Driver)).Scan(&stats.Database).Error
+	_ = s.db.WithContext(ctx).Raw(databaseVersionSQL(stats.Driver)).Scan(&stats.Version).Error
+	_ = s.db.WithContext(ctx).Raw(tableCountSQL(stats.Driver)).Scan(&stats.TableCount).Error
+
+	return stats, nil
 }
 
 // ListOnlineUsers lists users considered online based on recent activity.
@@ -132,4 +169,35 @@ func parseInt64(s string) (int64, error) {
 		return 0, nil
 	}
 	return strconv.ParseInt(s, 10, 64)
+}
+
+func databaseNameSQL(driver string) string {
+	switch driver {
+	case "mysql":
+		return "SELECT DATABASE()"
+	case "sqlite":
+		return "SELECT 'sqlite'"
+	default:
+		return "SELECT current_database()"
+	}
+}
+
+func databaseVersionSQL(driver string) string {
+	switch driver {
+	case "mysql", "sqlite":
+		return "SELECT VERSION()"
+	default:
+		return "SHOW server_version"
+	}
+}
+
+func tableCountSQL(driver string) string {
+	switch driver {
+	case "mysql":
+		return "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()"
+	case "sqlite":
+		return "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+	default:
+		return "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
+	}
 }

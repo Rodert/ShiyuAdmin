@@ -62,6 +62,9 @@ func Run(cfg *config.Config) error {
 		if err := bootstrap.AutoMigrate(db); err != nil {
 			return err
 		}
+		if err := bootstrap.ApplySchemaComments(db); err != nil {
+			return err
+		}
 		if err := bootstrap.EnsureAdminUser(db, cfg); err != nil {
 			return err
 		}
@@ -137,9 +140,9 @@ func Run(cfg *config.Config) error {
 		dataManageSvcVar = dataManageSvc.New(dbMetaRepo)
 	}
 	var monitorSvcVar serviceInterfaces.MonitorService
-	if redisClient != nil {
+	if redisClient != nil || db != nil {
 		// Online user considered online if active within last 10 minutes.
-		monitorSvcVar = monitorsvc.New(redisClient, 10*time.Minute)
+		monitorSvcVar = monitorsvc.New(redisClient, 10*time.Minute, db)
 	}
 	var permissionSvcVar serviceInterfaces.PermissionService
 	if userRoleRepo != nil && roleMenuRepo != nil {
