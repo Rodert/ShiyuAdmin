@@ -26,11 +26,7 @@
     <a href="https://github.com/Rodert/ShiyuAdmin/issues/new?labels=enhancement">功能建议</a>
   </p>
 
-  <details>
-    <summary>支持一下项目维护</summary>
-    <br />
-    <img src="img/zanshangma.png" alt="赞赏码" width="160" />
-  </details>
+
 </div>
 
 ---
@@ -189,3 +185,13 @@ ShiyuAdmin
 [issues-url]: https://github.com/Rodert/ShiyuAdmin/issues
 [license-shield]: https://img.shields.io/github/license/Rodert/ShiyuAdmin.svg?style=for-the-badge
 [license-url]: LICENSE
+
+
+
+
+
+  <details>
+    <summary>支持一下项目维护</summary>
+    <br />
+    <img src="img/zanshangma.png" alt="赞赏码" width="160" />
+  </details>
