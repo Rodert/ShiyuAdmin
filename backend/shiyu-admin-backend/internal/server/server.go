@@ -16,6 +16,7 @@ import (
 	repoInterfaces "shiyu-admin-backend/internal/repository/interfaces"
 	repoMock "shiyu-admin-backend/internal/repository/mock"
 	authsvc "shiyu-admin-backend/internal/service/auth"
+	cachesvc "shiyu-admin-backend/internal/service/cache"
 	dataManageSvc "shiyu-admin-backend/internal/service/data_manage"
 	deptsvc "shiyu-admin-backend/internal/service/dept"
 	serviceInterfaces "shiyu-admin-backend/internal/service/interfaces"
@@ -144,6 +145,7 @@ func Run(cfg *config.Config) error {
 		// Online user considered online if active within last 10 minutes.
 		monitorSvcVar = monitorsvc.New(redisClient, 10*time.Minute, db)
 	}
+	cacheSvcVar := cachesvc.New(redisClient)
 	var permissionSvcVar serviceInterfaces.PermissionService
 	if userRoleRepo != nil && roleMenuRepo != nil {
 		permissionSvcVar = permissionsvc.New(userRoleRepo, roleMenuRepo)
@@ -153,7 +155,7 @@ func Run(cfg *config.Config) error {
 
 	api := engine.Group("/api/v1")
 	{
-		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar)
+		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar, cacheSvcVar)
 	}
 
 	port := cfg.Server.Port

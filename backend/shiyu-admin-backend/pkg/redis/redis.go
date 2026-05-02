@@ -72,6 +72,13 @@ func (c *Client) DBSize(ctx context.Context) (int64, error) {
 	return c.rdb.DBSize(ctx).Result()
 }
 
+// DBSizeForDB returns the number of keys in a specific Redis logical database.
+func (c *Client) DBSizeForDB(ctx context.Context, db int) (int64, error) {
+	client := c.clientForDB(db)
+	defer client.Close()
+	return client.DBSize(ctx).Result()
+}
+
 // Keys finds all keys matching the given pattern.
 // Note: For monitoring/administration only; KEYS can be slow on large datasets.
 func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
@@ -99,6 +106,109 @@ func (c *Client) ScanKeys(ctx context.Context, pattern string, count int64) ([]s
 	}
 
 	return result, nil
+}
+
+// ScanKeysForDB incrementally scans keys in a specific Redis logical database.
+func (c *Client) ScanKeysForDB(ctx context.Context, db int, pattern string, count int64) ([]string, error) {
+	if count <= 0 {
+		count = 200
+	}
+	if pattern == "" {
+		pattern = "*"
+	}
+
+	client := c.clientForDB(db)
+	defer client.Close()
+
+	cursor := uint64(0)
+	result := make([]string, 0, 64)
+	for {
+		keys, nextCursor, err := client.Scan(ctx, cursor, pattern, count).Result()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, keys...)
+		cursor = nextCursor
+		if cursor == 0 {
+			break
+		}
+	}
+
+	return result, nil
+}
+
+// TypeForDB returns the Redis data type for a key in a specific database.
+func (c *Client) TypeForDB(ctx context.Context, db int, key string) (string, error) {
+	client := c.clientForDB(db)
+	defer client.Close()
+	return client.Type(ctx, key).Result()
+}
+
+// TTLForDB returns the TTL for a key in a specific database.
+func (c *Client) TTLForDB(ctx context.Context, db int, key string) (time.Duration, error) {
+	client := c.clientForDB(db)
+	defer client.Close()
+	return client.TTL(ctx, key).Result()
+}
+
+// ValueForDB returns the value for a key in a specific database, normalized by Redis type.
+func (c *Client) ValueForDB(ctx context.Context, db int, key string) (string, interface{}, error) {
+	client := c.clientForDB(db)
+	defer client.Close()
+
+	keyType, err := client.Type(ctx, key).Result()
+	if err != nil {
+		return "", nil, err
+	}
+
+	switch keyType {
+	case "string":
+		value, err := client.Get(ctx, key).Result()
+		return keyType, value, err
+	case "list":
+		value, err := client.LRange(ctx, key, 0, -1).Result()
+		return keyType, value, err
+	case "set":
+		value, err := client.SMembers(ctx, key).Result()
+		return keyType, value, err
+	case "zset":
+		items, err := client.ZRangeWithScores(ctx, key, 0, -1).Result()
+		if err != nil {
+			return keyType, nil, err
+		}
+		value := make([]map[string]interface{}, 0, len(items))
+		for _, item := range items {
+			value = append(value, map[string]interface{}{
+				"member": item.Member,
+				"score":  item.Score,
+			})
+		}
+		return keyType, value, nil
+	case "hash":
+		value, err := client.HGetAll(ctx, key).Result()
+		return keyType, value, err
+	case "stream":
+		items, err := client.XRangeN(ctx, key, "-", "+", 100).Result()
+		if err != nil {
+			return keyType, nil, err
+		}
+		value := make([]map[string]interface{}, 0, len(items))
+		for _, item := range items {
+			value = append(value, map[string]interface{}{
+				"id":     item.ID,
+				"values": item.Values,
+			})
+		}
+		return keyType, value, nil
+	default:
+		return keyType, nil, nil
+	}
+}
+
+func (c *Client) clientForDB(db int) *redis.Client {
+	opts := *c.rdb.Options()
+	opts.DB = db
+	return redis.NewClient(&opts)
 }
 
 // Close closes redis connection.

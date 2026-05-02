@@ -198,6 +198,16 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Perms:      "system:data:view",
 			Status:     1,
 		},
+		{
+			MenuCode:   "system-cache",
+			ParentCode: "system",
+			MenuName:   "缓存管理",
+			MenuType:   "C",
+			Path:       "/system/cache",
+			Component:  "/system/cache",
+			Perms:      "system:cache:list",
+			Status:     1,
+		},
 	}
 
 	for _, m := range menus {

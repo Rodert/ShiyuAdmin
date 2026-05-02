@@ -1,5 +1,9 @@
 export default [
-  { path: '/user', layout: false, routes: [{ path: '/user/login', component: './user/login' }] },
+  {
+    path: '/user',
+    layout: false,
+    routes: [{ path: '/user/login', component: './user/login' }],
+  },
   { path: '/welcome', icon: 'smile', component: './Welcome' },
   {
     path: '/system',
@@ -12,6 +16,7 @@ export default [
       { path: '/system/operation-log', component: './system/operation-log' },
       { path: '/system/monitor', component: './system/monitor' },
       { path: '/system/data-manage', component: './system/data-manage' },
+      { path: '/system/cache', component: './system/cache' },
     ],
   },
   { path: '/', redirect: '/welcome' },
