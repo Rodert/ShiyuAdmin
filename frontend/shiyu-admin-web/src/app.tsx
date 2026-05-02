@@ -1,10 +1,18 @@
 import { LinkOutlined } from '@ant-design/icons';
-import type { MenuDataItem, Settings as LayoutSettings } from '@ant-design/pro-components';
+import type {
+  MenuDataItem,
+  Settings as LayoutSettings,
+} from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
 import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
 import { history, Link } from '@umijs/max';
 import React from 'react';
-import { AvatarDropdown, AvatarName, Footer } from '@/components';
+import {
+  AvatarDropdown,
+  AvatarName,
+  Footer,
+  UserProfileAction,
+} from '@/components';
 import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
 import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';
 import defaultSettings from '../config/defaultSettings';
@@ -56,7 +64,11 @@ export async function getInitialState(): Promise<{
   };
   // 如果不是登录页面，执行
   const { location } = history;
-  if (![loginPath, '/user/register', '/user/register-result'].includes(location.pathname)) {
+  if (
+    ![loginPath, '/user/register', '/user/register-result'].includes(
+      location.pathname,
+    )
+  ) {
     const currentUser = await fetchUserInfo();
     const menuData = await fetchMenuData();
     return {
@@ -73,9 +85,12 @@ export async function getInitialState(): Promise<{
 }
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
-export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
+export const layout: RunTimeLayoutConfig = ({
+  initialState,
+  setInitialState,
+}) => {
   return {
-    actionsRender: () => [],
+    actionsRender: () => [<UserProfileAction key="profile" />],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
@@ -171,6 +186,9 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
  */
 export const request: RequestConfig = {
   // 开发环境使用代理，生产环境需要配置实际的后端地址
-  baseURL: process.env.NODE_ENV === 'production' ? process.env.REACT_APP_API_BASE_URL || '' : '',
+  baseURL:
+    process.env.NODE_ENV === 'production'
+      ? process.env.REACT_APP_API_BASE_URL || ''
+      : '',
   ...errorConfig,
 };

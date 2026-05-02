@@ -1,11 +1,11 @@
 import {
+  InfoCircleOutlined,
   LogoutOutlined,
-  SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { history, useModel } from '@umijs/max';
 import type { MenuProps } from 'antd';
-import { Spin } from 'antd';
+import { Button, Descriptions, Modal, Spin, Tag, Tooltip } from 'antd';
 import { createStyles } from 'antd-style';
 import React from 'react';
 import { flushSync } from 'react-dom';
@@ -20,6 +20,21 @@ export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   return <span className="anticon">{currentUser?.name}</span>;
+};
+
+const formatLoginTime = (loginAt?: number) => {
+  if (!loginAt) {
+    return '-';
+  }
+  const timestamp = loginAt > 10_000_000_000 ? loginAt : loginAt * 1000;
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(timestamp));
 };
 
 const useStyles = createStyles(({ token }) => {
@@ -37,8 +52,72 @@ const useStyles = createStyles(({ token }) => {
         backgroundColor: token.colorBgTextHover,
       },
     },
+    iconAction: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 40,
+      height: 40,
+      color: token.colorText,
+    },
   };
 });
+
+export const UserProfileAction: React.FC = () => {
+  const { styles } = useStyles();
+  const { initialState } = useModel('@@initialState');
+  const [open, setOpen] = React.useState(false);
+  const currentUser = initialState?.currentUser;
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const roleText = currentUser.isSuperAdmin
+    ? '超级管理员'
+    : currentUser.access || '普通用户';
+
+  return (
+    <>
+      <Tooltip title="个人信息">
+        <Button
+          aria-label="查看个人信息"
+          className={styles.iconAction}
+          icon={<InfoCircleOutlined />}
+          type="text"
+          onClick={() => setOpen(true)}
+        />
+      </Tooltip>
+      <Modal
+        title="个人信息"
+        open={open}
+        footer={null}
+        width={520}
+        onCancel={() => setOpen(false)}
+      >
+        <Descriptions column={1} size="middle" bordered>
+          <Descriptions.Item label="用户名">
+            {currentUser.name || '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="用户编码">
+            {currentUser.userid || '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="角色">
+            <Tag color={currentUser.isSuperAdmin ? 'blue' : 'default'}>
+              {roleText}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="权限标识">
+            {currentUser.access || '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="最近登录">
+            {formatLoginTime(currentUser.loginAt)}
+          </Descriptions.Item>
+        </Descriptions>
+      </Modal>
+    </>
+  );
+};
 
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
   menu,
@@ -100,7 +179,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
 
   const { currentUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!currentUser?.name) {
     return loading;
   }
 
@@ -111,11 +190,6 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
             key: 'center',
             icon: <UserOutlined />,
             label: '个人中心',
-          },
-          {
-            key: 'settings',
-            icon: <SettingOutlined />,
-            label: '个人设置',
           },
           {
             type: 'divider' as const,
