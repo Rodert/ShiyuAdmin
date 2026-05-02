@@ -12,12 +12,19 @@
   - 生成：`internal/service/auth/service.go` → `AuthService.Login`
   - 工具：`pkg/jwtutil`
   - 中间件：`internal/middleware/auth.go`
+  - 登录审计：登录成功、登录失败和参数错误会写入操作日志，模块为 `system-auth`，动作为 `login`
 
 - **权限校验（RBAC）**
   - 关系：用户 ↔ 角色 ↔ 菜单（多对多）
   - 权限中间件：`internal/middleware/permission.go`
   - 菜单与权限标识（`perms`）：`internal/model/entity/menu.go`
   - 菜单树接口：`internal/api/v1/system/menus.go` 中的 `listMenuTree`
+
+- **Redis 缓存管理**
+  - 接口：`internal/api/v1/system/cache.go`
+  - 服务：`internal/service/cache/service.go`
+  - Redis 封装：`pkg/redis/redis.go`
+  - 支持查看 0-15 号逻辑库、按 Key 表达式和数据类型查询缓存，并读取 String、List、Set、ZSet、Hash、Stream 类型的数据。
 
 ---
 
@@ -244,7 +251,42 @@ if user.Status != 1 {
 
 ---
 
-## 5. 开发者建议
+## 5. 操作日志与缓存管理
+
+### 5.1 登录日志
+
+登录接口 `/api/v1/system/auth/login` 属于未认证路由，不能依赖认证后的 `OperationLogger` 中间件记录，因此在登录处理函数中显式写入操作日志。
+
+记录规则：
+
+- 登录成功：`module = system-auth`，`action = login`，`status = 1`
+- 登录失败：`module = system-auth`，`action = login`，`status = 0`
+- 参数错误：同样记录为失败日志，并写入错误摘要
+
+普通业务写操作仍由 `internal/middleware/operation_logger.go` 统一记录，覆盖 `POST`、`PUT`、`PATCH`、`DELETE`。
+
+### 5.2 Redis 缓存管理
+
+缓存管理菜单权限标识为 `system:cache:list`，超级管理员默认可见。
+
+后端接口：
+
+- `GET /api/v1/system/cache/databases`：查看 Redis 0-15 号库及 Key 数量
+- `GET /api/v1/system/cache/keys`：按 `db`、`pattern`、`type` 查询 Key
+- `GET /api/v1/system/cache/value`：查看指定 Key 的类型、TTL 和数据
+
+支持的数据类型：
+
+- `string`
+- `list`
+- `set`
+- `zset`
+- `hash`
+- `stream`
+
+---
+
+## 6. 开发者建议
 
 - **新增超管用户**：
   - 直接在 `sys_users` 中新增用户，并将 `is_super_admin` 设为 `true`，即可拥有与默认 admin 相同的权限行为。

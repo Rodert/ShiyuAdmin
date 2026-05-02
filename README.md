@@ -37,6 +37,7 @@
 
 - **开箱即用**：Docker Compose 一条命令启动前端、后端、PostgreSQL、Redis。
 - **权限完整**：内置用户、角色、菜单、部门、动态菜单和接口权限控制。
+- **运维可见**：内置系统监控、数据管理、Redis 缓存管理和操作日志审计。
 - **前后端分离**：后端 Go + Gin + Gorm，前端 React + Umi Max + Ant Design Pro。
 - **部署友好**：项目介绍页支持 GitHub Pages，服务端可部署到 Docker / Fly.io / Render 等环境。
 
@@ -126,6 +127,8 @@ npm run start:dev
 - 权限控制：JWT 登录认证、RBAC、动态路由、超级管理员权限。
 - 系统监控：服务状态、运行信息、数据库状态。
 - 数据管理：表结构、字段注释、基础数据查看。
+- 缓存管理：查看 Redis 0-15 号库、按 Key / 类型查询缓存，支持 String、List、Set、ZSet、Hash、Stream。
+- 操作日志：记录新增、修改、删除等写操作，并记录登录成功和登录失败审计日志。
 
 ## 技术栈
 
