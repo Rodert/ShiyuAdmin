@@ -29,7 +29,7 @@ site/
 
 - 推送到 `main` 分支
 - 修改 `site/**`
-- 修改 README 截图资源 `img/**`
+- 修改 README / 站点截图资源 `img/**`（含 `img/dashboard.png` 仪表盘预览）
 - 修改站点使用的项目 Logo
 - 手动触发 `workflow_dispatch`
 
@@ -40,6 +40,7 @@ site/
 - `frontend/shiyu-admin-web/public/logo.png`
 - `img/login-img.png`
 - `img/home-img.png`
+- `img/dashboard.png`（后台「数据仪表盘」截图，在站点「界面预览」中展示）
 
 部署完成后访问：
 

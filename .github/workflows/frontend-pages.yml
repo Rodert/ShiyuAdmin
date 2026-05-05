@@ -43,6 +43,7 @@ jobs:
           cp frontend/shiyu-admin-web/public/logo.png site-dist/assets/logo.png
           cp img/login-img.png site-dist/assets/login-img.png
           cp img/home-img.png site-dist/assets/home-img.png
+          cp img/dashboard.png site-dist/assets/dashboard.png
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

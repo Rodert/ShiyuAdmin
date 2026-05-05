@@ -1,7 +1,8 @@
+import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import type { MenuDataItem } from '@ant-design/pro-components';
 import { request, useModel } from '@umijs/max';
-import { Col, Row, Spin, Table, Tag, Typography } from 'antd';
+import { Button, Col, Row, Space, Spin, Table, Tag, Typography } from 'antd';
 import type { EChartsOption } from 'echarts';
 import * as echarts from 'echarts';
 import dayjs from 'dayjs';
@@ -110,6 +111,33 @@ const Dashboard: React.FC = () => {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
+
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const sync = () => {
+      setIsFullscreen(document.fullscreenElement === boardRef.current);
+    };
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    const el = boardRef.current;
+    if (!el) {
+      return;
+    }
+    try {
+      if (!document.fullscreenElement) {
+        await el.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (_e) {
+      // 部分浏览器需用户手势或策略限制，静默失败
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -427,7 +455,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <PageContainer ghost title={false} childrenContentStyle={{ paddingBlockStart: 0, paddingInline: 0 }}>
-      <div className="data-board">
+      <div ref={boardRef} className="data-board">
         <div className="board-scan" aria-hidden />
 
         <Spin spinning={loading} size="large">
@@ -439,9 +467,20 @@ const Dashboard: React.FC = () => {
               </div>
             </Col>
             <Col>
-              <Typography.Text style={{ color: 'rgba(56,189,248,0.85)', fontSize: 12, letterSpacing: '0.12em' }}>
-                SHIYU ADMIN DASHBOARD
-              </Typography.Text>
+              <Space align="center" size="middle" wrap>
+                <Typography.Text style={{ color: 'rgba(56,189,248,0.85)', fontSize: 12, letterSpacing: '0.12em' }}>
+                  SHIYU ADMIN DASHBOARD
+                </Typography.Text>
+                <Button
+                  type="primary"
+                  ghost
+                  size="small"
+                  icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                  onClick={() => void toggleFullscreen()}
+                >
+                  {isFullscreen ? '退出全屏' : '全屏'}
+                </Button>
+              </Space>
             </Col>
           </Row>
 
