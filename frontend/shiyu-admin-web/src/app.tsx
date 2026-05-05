@@ -149,6 +149,11 @@ export const layout: RunTimeLayoutConfig = ({
           path: '/welcome',
           icon: 'smile',
         },
+        {
+          name: '仪表盘',
+          path: '/dashboard',
+          icon: 'dashboard',
+        },
       ];
     },
     // 自定义 403 页面

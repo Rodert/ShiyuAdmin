@@ -57,6 +57,7 @@ func (s *Service) Create(ctx context.Context, req *dto.CreateMenuRequest) (*enti
 		Path:       strings.TrimSpace(req.Path),
 		Component:  strings.TrimSpace(req.Component),
 		Status:     req.Status,
+		SortOrder:  req.SortOrder,
 	}
 	if err := s.repo.Create(ctx, menu); err != nil {
 		return nil, apperrors.WrapUniqueConstraint(err, "menu_creation_conflict", "菜单编码已存在，请更换后重试。")
@@ -102,6 +103,9 @@ func (s *Service) Update(ctx context.Context, menuCode string, req *dto.UpdateMe
 	}
 	if req.Status != nil {
 		menu.Status = *req.Status
+	}
+	if req.SortOrder != nil {
+		menu.SortOrder = *req.SortOrder
 	}
 	if err := s.repo.Update(ctx, menu); err != nil {
 		return nil, apperrors.WrapUniqueConstraint(err, "menu_update_conflict", "菜单编码已存在，请更换后重试。")

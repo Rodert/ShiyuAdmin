@@ -5,6 +5,8 @@ export default [
     routes: [{ path: '/user/login', component: './user/login' }],
   },
   { path: '/welcome', icon: 'smile', component: './Welcome' },
+  { path: '/dashboard', icon: 'dashboard', component: './Dashboard' },
+  { path: '/cockpit', redirect: '/dashboard' },
   {
     path: '/system',
     icon: 'setting',

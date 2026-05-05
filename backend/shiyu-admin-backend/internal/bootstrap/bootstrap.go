@@ -120,13 +120,25 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component: "/welcome",
 			Perms:     "welcome:view",
 			Status:    1,
+			SortOrder: 10,
 		},
 		{
-			MenuCode: "system",
-			MenuName: "系统管理",
-			MenuType: "M",
-			Path:     "/system",
-			Status:   1,
+			MenuCode:  "dashboard",
+			MenuName:  "仪表盘",
+			MenuType:  "C",
+			Path:      "/dashboard",
+			Component: "/dashboard",
+			Perms:     "dashboard:view",
+			Status:    1,
+			SortOrder: 20,
+		},
+		{
+			MenuCode:  "system",
+			MenuName:  "系统管理",
+			MenuType:  "M",
+			Path:      "/system",
+			Status:    1,
+			SortOrder: 30,
 		},
 		{
 			MenuCode:   "system-user",
@@ -137,6 +149,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/user",
 			Perms:      "system:user:list",
 			Status:     1,
+			SortOrder:  31,
 		},
 		{
 			MenuCode:   "system-role",
@@ -147,6 +160,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/role",
 			Perms:      "system:role:list",
 			Status:     1,
+			SortOrder:  32,
 		},
 		{
 			MenuCode:   "system-menu",
@@ -157,6 +171,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/menu",
 			Perms:      "system:menu:list",
 			Status:     1,
+			SortOrder:  33,
 		},
 		{
 			MenuCode:   "system-dept",
@@ -167,6 +182,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/dept",
 			Perms:      "system:dept:list",
 			Status:     1,
+			SortOrder:  34,
 		},
 		{
 			MenuCode:   "system-operation-log",
@@ -177,6 +193,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/operation-log",
 			Perms:      "system:operation-log:list",
 			Status:     1,
+			SortOrder:  35,
 		},
 		{
 			MenuCode:   "system-monitor",
@@ -187,6 +204,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/monitor",
 			Perms:      "system:monitor:view",
 			Status:     1,
+			SortOrder:  36,
 		},
 		{
 			MenuCode:   "system-data-manage",
@@ -197,6 +215,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/data-manage",
 			Perms:      "system:data:view",
 			Status:     1,
+			SortOrder:  37,
 		},
 		{
 			MenuCode:   "system-cache",
@@ -207,6 +226,7 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Component:  "/system/cache",
 			Perms:      "system:cache:list",
 			Status:     1,
+			SortOrder:  38,
 		},
 	}
 
@@ -224,6 +244,20 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 		}
 	}
 
+	// 将种子菜单的排序写回数据库（含已存在行），保证「欢迎 → 仪表盘 → 系统管理」等顺序可随版本校正。
+	seedMenuSort := map[string]int{
+		"welcome": 10, "dashboard": 20, "system": 30,
+		"system-user": 31, "system-role": 32, "system-menu": 33, "system-dept": 34,
+		"system-operation-log": 35, "system-monitor": 36, "system-data-manage": 37, "system-cache": 38,
+	}
+	for code, ord := range seedMenuSort {
+		if err := db.WithContext(ctx).Model(&entity.Menu{}).
+			Where("menu_code = ?", code).
+			Update("sort_order", ord).Error; err != nil {
+			return fmt.Errorf("sync menu sort %s failed: %w", code, err)
+		}
+	}
+
 	// Link admin role to all seeded menus.
 	for _, m := range menus {
 		if err := ensureRoleMenu(ctx, db, storedRole.RoleCode, m.MenuCode); err != nil {
@@ -231,8 +265,11 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 		}
 	}
 
-	// Link ordinary viewer role only to the welcome page.
+	// Link ordinary viewer role to top-level portal pages (welcome + dashboard).
 	if err := ensureRoleMenu(ctx, db, viewerRole.RoleCode, "welcome"); err != nil {
+		return err
+	}
+	if err := ensureRoleMenu(ctx, db, viewerRole.RoleCode, "dashboard"); err != nil {
 		return err
 	}
 

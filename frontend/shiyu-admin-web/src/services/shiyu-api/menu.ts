@@ -9,6 +9,8 @@ export interface Menu {
   path: string;
   component: string;
   status: number;
+  /** 同级菜单排序，越小越靠前 */
+  sort_order?: number;
   children?: Menu[];
 }
 
@@ -21,6 +23,7 @@ export interface CreateMenuRequest {
   path?: string;
   component?: string;
   status?: number;
+  sort_order?: number;
 }
 
 export interface UpdateMenuRequest {
@@ -31,6 +34,7 @@ export interface UpdateMenuRequest {
   path?: string;
   component?: string;
   status?: number;
+  sort_order?: number;
 }
 
 /** 获取菜单列表 */

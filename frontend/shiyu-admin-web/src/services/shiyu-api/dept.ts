@@ -22,13 +22,14 @@ export interface UpdateDeptRequest {
 }
 
 /** 获取部门列表 */
-export async function getDeptList() {
+export async function getDeptList(opts?: { skipErrorHandler?: boolean }) {
   return request<{
     code: number;
     data: Dept[];
     message?: string;
   }>('/api/v1/system/depts', {
     method: 'GET',
+    ...opts,
   });
 }
 

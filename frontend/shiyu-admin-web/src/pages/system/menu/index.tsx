@@ -107,6 +107,13 @@ const MenuManagement: React.FC = () => {
       width: 200,
     },
     {
+      title: '排序',
+      dataIndex: 'sort_order',
+      key: 'sort_order',
+      width: 72,
+      search: false,
+    },
+    {
       title: '状态',
       dataIndex: 'status',
       key: 'status',

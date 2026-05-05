@@ -10,6 +10,7 @@ type CreateMenuRequest struct {
 	Path       string `json:"path"`
 	Component  string `json:"component"`
 	Status     int    `json:"status"`
+	SortOrder  int    `json:"sort_order"`
 }
 
 // UpdateMenuRequest defines menu update payload.
@@ -21,5 +22,6 @@ type UpdateMenuRequest struct {
 	Path       *string `json:"path"`
 	Component  *string `json:"component"`
 	Status     *int    `json:"status"`
+	SortOrder  *int    `json:"sort_order"`
 }
 

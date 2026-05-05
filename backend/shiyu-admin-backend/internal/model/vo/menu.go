@@ -1,6 +1,10 @@
 package vo
 
-import "shiyu-admin-backend/internal/model/entity"
+import (
+	"sort"
+
+	"shiyu-admin-backend/internal/model/entity"
+)
 
 // MenuVO represents menu info for API responses.
 type MenuVO struct {
@@ -12,6 +16,7 @@ type MenuVO struct {
 	Path       string    `json:"path"`
 	Component  string    `json:"component"`
 	Status     int       `json:"status"`
+	SortOrder  int       `json:"sort_order"`
 	Children   []*MenuVO `json:"children,omitempty"`
 }
 
@@ -29,6 +34,32 @@ func BuildMenuVO(m *entity.Menu) *MenuVO {
 		Path:       m.Path,
 		Component:  m.Component,
 		Status:     m.Status,
+		SortOrder:  m.SortOrder,
+	}
+}
+
+func sortMenuVONodes(nodes []*MenuVO) {
+	if len(nodes) == 0 {
+		return
+	}
+	if len(nodes) < 2 {
+		for _, n := range nodes {
+			if n.Children != nil {
+				sortMenuVONodes(n.Children)
+			}
+		}
+		return
+	}
+	sort.SliceStable(nodes, func(i, j int) bool {
+		if nodes[i].SortOrder != nodes[j].SortOrder {
+			return nodes[i].SortOrder < nodes[j].SortOrder
+		}
+		return nodes[i].MenuCode < nodes[j].MenuCode
+	})
+	for _, n := range nodes {
+		if n.Children != nil {
+			sortMenuVONodes(n.Children)
+		}
 	}
 }
 
@@ -59,6 +90,7 @@ func BuildMenuTree(menus []*entity.Menu) []*MenuVO {
 		}
 	}
 
+	sortMenuVONodes(roots)
 	return roots
 }
 

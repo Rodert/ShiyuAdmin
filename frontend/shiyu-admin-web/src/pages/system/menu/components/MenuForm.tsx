@@ -1,4 +1,4 @@
-import { ProForm, ProFormText, ProFormSelect, ProFormTreeSelect } from '@ant-design/pro-components';
+import { ProForm, ProFormDigit, ProFormText, ProFormSelect, ProFormTreeSelect } from '@ant-design/pro-components';
 import type { ProFormInstance } from '@ant-design/pro-components';
 import { Button, Modal } from 'antd';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -33,7 +33,11 @@ const MenuForm: React.FC<MenuFormProps> = ({
   // 使用 useMemo 确保 initialValues 引用稳定
   const memoizedInitialValues = useMemo(() => {
     return initialValues
-      ? { ...initialValues, parent_code: initialValues.parent_code || undefined }
+      ? {
+          ...initialValues,
+          parent_code: initialValues.parent_code || undefined,
+          sort_order: initialValues.sort_order ?? 0,
+        }
       : undefined;
   }, [initialValues]);
 
@@ -116,7 +120,7 @@ const MenuForm: React.FC<MenuFormProps> = ({
       <ProForm
         formRef={formRef}
         key={isEdit ? initialValues?.menu_code : 'create'}
-        initialValues={memoizedInitialValues}
+        initialValues={memoizedInitialValues ?? { sort_order: 100, status: 1 }}
         onFinish={async (values) => {
           onSubmit(values as CreateMenuRequest | UpdateMenuRequest);
         }}
@@ -188,6 +192,13 @@ const MenuForm: React.FC<MenuFormProps> = ({
         />
         <ProFormText name="path" label="路径" />
         <ProFormText name="component" label="组件" />
+        <ProFormDigit
+          name="sort_order"
+          label="排序"
+          min={0}
+          fieldProps={{ precision: 0 }}
+          extra="同级菜单下数值越小越靠前，可与「菜单管理」列表对照调整"
+        />
         <ProFormSelect
           name="status"
           label="状态"

@@ -35,7 +35,7 @@ func (r *MenuRepository) GetByCode(ctx context.Context, menuCode string) (*entit
 func (r *MenuRepository) List(ctx context.Context) ([]*entity.Menu, error) {
 	var menus []*entity.Menu
 	if err := r.db.WithContext(ctx).
-		Order("id ASC").
+		Order("sort_order ASC, id ASC").
 		Find(&menus).Error; err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (r *MenuRepository) ListByParent(ctx context.Context, parentCode string) ([
 	} else {
 		query = query.Where("parent_code = ?", parentCode)
 	}
-	if err := query.Order("id ASC").Find(&menus).Error; err != nil {
+	if err := query.Order("sort_order ASC, id ASC").Find(&menus).Error; err != nil {
 		return nil, err
 	}
 	return menus, nil
@@ -61,10 +61,10 @@ func (r *MenuRepository) Create(ctx context.Context, menu *entity.Menu) error {
 }
 
 func (r *MenuRepository) Update(ctx context.Context, menu *entity.Menu) error {
-	return r.db.WithContext(ctx).
-		Model(&entity.Menu{}).
-		Where("menu_code = ?", menu.MenuCode).
-		Updates(menu).Error
+	if menu == nil || menu.ID == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return r.db.WithContext(ctx).Save(menu).Error
 }
 
 func (r *MenuRepository) DeleteByCode(ctx context.Context, menuCode string) error {

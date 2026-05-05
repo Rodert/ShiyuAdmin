@@ -74,6 +74,8 @@ type Menu struct {
 	Component string `json:"component" gorm:"size:255;comment:组件路径，前端组件文件路径"`
 	// Status 状态：1=启用，0=禁用
 	Status int `json:"status" gorm:"comment:状态：1=启用，0=禁用"`
+	// SortOrder 同级菜单显示顺序，数值越小越靠前
+	SortOrder int `json:"sort_order" gorm:"column:sort_order;default:0;comment:同级菜单排序，越小越靠前"`
 	// CreatedAt 创建时间
 	CreatedAt time.Time `json:"created_at" gorm:"comment:创建时间"`
 	// UpdatedAt 更新时间

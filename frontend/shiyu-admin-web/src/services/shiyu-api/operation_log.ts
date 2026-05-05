@@ -35,7 +35,10 @@ export interface OperationLogQueryParams {
 }
 
 /** 获取操作日志列表（分页） */
-export async function getOperationLogList(params: OperationLogQueryParams) {
+export async function getOperationLogList(
+  params: OperationLogQueryParams,
+  opts?: { skipErrorHandler?: boolean },
+) {
   return request<{
     code: number;
     data: OperationLogListResponse;
@@ -43,5 +46,6 @@ export async function getOperationLogList(params: OperationLogQueryParams) {
   }>('/api/v1/system/operation-logs', {
     method: 'GET',
     params,
+    ...opts,
   });
 }

@@ -32,34 +32,37 @@ export interface DatabaseStats {
 }
 
 /** 获取缓存监控数据 */
-export async function getCacheStats() {
+export async function getCacheStats(opts?: { skipErrorHandler?: boolean }) {
   return request<{
     code: number;
     data: CacheStats;
     message?: string;
   }>('/api/v1/system/monitor/cache', {
     method: 'GET',
+    ...opts,
   });
 }
 
 /** 获取数据库监控数据 */
-export async function getDatabaseStats() {
+export async function getDatabaseStats(opts?: { skipErrorHandler?: boolean }) {
   return request<{
     code: number;
     data: DatabaseStats;
     message?: string;
   }>('/api/v1/system/monitor/database', {
     method: 'GET',
+    ...opts,
   });
 }
 
 /** 获取在线用户列表 */
-export async function getOnlineUsers() {
+export async function getOnlineUsers(opts?: { skipErrorHandler?: boolean }) {
   return request<{
     code: number;
     data: OnlineUser[];
     message?: string;
   }>('/api/v1/system/monitor/online-users', {
     method: 'GET',
+    ...opts,
   });
 }

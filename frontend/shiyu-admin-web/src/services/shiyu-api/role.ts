@@ -31,10 +31,10 @@ export interface UpdateRoleRequest {
 }
 
 /** 获取角色列表 */
-export async function getRoleList(params: {
-  page?: number;
-  page_size?: number;
-}) {
+export async function getRoleList(
+  params: { page?: number; page_size?: number },
+  opts?: { skipErrorHandler?: boolean },
+) {
   return request<{
     code: number;
     data: RoleListResponse;
@@ -42,6 +42,7 @@ export async function getRoleList(params: {
   }>('/api/v1/system/roles', {
     method: 'GET',
     params,
+    ...opts,
   });
 }
 

@@ -37,10 +37,10 @@ export interface UpdateUserRequest {
 }
 
 /** 获取用户列表 */
-export async function getUserList(params: {
-  page?: number;
-  page_size?: number;
-}) {
+export async function getUserList(
+  params: { page?: number; page_size?: number },
+  opts?: { skipErrorHandler?: boolean },
+) {
   return request<{
     code: number;
     data: UserListResponse;
@@ -48,6 +48,7 @@ export async function getUserList(params: {
   }>('/api/v1/system/users', {
     method: 'GET',
     params,
+    ...opts,
   });
 }
 
