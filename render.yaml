@@ -1,4 +1,4 @@
-# Render 自动部署配置文件
+# Render 部署配置文件
 # 此文件用于在 Render 平台一键部署整个应用栈
 # 文档: https://render.com/docs/blueprint-spec
 
@@ -28,7 +28,7 @@ services:
       - key: PORT
         value: "8080"
     healthCheckPath: /api/v1/system/health
-    autoDeploy: true  # GitHub 推送自动部署
+    autoDeploy: false  # 关闭 GitHub 推送自动部署，改为手动部署
 
   # 前端服务
   - type: web
@@ -42,7 +42,7 @@ services:
           name: shiyu-admin-backend
           type: web
           property: host
-    autoDeploy: true  # GitHub 推送自动部署
+    autoDeploy: false  # 关闭 GitHub 推送自动部署，改为手动部署
 
 databases:
   # PostgreSQL 数据库

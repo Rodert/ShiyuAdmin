@@ -44,7 +44,7 @@
   - 零业务代码改动：通过环境变量和配置增强实现
   - 通用性：支持 Render、Railway、Fly.io 等平台的标准环境变量格式
   - 低耦合：配置与代码分离，通过环境变量注入
-  - 自动化：GitHub 推送自动触发 Render 部署
+  - 可控发布：Render 配置为手动部署，避免 GitHub 推送自动触发构建
   - 完全免费：支持 Render 免费计划（PostgreSQL 512MB、Redis 25MB、Web Service）
 
 - **遗留问题 / TODO**

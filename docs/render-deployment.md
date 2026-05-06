@@ -1,6 +1,6 @@
 # Render 平台部署指南
 
-本文档介绍如何在 Render 平台免费部署 ShiyuAdmin 系统，支持 GitHub 自动部署。
+本文档介绍如何在 Render 平台免费部署 ShiyuAdmin 系统。当前配置关闭 GitHub 推送自动部署，默认使用手动部署。
 
 ## 📋 目录
 
@@ -18,7 +18,7 @@
 ### Render 平台特点
 
 - ✅ **完全免费**：免费 PostgreSQL（512MB）、Redis（25MB）、Web Service
-- ✅ **自动部署**：连接 GitHub 仓库，推送代码自动部署
+- ✅ **手动部署**：连接 GitHub 仓库后，可在 Render Dashboard 手动触发部署
 - ✅ **Docker 支持**：原生支持 Docker 部署，无需修改业务代码
 - ✅ **环境变量**：自动注入数据库连接信息
 - ⚠️ **服务休眠**：免费服务 15 分钟无活动后休眠，首次访问需要 30-60 秒唤醒
@@ -27,7 +27,7 @@
 
 ```
 GitHub 仓库
-    ↓ (自动部署)
+    ↓ (手动部署)
 前端 (Render Web Service - Docker)
     ↓ (API 调用)
 后端 (Render Web Service - Docker)
@@ -43,7 +43,7 @@ Redis (Render Redis - 免费，可选)
 1. **GitHub 账号**：项目已推送到 GitHub
 2. **Render 账号**：访问 https://render.com 注册（支持 GitHub 登录）
 3. **项目代码**：确保包含以下文件：
-   - `render.yaml` - Render 自动部署配置
+   - `render.yaml` - Render 部署配置
    - `backend/shiyu-admin-backend/configs/config.render.yaml` - Render 专用配置
    - `backend/shiyu-admin-backend/Dockerfile` - 后端 Docker 配置
    - `frontend/shiyu-admin-web/Dockerfile` - 前端 Docker 配置
@@ -123,8 +123,8 @@ Redis (Render Redis - 免费，可选)
    JWT_SECRET=<生成一个随机字符串，如: openssl rand -hex 32>
    PORT=8080
    ```
-5. 配置自动部署：
-   - **Auto-Deploy**: `Yes`
+5. 配置部署方式：
+   - **Auto-Deploy**: `No`
    - **Branch**: `main`
 6. 点击 **"Create Web Service"**
 
@@ -142,8 +142,8 @@ Redis (Render Redis - 免费，可选)
    REACT_APP_API_BASE_URL=https://shiyu-admin-backend.onrender.com
    ```
    > 注意：`shiyu-admin-backend` 需要替换为你的实际后端服务名称
-5. 配置自动部署：
-   - **Auto-Deploy**: `Yes`
+5. 配置部署方式：
+   - **Auto-Deploy**: `No`
    - **Branch**: `main`
 6. 点击 **"Create Web Service"**
 
@@ -243,14 +243,14 @@ Render 平台专用后端配置文件，特点：
 - 确认后端服务地址正确（包含 `https://`）
 - 检查后端 CORS 配置是否允许前端域名
 
-### 4. 自动部署不工作
+### 4. 是否会自动部署
 
-**问题**：推送代码到 GitHub 后没有自动部署。
+**说明**：当前 `render.yaml` 中 `autoDeploy: false`，推送代码到 GitHub 后不会自动部署。
 
-**检查项**：
-- 确认 Render 中服务的 **Auto-Deploy** 设置为 `Yes`
-- 确认 GitHub Webhook 已正确配置（Render 自动配置）
-- 检查 Render Dashboard 的 Events 日志
+**手动部署**：
+- 在 Render Dashboard 中打开对应服务
+- 点击 **"Manual Deploy"** 触发部署
+- 如需重新使用自动部署，将服务的 **Auto-Deploy** 打开，并把 `render.yaml` 中对应服务的 `autoDeploy` 改回 `true`
 
 ### 5. 构建失败
 
@@ -276,8 +276,8 @@ Render 平台专用后端配置文件，特点：
 ### 更新代码
 
 1. 推送代码到 GitHub
-2. Render 会自动检测并开始部署
-3. 在 Dashboard 查看部署进度
+2. 在 Render Dashboard 中打开对应服务
+3. 点击 **"Manual Deploy"** 开始部署，并查看部署进度
 
 ### 查看日志
 
