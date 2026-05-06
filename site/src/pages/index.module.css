@@ -1,6 +1,6 @@
 .hero {
   min-height: calc(100vh - 64px);
-  padding: 56px 0 48px;
+  padding: 46px 0 40px;
   background:
     linear-gradient(135deg, rgba(239, 246, 255, 0.92), rgba(255, 255, 255, 0.94) 48%, rgba(236, 253, 245, 0.78)),
     #f8fafc;
@@ -9,11 +9,11 @@
 }
 
 .heroInner {
-  width: min(1200px, calc(100% - 40px));
+  width: min(1440px, calc(100% - 40px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(420px, 1.12fr);
-  gap: 44px;
+  grid-template-columns: minmax(360px, 0.62fr) minmax(680px, 1.38fr);
+  gap: 34px;
   align-items: center;
 }
 
@@ -58,17 +58,73 @@
 }
 
 .heroVisual {
-  padding: 12px;
+  min-width: 0;
+  padding: 10px;
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.76);
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.14);
 }
 
-.heroVisual img {
+.carouselFrame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #0f172a;
+}
+
+.carouselFrame img {
   display: block;
   width: 100%;
-  border-radius: 6px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.carouselCaption {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  display: grid;
+  gap: 4px;
+  max-width: 560px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+
+.carouselCaption strong {
+  font-size: 18px;
+}
+
+.carouselCaption span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.carouselDots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0 2px;
+}
+
+.carouselDot {
+  width: 34px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+}
+
+.carouselDotActive {
+  background: #0f766e;
 }
 
 .section {
@@ -146,7 +202,7 @@
 
 .screens {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -231,6 +287,14 @@
   .actions :global(.button) {
     width: 100%;
     justify-content: center;
+  }
+
+  .carouselCaption {
+    position: static;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0;
+    background: #0f172a;
   }
 
   .featureGrid,

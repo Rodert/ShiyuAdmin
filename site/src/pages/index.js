@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import Link from '@docusaurus/Link';
@@ -41,6 +42,70 @@ const stack = [
   'Docker Compose',
 ];
 
+const showcaseSlides = [
+  {
+    title: '系统首页',
+    description: '角色权限、系统状态、项目介绍和技术选型集中展示。',
+    image: '/ShiyuAdmin/img/shou-ye.png',
+    alt: 'Shiyu Admin 系统首页截图',
+  },
+  {
+    title: '运维态势全景',
+    description: '用户、角色、日志、会话、数据库和 Redis 状态一屏掌握。',
+    image: '/ShiyuAdmin/img/yi-biao-pan.png',
+    alt: 'Shiyu Admin 运维态势全景截图',
+  },
+  {
+    title: '数据监控',
+    description: '查看表结构、字段注释和基础数据，适合开发与排查。',
+    image: '/ShiyuAdmin/img/shu-ju-jian-kong.png',
+    alt: 'Shiyu Admin 数据监控截图',
+  },
+  {
+    title: '在线用户',
+    description: '查看在线会话、登录来源、浏览器信息，并支持强退操作。',
+    image: '/ShiyuAdmin/img/zai-xian-yong-hu.png',
+    alt: 'Shiyu Admin 在线用户截图',
+  },
+];
+
+function ShowcaseCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeSlide = showcaseSlides[activeIndex];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % showcaseSlides.length);
+    }, 4200);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <section className={styles.heroVisual} aria-label="Shiyu Admin 演示图轮播">
+      <div className={styles.carouselFrame}>
+        <img src={activeSlide.image} alt={activeSlide.alt} />
+        <div className={styles.carouselCaption}>
+          <strong>{activeSlide.title}</strong>
+          <span>{activeSlide.description}</span>
+        </div>
+      </div>
+      <div className={styles.carouselDots} aria-label="切换演示图">
+        {showcaseSlides.map((slide, index) => (
+          <button
+            type="button"
+            key={slide.title}
+            className={clsx(styles.carouselDot, index === activeIndex && styles.carouselDotActive)}
+            onClick={() => setActiveIndex(index)}
+            aria-label={`查看${slide.title}`}
+            aria-current={index === activeIndex ? 'true' : undefined}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function HomepageHeader() {
   return (
     <header className={styles.hero}>
@@ -67,9 +132,7 @@ function HomepageHeader() {
             </Link>
           </div>
         </section>
-        <section className={styles.heroVisual} aria-label="Shiyu Admin 后台首页截图">
-          <img src="/ShiyuAdmin/img/home-img.png" alt="Shiyu Admin 后台首页截图" />
-        </section>
+        <ShowcaseCarousel />
       </div>
     </header>
   );
@@ -130,16 +193,20 @@ function Preview() {
         </div>
         <div className={styles.screens}>
           <figure>
-            <img src="/ShiyuAdmin/img/login-img.png" alt="Shiyu Admin 登录页截图" />
-            <figcaption>登录页</figcaption>
+            <img src="/ShiyuAdmin/img/shou-ye.png" alt="Shiyu Admin 系统首页截图" />
+            <figcaption>系统首页</figcaption>
           </figure>
           <figure>
-            <img src="/ShiyuAdmin/img/home-img.png" alt="Shiyu Admin 后台首页截图" />
-            <figcaption>后台首页</figcaption>
+            <img src="/ShiyuAdmin/img/yi-biao-pan.png" alt="Shiyu Admin 运维态势全景截图" />
+            <figcaption>运维态势全景</figcaption>
           </figure>
           <figure>
-            <img src="/ShiyuAdmin/img/dashboard.png" alt="Shiyu Admin 数据仪表盘截图" />
-            <figcaption>数据仪表盘</figcaption>
+            <img src="/ShiyuAdmin/img/shu-ju-jian-kong.png" alt="Shiyu Admin 数据监控截图" />
+            <figcaption>数据监控</figcaption>
+          </figure>
+          <figure>
+            <img src="/ShiyuAdmin/img/zai-xian-yong-hu.png" alt="Shiyu Admin 在线用户截图" />
+            <figcaption>在线用户</figcaption>
           </figure>
         </div>
       </div>
