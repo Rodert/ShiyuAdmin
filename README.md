@@ -133,17 +133,18 @@ git status --short
 
 ## GitHub Pages 项目主页
 
-项目介绍页放在独立的 `site/` 目录，已配置 GitHub Actions 自动部署到 GitHub Pages，不和后台前端耦合。
+官网与文档站放在独立的 `site/` 目录，基于 Docusaurus 构建，已配置 GitHub Actions 自动部署到 GitHub Pages，不和后台前端耦合。
 
 1. 进入仓库 `Settings` -> `Pages`。
 2. Source 选择 `Deploy from a branch`。
 3. Branch 选择 `gh-pages`，目录选择 `/ (root)`。
-4. 推送 `main` 分支后，工作流会自动发布 `site/` 静态页。
+4. 推送 `main` 分支后，工作流会自动构建并发布 Docusaurus 站点。
 
 关键配置：
 
 - Workflow：`.github/workflows/frontend-pages.yml`
-- 静态页目录：`site/`
+- Docusaurus 目录：`site/`
+- 构建产物：`site/build`
 - GitHub Pages 子路径：`/ShiyuAdmin/`
 
 详细说明见：[GitHub Pages 项目主页部署指南](./docs/github-pages-deployment.md)。
@@ -175,7 +176,7 @@ git status --short
 ShiyuAdmin
 ├── backend/shiyu-admin-backend     # Go 后端
 ├── frontend/shiyu-admin-web        # React 前端
-├── site                            # GitHub Pages 项目介绍页
+├── site                            # Docusaurus 官网与文档站
 ├── docs                            # 部署与设计文档
 ├── img                             # README 预览图
 ├── docker-compose.yml              # 本地一键启动

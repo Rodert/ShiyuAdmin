@@ -1,0 +1,70 @@
+:root {
+  --ifm-color-primary: #0f766e;
+  --ifm-color-primary-dark: #0d6a63;
+  --ifm-color-primary-darker: #0c645d;
+  --ifm-color-primary-darkest: #0a524d;
+  --ifm-color-primary-light: #118278;
+  --ifm-color-primary-lighter: #12887f;
+  --ifm-color-primary-lightest: #149a90;
+  --ifm-heading-font-weight: 800;
+  --ifm-navbar-height: 64px;
+  --ifm-card-border-radius: 8px;
+  --ifm-global-radius: 8px;
+}
+
+html[data-theme='dark'] {
+  --ifm-background-color: #0f172a;
+  --ifm-background-surface-color: #111827;
+  --ifm-color-primary: #2dd4bf;
+}
+
+.navbar {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+}
+
+.button {
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.theme-doc-markdown img {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+}
+
+.cloud-grid,
+.link-grid,
+.screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cloud-card,
+.link-card,
+.screenshot-card {
+  padding: 18px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+  background: var(--ifm-background-surface-color);
+}
+
+.cloud-card h3,
+.link-card h3,
+.screenshot-card h3 {
+  margin-top: 0;
+}
+
+.screenshot-card img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+@media (max-width: 760px) {
+  .cloud-grid,
+  .link-grid,
+  .screenshot-grid {
+    grid-template-columns: 1fr;
+  }
+}

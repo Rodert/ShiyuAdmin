@@ -31,3 +31,7 @@ pnpm-debug.log*
 .umi/
 .umi-production/
 .umi-test/
+
+# docusaurus
+.docusaurus/
+**/.docusaurus/
