@@ -45,7 +45,10 @@
 
 - GitHub Pages 项目介绍页：<https://rodert.github.io/ShiyuAdmin/>
 - GitHub 主仓库：<https://github.com/Rodert/ShiyuAdmin>
-- Gitee 镜像：<https://gitee.com/rodert/ShiyuAdmin>
+- Gitee 国内镜像：<https://gitee.com/rodert/ShiyuAdmin>
+- GitCode 国内镜像：<https://gitcode.com/JavaPub/ShiyuAdmin>
+
+> 仓库说明：GitHub 为主仓库，Issue / PR / Release 以 GitHub 为准；Gitee 和 GitCode 用于国内访问、克隆和同步备份。
 
 > 当前不提供在线登录演示。需要体验完整后台，请按“开箱即用”在本地启动。
 
@@ -200,6 +203,8 @@ ShiyuAdmin
 - 作者：王仕宇（JavaPub）
 - 官网：<https://javapub.net.cn/>
 - GitHub：<https://github.com/Rodert/ShiyuAdmin>
+- Gitee：<https://gitee.com/rodert/ShiyuAdmin>
+- GitCode：<https://gitcode.com/JavaPub/ShiyuAdmin>
 - 公众号：`JavaPub`
 
 ---
