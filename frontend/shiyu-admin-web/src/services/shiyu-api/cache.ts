@@ -1,6 +1,13 @@
-import { request } from '@umijs/max';
+import { request } from "@umijs/max";
 
-export type RedisValueType = 'all' | 'string' | 'list' | 'set' | 'zset' | 'hash' | 'stream';
+export type RedisValueType =
+  | "all"
+  | "string"
+  | "list"
+  | "set"
+  | "zset"
+  | "hash"
+  | "stream";
 
 export interface CacheDatabase {
   db: number;
@@ -34,8 +41,8 @@ export async function getCacheDatabases() {
     code: number;
     data: CacheDatabase[];
     message?: string;
-  }>('/api/v1/system/cache/databases', {
-    method: 'GET',
+  }>("/api/v1/system/cache/databases", {
+    method: "GET",
   });
 }
 
@@ -49,8 +56,8 @@ export async function getCacheKeys(params: {
     code: number;
     data: CacheKeyList;
     message?: string;
-  }>('/api/v1/system/cache/keys', {
-    method: 'GET',
+  }>("/api/v1/system/cache/keys", {
+    method: "GET",
     params,
   });
 }
@@ -60,8 +67,19 @@ export async function getCacheValue(params: { db: number; key: string }) {
     code: number;
     data: CacheValue;
     message?: string;
-  }>('/api/v1/system/cache/value', {
-    method: 'GET',
+  }>("/api/v1/system/cache/value", {
+    method: "GET",
+    params,
+  });
+}
+
+export async function deleteCacheKey(params: { db: number; key: string }) {
+  return request<{
+    code: number;
+    data: { deleted: boolean };
+    message?: string;
+  }>("/api/v1/system/cache/key", {
+    method: "DELETE",
     params,
   });
 }

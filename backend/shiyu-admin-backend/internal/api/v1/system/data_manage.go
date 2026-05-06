@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"shiyu-admin-backend/internal/middleware"
+	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
 	"shiyu-admin-backend/pkg/response"
@@ -17,6 +18,10 @@ func registerDataManageRoutes(rg *gin.RouterGroup, svc interfaces.DataManageServ
 	if svc == nil {
 		return
 	}
+
+	rg.POST("/data/login", middleware.RequireSuperAdmin(), func(c *gin.Context) {
+		loginDataMonitor(c, svc)
+	})
 
 	// 列出所有表
 	rg.GET("/data/tables", middleware.RequireSuperAdmin(), func(c *gin.Context) {
@@ -32,6 +37,19 @@ func registerDataManageRoutes(rg *gin.RouterGroup, svc interfaces.DataManageServ
 	rg.GET("/data/tables/:table/rows", middleware.RequireSuperAdmin(), func(c *gin.Context) {
 		listTableRows(c, svc)
 	})
+}
+
+func loginDataMonitor(c *gin.Context, svc interfaces.DataManageService) {
+	var req dto.DataLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "参数错误")
+		return
+	}
+	if !svc.VerifyCredential(c, req.Username, req.Password) {
+		response.Error(c, http.StatusUnauthorized, "数据库用户名或密码错误")
+		return
+	}
+	response.Success(c, gin.H{"authenticated": true})
 }
 
 func listTables(c *gin.Context, svc interfaces.DataManageService) {

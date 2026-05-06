@@ -24,6 +24,7 @@ import (
 	monitorsvc "shiyu-admin-backend/internal/service/monitor"
 	operationlogsvc "shiyu-admin-backend/internal/service/operation_log"
 	permissionsvc "shiyu-admin-backend/internal/service/permission"
+	profilesvc "shiyu-admin-backend/internal/service/profile"
 	rolesvc "shiyu-admin-backend/internal/service/role"
 	roleDeptSvc "shiyu-admin-backend/internal/service/role_dept"
 	roleMenuSvc "shiyu-admin-backend/internal/service/role_menu"
@@ -124,6 +125,10 @@ func Run(cfg *config.Config) error {
 	if userRoleRepo != nil {
 		userRoleSvcVar = userRoleSvc.New(userRoleRepo)
 	}
+	var profileSvc serviceInterfaces.ProfileService
+	if userSvc != nil {
+		profileSvc = profilesvc.New(userSvc, deptSvc, userRoleSvcVar)
+	}
 	var roleMenuSvcVar serviceInterfaces.RoleMenuService
 	if roleMenuRepo != nil {
 		roleMenuSvcVar = roleMenuSvc.New(roleMenuRepo)
@@ -138,7 +143,7 @@ func Run(cfg *config.Config) error {
 	}
 	var dataManageSvcVar serviceInterfaces.DataManageService
 	if dbMetaRepo != nil {
-		dataManageSvcVar = dataManageSvc.New(dbMetaRepo)
+		dataManageSvcVar = dataManageSvc.New(dbMetaRepo, cfg.Database.Username, cfg.Database.Password)
 	}
 	var monitorSvcVar serviceInterfaces.MonitorService
 	if redisClient != nil || db != nil {
@@ -151,11 +156,11 @@ func Run(cfg *config.Config) error {
 		permissionSvcVar = permissionsvc.New(userRoleRepo, roleMenuRepo)
 	}
 
-	authMiddleware := middleware.Auth(cfg.JWT.Secret)
+	authMiddleware := middleware.Auth(cfg.JWT.Secret, monitorSvcVar)
 
 	api := engine.Group("/api/v1")
 	{
-		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar, cacheSvcVar)
+		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, profileSvc, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar, cacheSvcVar)
 	}
 
 	port := cfg.Server.Port

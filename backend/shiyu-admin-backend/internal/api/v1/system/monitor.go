@@ -30,6 +30,9 @@ func registerMonitorRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permiss
 	rg.GET("/monitor/online-users", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
 		listOnlineUsers(c, monitorSvc)
 	})
+	rg.DELETE("/monitor/online-users/:session_id", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
+		forceLogoutOnlineUser(c, monitorSvc)
+	})
 }
 
 // getCacheStats returns basic Redis/cache statistics.
@@ -69,4 +72,17 @@ func listOnlineUsers(c *gin.Context, monitorSvc interfaces.MonitorService) {
 		items = []*vo.OnlineUserVO{}
 	}
 	response.Success(c, items)
+}
+
+func forceLogoutOnlineUser(c *gin.Context, monitorSvc interfaces.MonitorService) {
+	sessionID := c.Param("session_id")
+	if sessionID == "" {
+		response.Error(c, http.StatusBadRequest, "会话编号不能为空")
+		return
+	}
+	if err := monitorSvc.ForceLogout(c, sessionID); err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.Success(c, gin.H{"forced": true})
 }

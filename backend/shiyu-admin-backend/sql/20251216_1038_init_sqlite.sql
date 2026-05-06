@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS sys_users (
   nickname TEXT,
   email TEXT,
   phone TEXT,
+  avatar TEXT NOT NULL DEFAULT '/logo-v2.png',
   password TEXT NOT NULL,
   dept_code TEXT,
   status INTEGER NOT NULL DEFAULT 1,

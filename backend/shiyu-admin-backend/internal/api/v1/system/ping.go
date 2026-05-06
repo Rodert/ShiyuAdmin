@@ -11,11 +11,12 @@ import (
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/entity"
 	"shiyu-admin-backend/internal/service/interfaces"
+	"shiyu-admin-backend/pkg/jwtutil"
 	"shiyu-admin-backend/pkg/response"
 )
 
 // RegisterRoutes wires system routes under /system.
-func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService, cacheSvc interfaces.CacheService) {
+func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, profileSvc interfaces.ProfileService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService, cacheSvc interfaces.CacheService) {
 	r := rg.Group("/system")
 	r.GET("/ping", ping)
 	r.GET("/health", health)
@@ -34,7 +35,15 @@ func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMid
 		if monitorSvc != nil {
 			protected.Use(middleware.OnlineUserTracker(monitorSvc))
 		}
-		protected.GET("/profile", profile)
+		protected.GET("/profile", func(c *gin.Context) {
+			profile(c, profileSvc)
+		})
+		protected.PUT("/profile", func(c *gin.Context) {
+			updateProfile(c, profileSvc)
+		})
+		protected.PUT("/profile/password", func(c *gin.Context) {
+			changePassword(c, profileSvc)
+		})
 		registerUserRoutes(protected, permissionSvc, userSvc)
 		registerRoleRoutes(protected, permissionSvc, roleSvc)
 		registerMenuRoutes(protected, permissionSvc, menuSvc, userRoleSvc, roleMenuSvc)
@@ -63,13 +72,91 @@ func health(c *gin.Context) {
 	})
 }
 
-func profile(c *gin.Context) {
+func profile(c *gin.Context, profileSvc interfaces.ProfileService) {
 	claims, ok := c.Get(middleware.CurrentUserCtxKey)
 	if !ok {
 		response.Error(c, http.StatusUnauthorized, "未授权")
 		return
 	}
-	response.Success(c, claims)
+	userCode := currentUserCode(claims)
+	if userCode == "" || profileSvc == nil {
+		response.Success(c, claims)
+		return
+	}
+	data, err := profileSvc.Get(c, userCode)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if data == nil {
+		response.Error(c, http.StatusNotFound, "用户不存在")
+		return
+	}
+	response.Success(c, data)
+}
+
+func updateProfile(c *gin.Context, profileSvc interfaces.ProfileService) {
+	if profileSvc == nil {
+		response.Error(c, http.StatusServiceUnavailable, "服务不可用")
+		return
+	}
+	userCode := currentUserCodeFromContext(c)
+	if userCode == "" {
+		response.Error(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+	var req dto.UpdateProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "参数错误")
+		return
+	}
+	data, err := profileSvc.Update(c, userCode, &req)
+	if err != nil {
+		writeServiceError(c, err)
+		return
+	}
+	if data == nil {
+		response.Error(c, http.StatusNotFound, "用户不存在")
+		return
+	}
+	response.Success(c, data)
+}
+
+func changePassword(c *gin.Context, profileSvc interfaces.ProfileService) {
+	if profileSvc == nil {
+		response.Error(c, http.StatusServiceUnavailable, "服务不可用")
+		return
+	}
+	userCode := currentUserCodeFromContext(c)
+	if userCode == "" {
+		response.Error(c, http.StatusUnauthorized, "未授权")
+		return
+	}
+	var req dto.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "参数错误")
+		return
+	}
+	if err := profileSvc.ChangePassword(c, userCode, &req); err != nil {
+		writeServiceError(c, err)
+		return
+	}
+	response.Success(c, gin.H{"updated": true})
+}
+
+func currentUserCodeFromContext(c *gin.Context) string {
+	claims, ok := c.Get(middleware.CurrentUserCtxKey)
+	if !ok {
+		return ""
+	}
+	return currentUserCode(claims)
+}
+
+func currentUserCode(claims any) string {
+	if v, ok := claims.(*jwtutil.Claims); ok {
+		return v.UserCode
+	}
+	return ""
 }
 
 // login handles user login.

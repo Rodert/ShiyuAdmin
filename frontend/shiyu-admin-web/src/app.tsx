@@ -1,25 +1,24 @@
-import { LinkOutlined } from '@ant-design/icons';
-import type {
-  MenuDataItem,
-  Settings as LayoutSettings,
-} from '@ant-design/pro-components';
-import { SettingDrawer } from '@ant-design/pro-components';
-import type { RequestConfig, RunTimeLayoutConfig } from '@umijs/max';
-import { history, Link } from '@umijs/max';
-import React from 'react';
 import {
   AvatarDropdown,
   AvatarName,
   Footer,
   UserProfileAction,
-} from '@/components';
-import { currentUser as queryCurrentUser } from '@/services/ant-design-pro/api';
-import { getMenuTree, type Menu as APIMenu } from '@/services/shiyu-api/menu';
-import defaultSettings from '../config/defaultSettings';
-import { errorConfig } from './requestErrorConfig';
-import '@ant-design/v5-patch-for-react-19';
-const isDev = process.env.NODE_ENV === 'development';
-const loginPath = '/user/login';
+} from "@/components";
+import { currentUser as queryCurrentUser } from "@/services/ant-design-pro/api";
+import { getMenuTree, type Menu as APIMenu } from "@/services/shiyu-api/menu";
+import { LinkOutlined } from "@ant-design/icons";
+import type {
+  Settings as LayoutSettings,
+  MenuDataItem,
+} from "@ant-design/pro-components";
+import { SettingDrawer } from "@ant-design/pro-components";
+import "@ant-design/v5-patch-for-react-19";
+import type { RequestConfig, RunTimeLayoutConfig } from "@umijs/max";
+import { history, Link } from "@umijs/max";
+import defaultSettings from "../config/defaultSettings";
+import { errorConfig } from "./requestErrorConfig";
+const isDev = process.env.NODE_ENV === "development";
+const loginPath = "/user/login";
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
@@ -33,7 +32,7 @@ export async function getInitialState(): Promise<{
 }> {
   const buildMenuData = (menus: APIMenu[]): MenuDataItem[] => {
     return (menus || [])
-      .filter((m) => m.status === 1 && m.menu_type !== 'F')
+      .filter((m) => m.status === 1 && m.menu_type !== "F")
       .map((m) => ({
         name: m.menu_name,
         path: m.path || `/${m.menu_code}`,
@@ -65,8 +64,8 @@ export async function getInitialState(): Promise<{
   // 如果不是登录页面，执行
   const { location } = history;
   if (
-    ![loginPath, '/user/register', '/user/register-result'].includes(
-      location.pathname,
+    ![loginPath, "/user/register", "/user/register-result"].includes(
+      location.pathname
     )
   ) {
     const currentUser = await fetchUserInfo();
@@ -95,7 +94,7 @@ export const layout: RunTimeLayoutConfig = ({
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
       render: (_, avatarChildren) => {
-        return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
+        return <AvatarDropdown menu>{avatarChildren}</AvatarDropdown>;
       },
     },
     waterMarkProps: {
@@ -111,22 +110,22 @@ export const layout: RunTimeLayoutConfig = ({
     },
     bgLayoutImgList: [
       {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',
+        src: "https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr",
         left: 85,
         bottom: 100,
-        height: '303px',
+        height: "303px",
       },
       {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr',
+        src: "https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/C2TWRpJpiC0AAAAAAAAAAAAAFl94AQBr",
         bottom: -68,
         right: -45,
-        height: '303px',
+        height: "303px",
       },
       {
-        src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr',
+        src: "https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/F6vSTbj8KpYAAAAAAAAAAAAAFl94AQBr",
         bottom: 0,
         left: 0,
-        width: '331px',
+        width: "331px",
       },
     ],
     links: isDev
@@ -142,17 +141,40 @@ export const layout: RunTimeLayoutConfig = ({
       if (initialState?.menuData && initialState.menuData.length > 0) {
         return initialState.menuData;
       }
-      // 后端未返回菜单时，仅展示欢迎页
+      // 后端未返回菜单时，仅展示首页
       return [
         {
-          name: '欢迎',
-          path: '/welcome',
-          icon: 'smile',
+          name: "首页",
+          path: "/welcome",
+          icon: "smile",
         },
         {
-          name: '仪表盘',
-          path: '/dashboard',
-          icon: 'dashboard',
+          name: "仪表盘",
+          path: "/dashboard",
+          icon: "dashboard",
+        },
+        {
+          name: "系统监控",
+          path: "/monitor",
+          icon: "monitor",
+          children: [
+            {
+              name: "在线用户",
+              path: "/monitor/online-users",
+            },
+            {
+              name: "服务监控",
+              path: "/monitor/service",
+            },
+            {
+              name: "缓存监控",
+              path: "/monitor/cache",
+            },
+            {
+              name: "数据监控",
+              path: "/monitor/data",
+            },
+          ],
         },
       ];
     },
@@ -192,8 +214,8 @@ export const layout: RunTimeLayoutConfig = ({
 export const request: RequestConfig = {
   // 开发环境使用代理，生产环境需要配置实际的后端地址
   baseURL:
-    process.env.NODE_ENV === 'production'
-      ? process.env.REACT_APP_API_BASE_URL || ''
-      : '',
+    process.env.NODE_ENV === "production"
+      ? process.env.REACT_APP_API_BASE_URL || ""
+      : "",
   ...errorConfig,
 };

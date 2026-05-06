@@ -1,8 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns } from '@ant-design/pro-components';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import { Button, message, Modal } from 'antd';
-import React, { useRef, useState } from 'react';
 import {
   createUser,
   deleteUser,
@@ -11,8 +6,13 @@ import {
   type CreateUserRequest,
   type UpdateUserRequest,
   type User,
-} from '@/services/shiyu-api/user';
-import UserForm from './components/UserForm';
+} from "@/services/shiyu-api/user";
+import { PlusOutlined } from "@ant-design/icons";
+import type { ActionType, ProColumns } from "@ant-design/pro-components";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import { Avatar, Button, message, Modal } from "antd";
+import React, { useRef, useState } from "react";
+import UserForm from "./components/UserForm";
 
 const UserManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -21,11 +21,11 @@ const UserManagement: React.FC = () => {
   const actionRef = useRef<ActionType>(null);
 
   const handleCreate = async (
-    values: CreateUserRequest | UpdateUserRequest,
+    values: CreateUserRequest | UpdateUserRequest
   ): Promise<User | undefined> => {
     const res = await createUser(values as CreateUserRequest);
     if (res.code === 200) {
-      message.success('创建成功');
+      message.success("创建成功");
       setCreateModalVisible(false);
       actionRef.current?.reload();
       return res.data;
@@ -34,12 +34,15 @@ const UserManagement: React.FC = () => {
   };
 
   const handleUpdate = async (
-    values: CreateUserRequest | UpdateUserRequest,
+    values: CreateUserRequest | UpdateUserRequest
   ): Promise<User | undefined> => {
     if (!editingRecord) return undefined;
-    const res = await updateUser(editingRecord.user_code, values as UpdateUserRequest);
+    const res = await updateUser(
+      editingRecord.user_code,
+      values as UpdateUserRequest
+    );
     if (res.code === 200) {
-      message.success('更新成功');
+      message.success("更新成功");
       setUpdateModalVisible(false);
       setEditingRecord(null);
       actionRef.current?.reload();
@@ -50,13 +53,13 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = (record: User) => {
     Modal.confirm({
-      title: '确认删除',
+      title: "确认删除",
       content: `确定要删除用户 "${record.username}" 吗？`,
       onOk: async () => {
         try {
           const res = await deleteUser(record.user_code);
           if (res.code === 200) {
-            message.success('删除成功');
+            message.success("删除成功");
             actionRef.current?.reload();
           }
         } catch (_error) {}
@@ -66,56 +69,66 @@ const UserManagement: React.FC = () => {
 
   const columns: ProColumns<User>[] = [
     {
-      title: '用户编码',
-      dataIndex: 'user_code',
-      key: 'user_code',
+      title: "用户编码",
+      dataIndex: "user_code",
+      key: "user_code",
+      width: 220,
+      ellipsis: true,
+      copyable: true,
+    },
+    {
+      title: "用户名",
+      dataIndex: "username",
+      key: "username",
       width: 120,
     },
     {
-      title: '用户名',
-      dataIndex: 'username',
-      key: 'username',
+      title: "昵称",
+      dataIndex: "nickname",
+      key: "nickname",
       width: 120,
     },
     {
-      title: '昵称',
-      dataIndex: 'nickname',
-      key: 'nickname',
-      width: 120,
+      title: "头像",
+      dataIndex: "avatar",
+      key: "avatar",
+      width: 80,
+      search: false,
+      render: (_, record) => <Avatar src={record.avatar || "/logo-v2.png"} />,
     },
     {
-      title: '邮箱',
-      dataIndex: 'email',
-      key: 'email',
+      title: "邮箱",
+      dataIndex: "email",
+      key: "email",
       width: 180,
     },
     {
-      title: '手机号',
-      dataIndex: 'phone',
-      key: 'phone',
+      title: "手机号",
+      dataIndex: "phone",
+      key: "phone",
       width: 120,
     },
     {
-      title: '部门编码',
-      dataIndex: 'dept_code',
-      key: 'dept_code',
+      title: "部门编码",
+      dataIndex: "dept_code",
+      key: "dept_code",
       width: 120,
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
       width: 80,
       valueEnum: {
-        1: { text: '启用', status: 'Success' },
-        0: { text: '禁用', status: 'Error' },
+        1: { text: "启用", status: "Success" },
+        0: { text: "禁用", status: "Error" },
       },
     },
     {
-      title: '操作',
-      key: 'action',
+      title: "操作",
+      key: "action",
       width: 180,
-      fixed: 'right',
+      fixed: "right",
       render: (_, record) => [
         <Button
           key="edit"
@@ -148,7 +161,7 @@ const UserManagement: React.FC = () => {
         actionRef={actionRef}
         rowKey="user_code"
         search={{
-          labelWidth: 'auto',
+          labelWidth: "auto",
         }}
         toolBarRender={() => [
           <Button
@@ -206,4 +219,3 @@ const UserManagement: React.FC = () => {
 };
 
 export default UserManagement;
-

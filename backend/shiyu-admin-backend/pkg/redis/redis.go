@@ -52,6 +52,13 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 	return c.rdb.Del(ctx, key).Err()
 }
 
+// DeleteForDB deletes a key in a specific Redis logical database.
+func (c *Client) DeleteForDB(ctx context.Context, db int, key string) error {
+	client := c.clientForDB(db)
+	defer client.Close()
+	return client.Del(ctx, key).Err()
+}
+
 // Exists checks if key exists.
 func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 	count, err := c.rdb.Exists(ctx, key).Result()

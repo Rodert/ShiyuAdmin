@@ -24,6 +24,7 @@ var schemaComments = []tableComment{
 			"nickname":       "昵称，显示名称",
 			"email":          "邮箱地址",
 			"phone":          "手机号码",
+			"avatar":         "头像地址",
 			"password":       "密码，BCrypt加密存储",
 			"dept_code":      "部门编码，关联部门表",
 			"status":         "状态：1=启用，0=禁用",

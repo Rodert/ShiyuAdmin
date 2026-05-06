@@ -4,6 +4,7 @@
 declare namespace API {
   type CurrentUser = {
     name?: string;
+    nickname?: string;
     avatar?: string;
     userid?: string;
     email?: string;
@@ -21,6 +22,14 @@ declare namespace API {
     };
     address?: string;
     phone?: string;
+    deptCode?: string;
+    deptName?: string;
+    status?: number;
+    roles?: {
+      role_code?: string;
+      role_name?: string;
+      role_key?: string;
+    }[];
     isSuperAdmin?: boolean;
     loginAt?: number;
   };
@@ -86,7 +95,7 @@ declare namespace API {
     success?: boolean;
   };
 
-  type NoticeIconItemType = 'notification' | 'message' | 'event';
+  type NoticeIconItemType = "notification" | "message" | "event";
 
   type NoticeIconItem = {
     id?: string;

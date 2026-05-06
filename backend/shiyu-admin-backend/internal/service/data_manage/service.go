@@ -11,11 +11,21 @@ import (
 )
 
 type Service struct {
-	repo interfaces.DBMetaRepository
+	repo       interfaces.DBMetaRepository
+	dbUser     string
+	dbPassword string
 }
 
-func New(repo interfaces.DBMetaRepository) serviceinterfaces.DataManageService {
-	return &Service{repo: repo}
+func New(repo interfaces.DBMetaRepository, dbUser string, dbPassword string) serviceinterfaces.DataManageService {
+	return &Service{repo: repo, dbUser: dbUser, dbPassword: dbPassword}
+}
+
+func (s *Service) VerifyCredential(ctx context.Context, username string, password string) bool {
+	username = strings.TrimSpace(username)
+	if s.dbUser == "" && s.dbPassword == "" {
+		return (username == "" && password == "") || (username == "shiyu" && password == "shiyu123")
+	}
+	return username == s.dbUser && password == s.dbPassword
 }
 
 func (s *Service) ListTables(ctx context.Context) ([]*vo.TableMetaVO, error) {

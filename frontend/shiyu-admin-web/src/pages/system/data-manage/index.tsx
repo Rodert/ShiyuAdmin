@@ -1,12 +1,24 @@
-import type { ActionType, ProColumns } from '@ant-design/pro-components';
-import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
-import { Button, Modal } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
-import type { TableMeta, ColumnMeta } from '@/services/shiyu-api/data_manage';
-import { getTables, getTableColumns, getTableRows } from '@/services/shiyu-api/data_manage';
-import { renderCellText } from '@/utils/tableRender';
+import type { ColumnMeta, TableMeta } from "@/services/shiyu-api/data_manage";
+import {
+  getTableColumns,
+  getTableRows,
+  getTables,
+  loginDataMonitor,
+} from "@/services/shiyu-api/data_manage";
+import { renderCellText } from "@/utils/tableRender";
+import type { ActionType, ProColumns } from "@ant-design/pro-components";
+import {
+  PageContainer,
+  ProCard,
+  ProForm,
+  ProFormText,
+  ProTable,
+} from "@ant-design/pro-components";
+import { Button, message, Modal } from "antd";
+import React, { useEffect, useRef, useState } from "react";
 
 const DataManagePage: React.FC = () => {
+  const [authenticated, setAuthenticated] = useState(false);
   const [currentTable, setCurrentTable] = useState<string | undefined>();
   const [columnsMeta, setColumnsMeta] = useState<ColumnMeta[]>([]);
   const [dataModalOpen, setDataModalOpen] = useState(false);
@@ -30,31 +42,70 @@ const DataManagePage: React.FC = () => {
     setDataModalOpen(true);
   };
 
+  if (!authenticated) {
+    return (
+      <PageContainer>
+        <ProCard>
+          <ProForm
+            style={{ maxWidth: 420 }}
+            initialValues={{
+              username: "shiyu",
+              password: "shiyu123",
+            }}
+            onFinish={async (values) => {
+              const res = await loginDataMonitor({
+                username: values.username,
+                password: values.password,
+              });
+              if (res.code === 200 && res.data?.authenticated) {
+                setAuthenticated(true);
+                message.success("登录成功");
+                return true;
+              }
+              return false;
+            }}
+          >
+            <ProFormText
+              name="username"
+              label="数据库用户名"
+              rules={[{ required: true, message: "请输入数据库用户名" }]}
+            />
+            <ProFormText.Password
+              name="password"
+              label="数据库密码"
+              rules={[{ required: true, message: "请输入数据库密码" }]}
+            />
+          </ProForm>
+        </ProCard>
+      </PageContainer>
+    );
+  }
+
   const tableColumns: ProColumns<TableMeta>[] = [
     {
-      title: '表名',
-      dataIndex: 'table_name',
-      key: 'table_name',
+      title: "表名",
+      dataIndex: "table_name",
+      key: "table_name",
     },
     {
-      title: '类型',
-      dataIndex: 'table_type',
-      key: 'table_type',
+      title: "类型",
+      dataIndex: "table_type",
+      key: "table_type",
     },
     {
-      title: '表注释',
-      dataIndex: 'table_comment',
-      key: 'table_comment',
+      title: "表注释",
+      dataIndex: "table_comment",
+      key: "table_comment",
       ellipsis: true,
-      render: renderCellText<TableMeta, 'table_comment'>(
-        'table_comment',
-        (value) => value || '-',
+      render: renderCellText<TableMeta, "table_comment">(
+        "table_comment",
+        (value) => value || "-"
       ),
     },
     {
-      title: '操作',
-      key: 'option',
-      valueType: 'option',
+      title: "操作",
+      key: "option",
+      valueType: "option",
       render: (_, record) => [
         <Button
           key="preview"
@@ -72,49 +123,50 @@ const DataManagePage: React.FC = () => {
 
   const columnColumns: ProColumns<ColumnMeta>[] = [
     {
-      title: '字段名',
-      dataIndex: 'column_name',
-      key: 'column_name',
+      title: "字段名",
+      dataIndex: "column_name",
+      key: "column_name",
     },
     {
-      title: '数据类型',
-      dataIndex: 'data_type',
-      key: 'data_type',
+      title: "数据类型",
+      dataIndex: "data_type",
+      key: "data_type",
     },
     {
-      title: '可为空',
-      dataIndex: 'is_nullable',
-      key: 'is_nullable',
-      render: renderCellText<ColumnMeta, 'is_nullable'>('is_nullable', (value) =>
-        value ? '是' : '否',
+      title: "可为空",
+      dataIndex: "is_nullable",
+      key: "is_nullable",
+      render: renderCellText<ColumnMeta, "is_nullable">(
+        "is_nullable",
+        (value) => (value ? "是" : "否")
       ),
     },
     {
-      title: '最大长度',
-      dataIndex: 'max_length',
-      key: 'max_length',
-      render: renderCellText<ColumnMeta, 'max_length'>('max_length', (value) =>
-        value != null ? value : '-',
+      title: "最大长度",
+      dataIndex: "max_length",
+      key: "max_length",
+      render: renderCellText<ColumnMeta, "max_length">("max_length", (value) =>
+        value != null ? value : "-"
       ),
     },
     {
-      title: '默认值',
-      dataIndex: 'column_default',
-      key: 'column_default',
+      title: "默认值",
+      dataIndex: "column_default",
+      key: "column_default",
       ellipsis: true,
-      render: renderCellText<ColumnMeta, 'column_default'>(
-        'column_default',
-        (value) => value || '-',
+      render: renderCellText<ColumnMeta, "column_default">(
+        "column_default",
+        (value) => value || "-"
       ),
     },
     {
-      title: '字段注释',
-      dataIndex: 'column_comment',
-      key: 'column_comment',
+      title: "字段注释",
+      dataIndex: "column_comment",
+      key: "column_comment",
       ellipsis: true,
-      render: renderCellText<ColumnMeta, 'column_comment'>(
-        'column_comment',
-        (value) => value || '-',
+      render: renderCellText<ColumnMeta, "column_comment">(
+        "column_comment",
+        (value) => value || "-"
       ),
     },
   ];
@@ -148,7 +200,7 @@ const DataManagePage: React.FC = () => {
             }}
             columns={tableColumns}
             rowSelection={{
-              type: 'radio',
+              type: "radio",
               selectedRowKeys,
               onChange: (keys) => {
                 setSelectedRowKeys(keys);
@@ -165,10 +217,13 @@ const DataManagePage: React.FC = () => {
           />
         </ProCard>
         <ProCard
-          title={currentTable ? `表信息（${currentTable}）` : '表信息'}
+          title={currentTable ? `表信息（${currentTable}）` : "表信息"}
           extra={
             currentTable ? (
-              <Button type="primary" onClick={() => openDataModal(currentTable)}>
+              <Button
+                type="primary"
+                onClick={() => openDataModal(currentTable)}
+              >
                 查看数据
               </Button>
             ) : undefined
@@ -210,7 +265,7 @@ const DataManagePage: React.FC = () => {
         </ProCard>
       </ProCard>
       <Modal
-        title={currentTable ? `表数据预览（${currentTable}）` : '表数据预览'}
+        title={currentTable ? `表数据预览（${currentTable}）` : "表数据预览"}
         open={dataModalOpen}
         width={1100}
         footer={null}
@@ -268,9 +323,9 @@ const DataManagePage: React.FC = () => {
                 })) as ProColumns<Record<string, any>>[])
               : [
                   {
-                    title: '无字段信息',
-                    dataIndex: '_',
-                    render: () => '-',
+                    title: "无字段信息",
+                    dataIndex: "_",
+                    render: () => "-",
                   } as ProColumns<Record<string, any>>,
                 ]
           }

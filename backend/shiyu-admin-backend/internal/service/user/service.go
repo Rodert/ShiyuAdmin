@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -20,6 +21,8 @@ import (
 type Service struct {
 	repo repointerfaces.UserRepository
 }
+
+const defaultAvatar = "/logo-v2.png"
 
 func New(repo repointerfaces.UserRepository) serviceinterfaces.UserService {
 	return &Service{repo: repo}
@@ -49,12 +52,18 @@ func (s *Service) Create(ctx context.Context, req *dto.CreateUserRequest) (*enti
 	if err != nil {
 		return nil, err
 	}
+	avatar, err := normalizeAvatar(req.Avatar)
+	if err != nil {
+		return nil, err
+	}
+
 	user := &entity.User{
 		UserCode: userCode,
 		Username: username,
 		Nickname: strings.TrimSpace(req.Nickname),
 		Email:    strings.TrimSpace(req.Email),
 		Phone:    strings.TrimSpace(req.Phone),
+		Avatar:   avatar,
 		DeptCode: strings.TrimSpace(req.DeptCode),
 		Status:   req.Status,
 		Password: string(hashed),
@@ -82,6 +91,13 @@ func (s *Service) Update(ctx context.Context, userCode string, req *dto.UpdateUs
 	if req.Phone != nil {
 		user.Phone = strings.TrimSpace(*req.Phone)
 	}
+	if req.Avatar != nil {
+		avatar, err := normalizeAvatar(*req.Avatar)
+		if err != nil {
+			return nil, err
+		}
+		user.Avatar = avatar
+	}
 	if req.DeptCode != nil {
 		user.DeptCode = strings.TrimSpace(*req.DeptCode)
 	}
@@ -99,6 +115,59 @@ func (s *Service) Update(ctx context.Context, userCode string, req *dto.UpdateUs
 		return nil, apperrors.WrapUniqueConstraint(err, "duplicate_user_identity", "用户编码或用户名已存在，请检查后重试。")
 	}
 	return user, nil
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, userCode string, req *dto.UpdateProfileRequest) (*entity.User, error) {
+	user, err := s.repo.GetByCode(ctx, userCode)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, nil
+	}
+	if req.Nickname != nil {
+		user.Nickname = strings.TrimSpace(*req.Nickname)
+	}
+	if req.Email != nil {
+		user.Email = strings.TrimSpace(*req.Email)
+	}
+	if req.Phone != nil {
+		user.Phone = strings.TrimSpace(*req.Phone)
+	}
+	if req.Avatar != nil {
+		avatar, err := normalizeAvatar(*req.Avatar)
+		if err != nil {
+			return nil, err
+		}
+		user.Avatar = avatar
+	}
+	if err := s.repo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *Service) ChangePassword(ctx context.Context, userCode string, req *dto.ChangePasswordRequest) error {
+	user, err := s.repo.GetByCode(ctx, userCode)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return apperrors.New(http.StatusNotFound, "not_found", "用户不存在")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
+		return apperrors.New(http.StatusBadRequest, "invalid_old_password", "原密码不正确")
+	}
+	newPassword := strings.TrimSpace(req.NewPassword)
+	if newPassword == "" {
+		return apperrors.New(http.StatusBadRequest, "bad_request", "新密码不能为空")
+	}
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.Password = string(hashed)
+	return s.repo.Update(ctx, user)
 }
 
 func (s *Service) Delete(ctx context.Context, userCode string) error {
@@ -130,4 +199,18 @@ func randomHex(byteLen int) (string, error) {
 		return "", err
 	}
 	return strings.ToUpper(hex.EncodeToString(buf)), nil
+}
+
+func normalizeAvatar(avatar string) (string, error) {
+	avatar = strings.TrimSpace(avatar)
+	if avatar == "" {
+		return defaultAvatar, nil
+	}
+	if strings.HasPrefix(strings.ToLower(avatar), "data:image/") {
+		return "", apperrors.New(http.StatusBadRequest, "avatar_too_large", "头像请填写图片 URL 或站内路径，不支持直接保存 base64 图片。")
+	}
+	if len(avatar) > 255 {
+		return "", apperrors.New(http.StatusBadRequest, "avatar_too_long", "头像地址不能超过 255 个字符。")
+	}
+	return avatar, nil
 }

@@ -15,11 +15,20 @@ type CacheStatsVO struct {
 
 // OnlineUserVO represents an online user session for monitoring.
 type OnlineUserVO struct {
-	UserCode   string `json:"user_code"`
-	Username   string `json:"username"`
-	IP         string `json:"ip"`
-	UserAgent  string `json:"user_agent"`
-	LastActive int64  `json:"last_active"`
+	SessionID      string `json:"session_id"`
+	UserCode       string `json:"user_code"`
+	Username       string `json:"username"`
+	DeptName       string `json:"dept_name"`
+	IP             string `json:"ip"`
+	LoginLocation  string `json:"login_location"`
+	HostIP         string `json:"host_ip"`
+	UserAgent      string `json:"user_agent"`
+	OS             string `json:"os"`
+	Browser        string `json:"browser"`
+	BrowserVersion string `json:"browser_version"`
+	BrowserDetail  string `json:"browser_detail"`
+	LoginTime      int64  `json:"login_time"`
+	LastActive     int64  `json:"last_active"`
 }
 
 // DatabaseStatsVO represents database health and basic schema statistics.

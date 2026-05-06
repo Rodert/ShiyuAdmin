@@ -3,6 +3,9 @@ package monitor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -120,30 +123,68 @@ func (s *Service) ListOnlineUsers(ctx context.Context) ([]*vo.OnlineUserVO, erro
 		if err := json.Unmarshal([]byte(val), &item); err != nil {
 			continue
 		}
+		if item.SessionID == "" {
+			item.SessionID = strings.TrimPrefix(key, "online:user:")
+		}
 		result = append(result, &item)
+	}
+	if err := s.fillDepartmentNames(ctx, result); err != nil {
+		return nil, err
 	}
 	return result, nil
 }
 
 // UpdateOnlineUser updates online user heartbeat info.
-func (s *Service) UpdateOnlineUser(ctx context.Context, userCode, username, ip, userAgent string) error {
-	if s.redisClient == nil || userCode == "" {
+func (s *Service) UpdateOnlineUser(ctx context.Context, sessionID, userCode, username, ip, hostIP, userAgent string) error {
+	if s.redisClient == nil || userCode == "" || sessionID == "" {
 		return nil
 	}
 
+	now := time.Now().Unix()
+	browser, browserVersion := parseBrowser(userAgent)
 	item := vo.OnlineUserVO{
-		UserCode:   userCode,
-		Username:   username,
-		IP:         ip,
-		UserAgent:  userAgent,
-		LastActive: time.Now().Unix(),
+		SessionID:      sessionID,
+		UserCode:       userCode,
+		Username:       username,
+		IP:             ip,
+		LoginLocation:  parseLoginLocation(ip),
+		HostIP:         hostIP,
+		UserAgent:      userAgent,
+		OS:             parseOS(userAgent),
+		Browser:        browser,
+		BrowserVersion: browserVersion,
+		BrowserDetail:  browserDetail(browser, browserVersion),
+		LoginTime:      now,
+		LastActive:     now,
+	}
+	if existing, err := s.redisClient.Get(ctx, onlineUserKey(sessionID)); err == nil && existing != "" {
+		var old vo.OnlineUserVO
+		if err := json.Unmarshal([]byte(existing), &old); err == nil && old.LoginTime > 0 {
+			item.LoginTime = old.LoginTime
+		}
 	}
 	b, err := json.Marshal(item)
 	if err != nil {
 		return err
 	}
-	key := "online:user:" + userCode
-	return s.redisClient.Set(ctx, key, b, s.onlineTTL)
+	return s.redisClient.Set(ctx, onlineUserKey(sessionID), b, s.onlineTTL)
+}
+
+func (s *Service) ForceLogout(ctx context.Context, sessionID string) error {
+	if s.redisClient == nil || sessionID == "" {
+		return nil
+	}
+	if err := s.redisClient.Delete(ctx, onlineUserKey(sessionID)); err != nil {
+		return err
+	}
+	return s.redisClient.Set(ctx, revokedSessionKey(sessionID), "1", s.onlineTTL)
+}
+
+func (s *Service) IsSessionRevoked(ctx context.Context, sessionID string) (bool, error) {
+	if s.redisClient == nil || sessionID == "" {
+		return false, nil
+	}
+	return s.redisClient.Exists(ctx, revokedSessionKey(sessionID))
 }
 
 // parseRedisInfo parses the output of the INFO command into a map.
@@ -169,6 +210,123 @@ func parseInt64(s string) (int64, error) {
 		return 0, nil
 	}
 	return strconv.ParseInt(s, 10, 64)
+}
+
+func onlineUserKey(sessionID string) string {
+	return "online:user:" + sessionID
+}
+
+func revokedSessionKey(sessionID string) string {
+	return "online:revoked:" + sessionID
+}
+
+func (s *Service) fillDepartmentNames(ctx context.Context, users []*vo.OnlineUserVO) error {
+	if s.db == nil || len(users) == 0 {
+		return nil
+	}
+	codes := make([]string, 0, len(users))
+	seen := make(map[string]struct{}, len(users))
+	for _, user := range users {
+		if user.UserCode == "" {
+			continue
+		}
+		if _, ok := seen[user.UserCode]; ok {
+			continue
+		}
+		seen[user.UserCode] = struct{}{}
+		codes = append(codes, user.UserCode)
+	}
+	if len(codes) == 0 {
+		return nil
+	}
+
+	rows := make([]struct {
+		UserCode string `gorm:"column:user_code"`
+		DeptName string `gorm:"column:dept_name"`
+	}, 0, len(codes))
+	if err := s.db.WithContext(ctx).
+		Table("sys_users").
+		Select("sys_users.user_code, sys_depts.dept_name").
+		Joins("LEFT JOIN sys_depts ON sys_users.dept_code = sys_depts.dept_code").
+		Where("sys_users.user_code IN ?", codes).
+		Scan(&rows).Error; err != nil {
+		return fmt.Errorf("fill online user departments failed: %w", err)
+	}
+	deptByUser := make(map[string]string, len(rows))
+	for _, row := range rows {
+		deptByUser[row.UserCode] = row.DeptName
+	}
+	for _, user := range users {
+		user.DeptName = deptByUser[user.UserCode]
+	}
+	return nil
+}
+
+func parseOS(userAgent string) string {
+	ua := strings.ToLower(userAgent)
+	switch {
+	case strings.Contains(ua, "windows"):
+		return "Windows"
+	case strings.Contains(ua, "mac os") || strings.Contains(ua, "macintosh"):
+		return "macOS"
+	case strings.Contains(ua, "iphone") || strings.Contains(ua, "ipad"):
+		return "iOS"
+	case strings.Contains(ua, "android"):
+		return "Android"
+	case strings.Contains(ua, "linux"):
+		return "Linux"
+	default:
+		return "未知"
+	}
+}
+
+func parseBrowser(userAgent string) (string, string) {
+	ua := strings.ToLower(userAgent)
+	switch {
+	case strings.Contains(ua, "edg/"):
+		return "Microsoft Edge", userAgentVersion(userAgent, `(?i)Edg/([0-9.]+)`)
+	case strings.Contains(ua, "crios/"):
+		return "Chrome", userAgentVersion(userAgent, `(?i)CriOS/([0-9.]+)`)
+	case strings.Contains(ua, "chrome/"):
+		return "Chrome", userAgentVersion(userAgent, `(?i)Chrome/([0-9.]+)`)
+	case strings.Contains(ua, "fxios/"):
+		return "Firefox", userAgentVersion(userAgent, `(?i)FxiOS/([0-9.]+)`)
+	case strings.Contains(ua, "firefox/"):
+		return "Firefox", userAgentVersion(userAgent, `(?i)Firefox/([0-9.]+)`)
+	case strings.Contains(ua, "safari/"):
+		return "Safari", userAgentVersion(userAgent, `(?i)Version/([0-9.]+)`)
+	default:
+		return "未知", ""
+	}
+}
+
+func userAgentVersion(userAgent string, pattern string) string {
+	matches := regexp.MustCompile(pattern).FindStringSubmatch(userAgent)
+	if len(matches) < 2 {
+		return ""
+	}
+	return matches[1]
+}
+
+func browserDetail(browser string, version string) string {
+	if version == "" {
+		return browser
+	}
+	return browser + " " + version
+}
+
+func parseLoginLocation(ipText string) string {
+	ip := net.ParseIP(strings.TrimSpace(ipText))
+	if ip == nil {
+		return "未知地点"
+	}
+	if ip.IsLoopback() {
+		return "本机"
+	}
+	if ip.IsPrivate() {
+		return "内网"
+	}
+	return "公网IP（未配置归属地解析）"
 }
 
 func databaseNameSQL(driver string) string {

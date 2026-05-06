@@ -16,6 +16,8 @@ type User struct {
 	Email string `json:"email" gorm:"size:128;comment:邮箱地址"`
 	// Phone 手机号码
 	Phone string `json:"phone" gorm:"size:32;comment:手机号码"`
+	// Avatar 头像地址
+	Avatar string `json:"avatar" gorm:"size:255;default:/logo-v2.png;comment:头像地址"`
 	// Password 密码，BCrypt加密存储，JSON序列化时隐藏
 	Password string `json:"-" gorm:"size:255;comment:密码，BCrypt加密存储"`
 	// DeptCode 部门编码，关联部门表

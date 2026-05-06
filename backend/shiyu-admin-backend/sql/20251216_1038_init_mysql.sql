@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS sys_users (
   nickname VARCHAR(64) DEFAULT NULL COMMENT '昵称，显示名称',
   email VARCHAR(128) DEFAULT NULL COMMENT '邮箱地址',
   phone VARCHAR(32) DEFAULT NULL COMMENT '手机号码',
+  avatar VARCHAR(255) NOT NULL DEFAULT '/logo-v2.png' COMMENT '头像地址',
   password VARCHAR(255) NOT NULL COMMENT '密码，BCrypt加密存储',
   dept_code VARCHAR(32) DEFAULT NULL COMMENT '部门编码，关联部门表',
   status INT NOT NULL DEFAULT 1 COMMENT '状态：1=启用，0=禁用',

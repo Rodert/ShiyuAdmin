@@ -27,6 +27,9 @@ func registerCacheRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permissio
 	rg.GET("/cache/value", middleware.RequirePermission(permissionSvc, "system:cache:list"), func(c *gin.Context) {
 		getCacheValue(c, cacheSvc)
 	})
+	rg.DELETE("/cache/key", middleware.RequirePermission(permissionSvc, "system:cache:list"), func(c *gin.Context) {
+		deleteCacheKey(c, cacheSvc)
+	})
 }
 
 func listCacheDatabases(c *gin.Context, svc interfaces.CacheService) {
@@ -81,6 +84,24 @@ func getCacheValue(c *gin.Context, svc interfaces.CacheService) {
 		return
 	}
 	response.Success(c, result)
+}
+
+func deleteCacheKey(c *gin.Context, svc interfaces.CacheService) {
+	db, err := parseRedisDB(c.DefaultQuery("db", "0"))
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	key := c.Query("key")
+	if key == "" {
+		response.Error(c, http.StatusBadRequest, "key 不能为空")
+		return
+	}
+	if err := svc.DeleteKey(c, db, key); err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.Success(c, gin.H{"deleted": true})
 }
 
 func parseRedisDB(raw string) (int, error) {

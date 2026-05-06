@@ -1,4 +1,4 @@
-import { request } from '@umijs/max';
+import { request } from "@umijs/max";
 
 export interface CacheStats {
   redis_version?: string;
@@ -13,10 +13,19 @@ export interface CacheStats {
 }
 
 export interface OnlineUser {
+  session_id: string;
   user_code: string;
   username: string;
+  dept_name?: string;
   ip?: string;
+  login_location?: string;
+  host_ip?: string;
   user_agent?: string;
+  os?: string;
+  browser?: string;
+  browser_version?: string;
+  browser_detail?: string;
+  login_time?: number;
   last_active: number;
 }
 
@@ -37,8 +46,8 @@ export async function getCacheStats(opts?: { skipErrorHandler?: boolean }) {
     code: number;
     data: CacheStats;
     message?: string;
-  }>('/api/v1/system/monitor/cache', {
-    method: 'GET',
+  }>("/api/v1/system/monitor/cache", {
+    method: "GET",
     ...opts,
   });
 }
@@ -49,8 +58,8 @@ export async function getDatabaseStats(opts?: { skipErrorHandler?: boolean }) {
     code: number;
     data: DatabaseStats;
     message?: string;
-  }>('/api/v1/system/monitor/database', {
-    method: 'GET',
+  }>("/api/v1/system/monitor/database", {
+    method: "GET",
     ...opts,
   });
 }
@@ -61,8 +70,19 @@ export async function getOnlineUsers(opts?: { skipErrorHandler?: boolean }) {
     code: number;
     data: OnlineUser[];
     message?: string;
-  }>('/api/v1/system/monitor/online-users', {
-    method: 'GET',
+  }>("/api/v1/system/monitor/online-users", {
+    method: "GET",
     ...opts,
+  });
+}
+
+/** 强退在线用户 */
+export async function forceLogoutOnlineUser(sessionId: string) {
+  return request<{
+    code: number;
+    data: { forced: boolean };
+    message?: string;
+  }>(`/api/v1/system/monitor/online-users/${sessionId}`, {
+    method: "DELETE",
   });
 }

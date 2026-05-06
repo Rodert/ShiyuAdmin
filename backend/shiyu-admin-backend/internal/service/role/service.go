@@ -65,19 +65,6 @@ func (s *Service) Update(ctx context.Context, roleCode string, req *dto.UpdateRo
 	if req.RoleName != nil {
 		role.RoleName = strings.TrimSpace(*req.RoleName)
 	}
-	if req.RoleKey != nil {
-		roleKey := strings.TrimSpace(*req.RoleKey)
-		if roleKey != role.RoleKey {
-			existing, err := s.repo.GetByKey(ctx, roleKey)
-			if err != nil {
-				return nil, err
-			}
-			if existing != nil && existing.RoleCode != role.RoleCode {
-				return nil, apperrors.NewConflict("duplicate_role_key", "角色标识已存在，请更换后重试。")
-			}
-		}
-		role.RoleKey = roleKey
-	}
 	if req.DataScope != nil {
 		role.DataScope = strings.TrimSpace(*req.DataScope)
 	}

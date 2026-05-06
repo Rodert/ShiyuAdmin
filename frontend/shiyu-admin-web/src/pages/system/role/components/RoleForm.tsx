@@ -1,11 +1,19 @@
-import { ProForm, ProFormText, ProFormSelect } from '@ant-design/pro-components';
-import type { ProFormInstance } from '@ant-design/pro-components';
-import { Button, Modal, message, Tree } from 'antd';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { CreateRoleRequest, Role, UpdateRoleRequest } from '@/services/shiyu-api/role';
-import { getRoleMenus, setRoleMenus } from '@/services/shiyu-api/role';
-import { getMenuTree, type Menu } from '@/services/shiyu-api/menu';
-import type { DataNode } from 'antd/es/tree';
+import { getMenuTree, type Menu } from "@/services/shiyu-api/menu";
+import type {
+  CreateRoleRequest,
+  Role,
+  UpdateRoleRequest,
+} from "@/services/shiyu-api/role";
+import { getRoleMenus, setRoleMenus } from "@/services/shiyu-api/role";
+import type { ProFormInstance } from "@ant-design/pro-components";
+import {
+  ProForm,
+  ProFormSelect,
+  ProFormText,
+} from "@ant-design/pro-components";
+import { Button, message, Modal, Tree } from "antd";
+import type { DataNode } from "antd/es/tree";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 interface RoleFormProps {
   visible: boolean;
@@ -28,7 +36,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
   const formRef = useRef<ProFormInstance>(null);
   const memoizedInitialValues = useMemo(
     () => (initialValues ? { ...initialValues } : undefined),
-    [initialValues],
+    [initialValues]
   );
 
   // 加载菜单树
@@ -58,7 +66,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
         setMenuTree(tree);
       }
     } catch (error) {
-      console.error('加载菜单树失败:', error);
+      console.error("加载菜单树失败:", error);
     }
   };
 
@@ -70,7 +78,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
         setSelectedMenuKeys(menuCodes);
       }
     } catch (error) {
-      console.error('加载角色菜单失败:', error);
+      console.error("加载角色菜单失败:", error);
     }
   };
 
@@ -94,18 +102,24 @@ const RoleForm: React.FC<RoleFormProps> = ({
     >
       <ProForm
         formRef={formRef}
-        key={isEdit ? initialValues?.role_code : 'create'}
+        key={isEdit ? initialValues?.role_code : "create"}
         initialValues={memoizedInitialValues}
         onFinish={async (values) => {
           try {
+            const submitValues = { ...values };
+            if (isEdit) {
+              delete submitValues.role_key;
+            }
             // 先提交角色信息
-            await onSubmit(values as CreateRoleRequest | UpdateRoleRequest);
-            
+            await onSubmit(
+              submitValues as CreateRoleRequest | UpdateRoleRequest
+            );
+
             // 获取角色编码（新建时从表单值获取，编辑时从 initialValues 获取）
-            const roleCode = isEdit 
-              ? initialValues?.role_code 
+            const roleCode = isEdit
+              ? initialValues?.role_code
               : (values as CreateRoleRequest).role_code;
-            
+
             // 设置角色菜单
             if (roleCode && selectedMenuKeys.length >= 0) {
               try {
@@ -113,11 +127,11 @@ const RoleForm: React.FC<RoleFormProps> = ({
                 const res = await setRoleMenus(roleCode, menuCodes);
                 if (res.code === 200) {
                   if (selectedMenuKeys.length > 0) {
-                    message.success('菜单权限分配成功');
+                    message.success("菜单权限分配成功");
                   }
                 }
               } catch (error) {
-                message.warning('角色信息已保存，但菜单权限分配失败');
+                message.warning("角色信息已保存，但菜单权限分配失败");
               }
             }
           } catch (error) {
@@ -130,7 +144,11 @@ const RoleForm: React.FC<RoleFormProps> = ({
               <Button key="cancel" onClick={onCancel}>
                 取消
               </Button>,
-              <Button key="submit" type="primary" onClick={() => props.form?.submit?.()}>
+              <Button
+                key="submit"
+                type="primary"
+                onClick={() => props.form?.submit?.()}
+              >
                 确定
               </Button>,
             ];
@@ -145,14 +163,16 @@ const RoleForm: React.FC<RoleFormProps> = ({
               extra="需唯一，仅允许字母、数字、下划线或中划线"
               fieldProps={{ maxLength: 32, showCount: true }}
               rules={[
-                { required: true, whitespace: true, message: '请输入角色编码' },
-                { pattern: /^[A-Za-z0-9_-]+$/, message: '角色编码格式不正确' },
+                { required: true, whitespace: true, message: "请输入角色编码" },
+                { pattern: /^[A-Za-z0-9_-]+$/, message: "角色编码格式不正确" },
               ]}
             />
             <ProFormText
               name="role_name"
               label="角色名称"
-              rules={[{ required: true, whitespace: true, message: '请输入角色名称' }]}
+              rules={[
+                { required: true, whitespace: true, message: "请输入角色名称" },
+              ]}
             />
             <ProFormText
               name="role_key"
@@ -160,8 +180,8 @@ const RoleForm: React.FC<RoleFormProps> = ({
               extra="需唯一，仅允许字母、数字、冒号、下划线或中划线"
               fieldProps={{ maxLength: 64, showCount: true }}
               rules={[
-                { required: true, whitespace: true, message: '请输入角色标识' },
-                { pattern: /^[A-Za-z0-9:_-]+$/, message: '角色标识格式不正确' },
+                { required: true, whitespace: true, message: "请输入角色标识" },
+                { pattern: /^[A-Za-z0-9:_-]+$/, message: "角色标识格式不正确" },
               ]}
             />
           </>
@@ -172,9 +192,8 @@ const RoleForm: React.FC<RoleFormProps> = ({
             <ProFormText
               name="role_key"
               label="角色标识"
-              extra="需唯一，仅允许字母、数字、冒号、下划线或中划线"
-              fieldProps={{ maxLength: 64, showCount: true }}
-              rules={[{ pattern: /^[A-Za-z0-9:_-]+$/, message: '角色标识格式不正确' }]}
+              disabled
+              extra="角色标识用于权限判断，创建后不可修改"
             />
           </>
         )}
@@ -182,18 +201,18 @@ const RoleForm: React.FC<RoleFormProps> = ({
           name="data_scope"
           label="数据权限"
           options={[
-            { label: '全部数据', value: 'all' },
-            { label: '部门数据', value: 'dept' },
-            { label: '部门及以下', value: 'dept_and_child' },
-            { label: '仅本人', value: 'self' },
+            { label: "全部数据", value: "all" },
+            { label: "部门数据", value: "dept" },
+            { label: "部门及以下", value: "dept_and_child" },
+            { label: "仅本人", value: "self" },
           ]}
         />
         <ProFormSelect
           name="status"
           label="状态"
           options={[
-            { label: '启用', value: 1 },
-            { label: '禁用', value: 0 },
+            { label: "启用", value: 1 },
+            { label: "禁用", value: 0 },
           ]}
         />
         <ProForm.Item label="菜单权限">
@@ -204,7 +223,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
             onCheck={(checkedKeys) => {
               setSelectedMenuKeys(checkedKeys as React.Key[]);
             }}
-            style={{ maxHeight: '300px', overflow: 'auto' }}
+            style={{ maxHeight: "300px", overflow: "auto" }}
           />
         </ProForm.Item>
       </ProForm>
@@ -213,4 +232,3 @@ const RoleForm: React.FC<RoleFormProps> = ({
 };
 
 export default RoleForm;
-

@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import { request } from '@umijs/max';
+import { request } from "@umijs/max";
 
 /** 获取当前的用户 GET /api/v1/system/profile */
 export async function currentUser(options?: { [key: string]: any }) {
@@ -9,23 +9,46 @@ export async function currentUser(options?: { [key: string]: any }) {
     data?: {
       user_code?: string;
       username?: string;
+      nickname?: string;
+      email?: string;
+      phone?: string;
+      avatar?: string;
+      dept_code?: string;
+      status?: number;
+      dept?: {
+        dept_code?: string;
+        dept_name?: string;
+      };
+      roles?: {
+        role_code?: string;
+        role_name?: string;
+        role_key?: string;
+      }[];
       is_super_admin?: boolean;
       iat?: number;
     };
     message?: string;
-  }>('/api/v1/system/profile', {
-    method: 'GET',
+  }>("/api/v1/system/profile", {
+    method: "GET",
     ...(options || {}),
   });
 
   if (res.code !== 200 || !res.data) {
-    throw new Error(res.message || '获取用户信息失败');
+    throw new Error(res.message || "获取用户信息失败");
   }
 
   const user: API.CurrentUser = {
     name: res.data.username,
     userid: res.data.user_code,
-    access: res.data.is_super_admin ? 'admin' : 'user',
+    nickname: res.data.nickname,
+    email: res.data.email,
+    phone: res.data.phone,
+    avatar: res.data.avatar || "/logo-v2.png",
+    deptCode: res.data.dept_code,
+    deptName: res.data.dept?.dept_name,
+    status: res.data.status,
+    roles: res.data.roles || [],
+    access: res.data.is_super_admin ? "admin" : "user",
     isSuperAdmin: res.data.is_super_admin,
     loginAt: res.data.iat,
   };
@@ -35,14 +58,17 @@ export async function currentUser(options?: { [key: string]: any }) {
 
 /** 退出登录接口 POST /api/login/outLogin */
 export async function outLogin(options?: { [key: string]: any }) {
-  return request<Record<string, any>>('/api/login/outLogin', {
-    method: 'POST',
+  return request<Record<string, any>>("/api/login/outLogin", {
+    method: "POST",
     ...(options || {}),
   });
 }
 
 /** 登录接口 POST /api/v1/system/auth/login */
-export async function login(body: API.LoginParams, options?: { [key: string]: any }) {
+export async function login(
+  body: API.LoginParams,
+  options?: { [key: string]: any }
+) {
   const res = await request<{
     code: number;
     data?: {
@@ -51,10 +77,10 @@ export async function login(body: API.LoginParams, options?: { [key: string]: an
       expire_in?: number;
     };
     message?: string;
-  }>('/api/v1/system/auth/login', {
-    method: 'POST',
+  }>("/api/v1/system/auth/login", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     data: {
       username: body.username,
@@ -65,27 +91,27 @@ export async function login(body: API.LoginParams, options?: { [key: string]: an
 
   if (res.code === 200 && res.data?.token) {
     // 持久化 Token，后续请求拦截器会自动携带 Authorization 头
-    localStorage.setItem('shiyu_token', res.data.token);
+    localStorage.setItem("shiyu_token", res.data.token);
     const result: API.LoginResult = {
-      status: 'ok',
-      type: body.type || 'account',
-      currentAuthority: 'admin',
+      status: "ok",
+      type: body.type || "account",
+      currentAuthority: "admin",
     };
     return result;
   }
 
   const result: API.LoginResult = {
-    status: 'error',
-    type: body.type || 'account',
-    currentAuthority: 'guest',
+    status: "error",
+    type: body.type || "account",
+    currentAuthority: "guest",
   };
   return result;
 }
 
 /** 此处后端没有提供注释 GET /api/notices */
 export async function getNotices(options?: { [key: string]: any }) {
-  return request<API.NoticeIconList>('/api/notices', {
-    method: 'GET',
+  return request<API.NoticeIconList>("/api/notices", {
+    method: "GET",
     ...(options || {}),
   });
 }
@@ -99,10 +125,10 @@ export async function rule(
     /** 页面的容量 */
     pageSize?: number;
   },
-  options?: { [key: string]: any },
+  options?: { [key: string]: any }
 ) {
-  return request<API.RuleList>('/api/rule', {
-    method: 'GET',
+  return request<API.RuleList>("/api/rule", {
+    method: "GET",
     params: {
       ...params,
     },
@@ -112,10 +138,10 @@ export async function rule(
 
 /** 更新规则 PUT /api/rule */
 export async function updateRule(options?: { [key: string]: any }) {
-  return request<API.RuleListItem>('/api/rule', {
-    method: 'POST',
+  return request<API.RuleListItem>("/api/rule", {
+    method: "POST",
     data: {
-      method: 'update',
+      method: "update",
       ...(options || {}),
     },
   });
@@ -123,10 +149,10 @@ export async function updateRule(options?: { [key: string]: any }) {
 
 /** 新建规则 POST /api/rule */
 export async function addRule(options?: { [key: string]: any }) {
-  return request<API.RuleListItem>('/api/rule', {
-    method: 'POST',
+  return request<API.RuleListItem>("/api/rule", {
+    method: "POST",
     data: {
-      method: 'post',
+      method: "post",
       ...(options || {}),
     },
   });
@@ -134,10 +160,10 @@ export async function addRule(options?: { [key: string]: any }) {
 
 /** 删除规则 DELETE /api/rule */
 export async function removeRule(options?: { [key: string]: any }) {
-  return request<Record<string, any>>('/api/rule', {
-    method: 'POST',
+  return request<Record<string, any>>("/api/rule", {
+    method: "POST",
     data: {
-      method: 'delete',
+      method: "delete",
       ...(options || {}),
     },
   });

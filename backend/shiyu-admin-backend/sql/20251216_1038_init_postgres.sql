@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS sys_users (
   nickname VARCHAR(64),
   email VARCHAR(128),
   phone VARCHAR(32),
+  avatar VARCHAR(255) NOT NULL DEFAULT '/logo-v2.png',
   password VARCHAR(255) NOT NULL,
   dept_code VARCHAR(32),
   status INT NOT NULL DEFAULT 1,
@@ -114,6 +115,7 @@ COMMENT ON COLUMN sys_users.username IS '用户名，登录账号，唯一';
 COMMENT ON COLUMN sys_users.nickname IS '昵称，显示名称';
 COMMENT ON COLUMN sys_users.email IS '邮箱地址';
 COMMENT ON COLUMN sys_users.phone IS '手机号码';
+COMMENT ON COLUMN sys_users.avatar IS '头像地址';
 COMMENT ON COLUMN sys_users.password IS '密码，BCrypt加密存储';
 COMMENT ON COLUMN sys_users.dept_code IS '部门编码，关联部门表';
 COMMENT ON COLUMN sys_users.status IS '状态：1=启用，0=禁用';

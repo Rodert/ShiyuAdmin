@@ -1,4 +1,4 @@
-import { request } from '@umijs/max';
+import { request } from "@umijs/max";
 
 export interface User {
   user_code: string;
@@ -6,8 +6,10 @@ export interface User {
   nickname: string;
   email?: string;
   phone?: string;
+  avatar?: string;
   dept_code?: string;
   status: number;
+  is_super_admin?: boolean;
 }
 
 export interface UserListResponse {
@@ -23,6 +25,7 @@ export interface CreateUserRequest {
   nickname?: string;
   email?: string;
   phone?: string;
+  avatar?: string;
   dept_code?: string;
   status?: number;
 }
@@ -31,22 +34,35 @@ export interface UpdateUserRequest {
   nickname?: string;
   email?: string;
   phone?: string;
+  avatar?: string;
   dept_code?: string;
   status?: number;
   password?: string;
 }
 
+export interface UpdateProfileRequest {
+  nickname?: string;
+  email?: string;
+  phone?: string;
+  avatar?: string;
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
+
 /** 获取用户列表 */
 export async function getUserList(
   params: { page?: number; page_size?: number },
-  opts?: { skipErrorHandler?: boolean },
+  opts?: { skipErrorHandler?: boolean }
 ) {
   return request<{
     code: number;
     data: UserListResponse;
     message?: string;
-  }>('/api/v1/system/users', {
-    method: 'GET',
+  }>("/api/v1/system/users", {
+    method: "GET",
     params,
     ...opts,
   });
@@ -58,8 +74,8 @@ export async function createUser(data: CreateUserRequest) {
     code: number;
     data: User;
     message?: string;
-  }>('/api/v1/system/users', {
-    method: 'POST',
+  }>("/api/v1/system/users", {
+    method: "POST",
     data,
   });
 }
@@ -71,7 +87,31 @@ export async function updateUser(userCode: string, data: UpdateUserRequest) {
     data: User;
     message?: string;
   }>(`/api/v1/system/users/${userCode}`, {
-    method: 'PUT',
+    method: "PUT",
+    data,
+  });
+}
+
+/** 更新当前登录用户资料 */
+export async function updateCurrentProfile(data: UpdateProfileRequest) {
+  return request<{
+    code: number;
+    data: User;
+    message?: string;
+  }>("/api/v1/system/profile", {
+    method: "PUT",
+    data,
+  });
+}
+
+/** 修改当前登录用户密码 */
+export async function changeCurrentPassword(data: ChangePasswordRequest) {
+  return request<{
+    code: number;
+    data: { updated: boolean };
+    message?: string;
+  }>("/api/v1/system/profile/password", {
+    method: "PUT",
     data,
   });
 }
@@ -83,7 +123,7 @@ export async function deleteUser(userCode: string) {
     data: { deleted: boolean };
     message?: string;
   }>(`/api/v1/system/users/${userCode}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
 }
 
@@ -94,7 +134,7 @@ export async function getUserRoles(userCode: string) {
     data: any[];
     message?: string;
   }>(`/api/v1/system/users/${userCode}/roles`, {
-    method: 'GET',
+    method: "GET",
   });
 }
 
@@ -105,8 +145,7 @@ export async function setUserRoles(userCode: string, roleCodes: string[]) {
     data: { updated: boolean };
     message?: string;
   }>(`/api/v1/system/users/${userCode}/roles`, {
-    method: 'PUT',
+    method: "PUT",
     data: { role_codes: roleCodes },
   });
 }
-

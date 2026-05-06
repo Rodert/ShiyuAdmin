@@ -4,13 +4,15 @@ import "shiyu-admin-backend/internal/model/entity"
 
 // UserVO basic user info for API responses.
 type UserVO struct {
-	UserCode string `json:"user_code"`
-	Username string `json:"username"`
-	Nickname string `json:"nickname"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	DeptCode string `json:"dept_code"`
-	Status   int    `json:"status"`
+	UserCode     string `json:"user_code"`
+	Username     string `json:"username"`
+	Nickname     string `json:"nickname"`
+	Email        string `json:"email"`
+	Phone        string `json:"phone"`
+	Avatar       string `json:"avatar"`
+	DeptCode     string `json:"dept_code"`
+	Status       int    `json:"status"`
+	IsSuperAdmin bool   `json:"is_super_admin"`
 }
 
 // PageResult wraps paginated data.
@@ -26,13 +28,15 @@ func BuildUserVO(u *entity.User) *UserVO {
 		return nil
 	}
 	return &UserVO{
-		UserCode: u.UserCode,
-		Username: u.Username,
-		Nickname: u.Nickname,
-		Email:    u.Email,
-		Phone:    u.Phone,
-		DeptCode: u.DeptCode,
-		Status:   u.Status,
+		UserCode:     u.UserCode,
+		Username:     u.Username,
+		Nickname:     u.Nickname,
+		Email:        u.Email,
+		Phone:        u.Phone,
+		Avatar:       u.Avatar,
+		DeptCode:     u.DeptCode,
+		Status:       u.Status,
+		IsSuperAdmin: u.IsSuperAdmin,
 	}
 }
 

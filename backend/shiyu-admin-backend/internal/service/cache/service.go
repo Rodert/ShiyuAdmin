@@ -132,6 +132,21 @@ func (s *Service) GetValue(ctx context.Context, db int, key string) (*vo.CacheVa
 	}, nil
 }
 
+// DeleteKey deletes a Redis key from a logical database.
+func (s *Service) DeleteKey(ctx context.Context, db int, key string) error {
+	if s.redisClient == nil {
+		return fmt.Errorf("redis is not enabled")
+	}
+	if err := validateDB(db); err != nil {
+		return err
+	}
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return fmt.Errorf("key is required")
+	}
+	return s.redisClient.DeleteForDB(ctx, db, key)
+}
+
 func validateDB(db int) error {
 	if db < 0 || db >= redisDatabaseCount {
 		return fmt.Errorf("redis db must be between 0 and 15")

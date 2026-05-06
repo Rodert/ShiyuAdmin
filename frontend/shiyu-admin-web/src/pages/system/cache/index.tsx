@@ -1,44 +1,54 @@
-import type { ActionType, ProColumns } from '@ant-design/pro-components';
-import { PageContainer, ProCard, ProTable } from '@ant-design/pro-components';
-import { Button, Descriptions, Drawer, Space, Tag, Typography } from 'antd';
-import React, { useRef, useState } from 'react';
 import type {
   CacheDatabase,
   CacheKey,
   CacheValue,
   RedisValueType,
-} from '@/services/shiyu-api/cache';
+} from "@/services/shiyu-api/cache";
 import {
+  deleteCacheKey,
   getCacheDatabases,
   getCacheKeys,
   getCacheValue,
-} from '@/services/shiyu-api/cache';
-import { renderCellText } from '@/utils/tableRender';
+} from "@/services/shiyu-api/cache";
+import { renderCellText } from "@/utils/tableRender";
+import type { ActionType, ProColumns } from "@ant-design/pro-components";
+import { PageContainer, ProCard, ProTable } from "@ant-design/pro-components";
+import {
+  Button,
+  Descriptions,
+  Drawer,
+  message,
+  Modal,
+  Space,
+  Tag,
+  Typography,
+} from "antd";
+import React, { useRef, useState } from "react";
 
 const redisTypes: { label: string; value: RedisValueType }[] = [
-  { label: '全部', value: 'all' },
-  { label: 'String', value: 'string' },
-  { label: 'List', value: 'list' },
-  { label: 'Set', value: 'set' },
-  { label: 'ZSet', value: 'zset' },
-  { label: 'Hash', value: 'hash' },
-  { label: 'Stream', value: 'stream' },
+  { label: "全部", value: "all" },
+  { label: "String", value: "string" },
+  { label: "List", value: "list" },
+  { label: "Set", value: "set" },
+  { label: "ZSet", value: "zset" },
+  { label: "Hash", value: "hash" },
+  { label: "Stream", value: "stream" },
 ];
 
 const typeColorMap: Record<string, string> = {
-  string: 'blue',
-  list: 'green',
-  set: 'cyan',
-  zset: 'purple',
-  hash: 'orange',
-  stream: 'magenta',
-  none: 'default',
+  string: "blue",
+  list: "green",
+  set: "cyan",
+  zset: "purple",
+  hash: "orange",
+  stream: "magenta",
+  none: "default",
 };
 
 const formatTTL = (ttl?: number) => {
-  if (ttl === undefined || ttl === null) return '-';
-  if (ttl === -1) return '永久';
-  if (ttl === -2) return '不存在';
+  if (ttl === undefined || ttl === null) return "-";
+  if (ttl === -1) return "永久";
+  if (ttl === -2) return "不存在";
   if (ttl < 60) return `${ttl} 秒`;
   if (ttl < 3600) return `${Math.floor(ttl / 60)} 分 ${ttl % 60} 秒`;
   const hours = Math.floor(ttl / 3600);
@@ -48,9 +58,9 @@ const formatTTL = (ttl?: number) => {
 
 const formatValue = (value: any) => {
   if (value === undefined || value === null) {
-    return '';
+    return "";
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value;
   }
   return JSON.stringify(value, null, 2);
@@ -65,53 +75,53 @@ const CachePage: React.FC = () => {
 
   const databaseColumns: ProColumns<CacheDatabase>[] = [
     {
-      title: '库',
-      dataIndex: 'db',
-      key: 'db',
+      title: "库",
+      dataIndex: "db",
+      key: "db",
       width: 90,
       render: (_, record) => `DB ${record.db}`,
     },
     {
-      title: '键数量',
-      dataIndex: 'key_count',
-      key: 'key_count',
+      title: "键数量",
+      dataIndex: "key_count",
+      key: "key_count",
     },
   ];
 
   const keyColumns: ProColumns<CacheKey>[] = [
     {
-      title: 'Key',
-      dataIndex: 'key',
-      key: 'key',
+      title: "Key",
+      dataIndex: "key",
+      key: "key",
       ellipsis: true,
       copyable: true,
     },
     {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
+      title: "类型",
+      dataIndex: "type",
+      key: "type",
       width: 120,
-      valueType: 'select',
+      valueType: "select",
       fieldProps: {
         options: redisTypes,
       },
-      render: renderCellText<CacheKey, 'type'>('type', (value) => (
-        <Tag color={typeColorMap[value || 'none']}>{value || '-'}</Tag>
+      render: renderCellText<CacheKey, "type">("type", (value) => (
+        <Tag color={typeColorMap[value || "none"]}>{value || "-"}</Tag>
       )),
     },
     {
-      title: 'TTL',
-      dataIndex: 'ttl',
-      key: 'ttl',
+      title: "TTL",
+      dataIndex: "ttl",
+      key: "ttl",
       width: 140,
       search: false,
-      render: renderCellText<CacheKey, 'ttl'>('ttl', formatTTL),
+      render: renderCellText<CacheKey, "ttl">("ttl", formatTTL),
     },
     {
-      title: '操作',
-      key: 'option',
-      valueType: 'option',
-      width: 120,
+      title: "操作",
+      key: "option",
+      valueType: "option",
+      width: 160,
       render: (_, record) => [
         <Button
           key="view"
@@ -125,6 +135,31 @@ const CachePage: React.FC = () => {
           }}
         >
           查看数据
+        </Button>,
+        <Button
+          key="delete"
+          type="link"
+          danger
+          onClick={() => {
+            Modal.confirm({
+              title: "确认删除",
+              content: `确定删除 DB ${currentDB} 中的 key「${record.key}」吗？`,
+              onOk: async () => {
+                const res = await deleteCacheKey({
+                  db: currentDB,
+                  key: record.key,
+                });
+                if (res.code === 200) {
+                  message.success("删除成功");
+                  setValueDrawerOpen(false);
+                  setCurrentValue(undefined);
+                  keysActionRef.current?.reload();
+                }
+              },
+            });
+          }}
+        >
+          删除
         </Button>,
       ],
     },
@@ -154,7 +189,7 @@ const CachePage: React.FC = () => {
               };
             }}
             rowSelection={{
-              type: 'radio',
+              type: "radio",
               selectedRowKeys: selectedDBKeys,
               onChange: (keys) => {
                 const nextDB = Number(keys[0] ?? 0);
@@ -196,8 +231,8 @@ const CachePage: React.FC = () => {
             request={async (params) => {
               const res = await getCacheKeys({
                 db: currentDB,
-                pattern: (params.key as string) || '*',
-                type: (params.type as RedisValueType) || 'all',
+                pattern: (params.key as string) || "*",
+                type: (params.type as RedisValueType) || "all",
                 count: 1000,
               });
               if (res.code === 200 && res.data) {
@@ -225,7 +260,7 @@ const CachePage: React.FC = () => {
         onClose={() => setValueDrawerOpen(false)}
       >
         {currentValue ? (
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             <Descriptions column={1} bordered size="small">
               <Descriptions.Item label="库">
                 DB {currentValue.db}
@@ -234,8 +269,8 @@ const CachePage: React.FC = () => {
                 {currentValue.key}
               </Descriptions.Item>
               <Descriptions.Item label="类型">
-                <Tag color={typeColorMap[currentValue.type || 'none']}>
-                  {currentValue.type || '-'}
+                <Tag color={typeColorMap[currentValue.type || "none"]}>
+                  {currentValue.type || "-"}
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="TTL">
@@ -246,13 +281,13 @@ const CachePage: React.FC = () => {
               <pre
                 style={{
                   maxHeight: 520,
-                  overflow: 'auto',
+                  overflow: "auto",
                   padding: 12,
                   margin: 0,
-                  background: '#f5f5f5',
+                  background: "#f5f5f5",
                   borderRadius: 6,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
                 }}
               >
                 {formatValue(currentValue.value)}
