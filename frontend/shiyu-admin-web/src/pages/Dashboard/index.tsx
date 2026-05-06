@@ -5,6 +5,7 @@ import { request, useModel } from '@umijs/max';
 import { Button, Col, Row, Space, Spin, Table, Tag, Typography } from 'antd';
 import type { EChartsOption } from 'echarts';
 import * as echarts from 'echarts';
+import 'echarts-gl';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GeoAccessSummary } from '@/services/shiyu-api/dashboard';
@@ -48,11 +49,13 @@ function bucketLogsByHour(logs: OperationLog[], slotCount: number): number[] {
 }
 
 /** 避免 echarts-for-react 与 React 19 类型不兼容，使用原生 init */
+type DashboardChartOption = EChartsOption | Record<string, unknown>;
+
 function ChartShell({
   option,
   style,
 }: {
-  option: EChartsOption;
+  option: DashboardChartOption;
   style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -75,10 +78,53 @@ function ChartShell({
   }, []);
 
   useEffect(() => {
-    chartRef.current?.setOption(option, true);
+    chartRef.current?.setOption(option as EChartsOption, true);
   }, [option]);
 
   return <div ref={ref} style={style} />;
+}
+
+function createWorldBaseTexture() {
+  const canvas = document.createElement('canvas');
+  const chart = echarts.init(canvas, undefined, {
+    renderer: 'canvas',
+    width: 4096,
+    height: 2048,
+  });
+
+  chart.setOption({
+    animation: false,
+    backgroundColor: '#06111f',
+    geo: {
+      type: 'map',
+      map: 'world',
+      roam: false,
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      boundingCoords: [
+        [-180, 90],
+        [180, -90],
+      ],
+      itemStyle: {
+        areaColor: '#13223a',
+        borderColor: 'rgba(125,211,252,0.55)',
+        borderWidth: 0.65,
+      },
+      emphasis: { disabled: true },
+    },
+    series: [
+      {
+        type: 'map',
+        map: 'world',
+        geoIndex: 0,
+        silent: true,
+      },
+    ],
+  } as EChartsOption);
+
+  return { canvas, chart };
 }
 
 const Dashboard: React.FC = () => {
@@ -97,9 +143,10 @@ const Dashboard: React.FC = () => {
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
   const [geoSummary, setGeoSummary] = useState<GeoAccessSummary | null>(null);
-  const [worldMapReady, setWorldMapReady] = useState(false);
+  const [worldBaseTexture, setWorldBaseTexture] = useState<HTMLCanvasElement | null>(null);
 
   const boardRef = useRef<HTMLDivElement>(null);
+  const worldTextureChartRef = useRef<ReturnType<typeof echarts.init> | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -207,22 +254,27 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    fetch('https://fastly.jsdelivr.net/npm/echarts@5/map/json/world.json')
+    fetch('/assets/world.json')
       .then((res) => res.json())
       .then((geojson) => {
         if (!mounted) {
           return;
         }
         echarts.registerMap('world', geojson as never);
-        setWorldMapReady(true);
+        worldTextureChartRef.current?.dispose();
+        const { canvas, chart } = createWorldBaseTexture();
+        worldTextureChartRef.current = chart;
+        setWorldBaseTexture(canvas);
       })
       .catch(() => {
         if (mounted) {
-          setWorldMapReady(false);
+          setWorldBaseTexture(null);
         }
       });
     return () => {
       mounted = false;
+      worldTextureChartRef.current?.dispose();
+      worldTextureChartRef.current = null;
     };
   }, []);
 
@@ -296,9 +348,11 @@ const Dashboard: React.FC = () => {
     [hourly, timeAxisLabels],
   );
 
-  const geoMapOption: EChartsOption = useMemo(() => {
+  const geoMapOption: DashboardChartOption = useMemo(() => {
     const points = (geoSummary?.countries || []).filter((x) => Number.isFinite(x.lat) && Number.isFinite(x.lon));
-    if (!worldMapReady) {
+    const maxCount = Math.max(1, ...points.map((x) => x.count || 0));
+
+    if (!worldBaseTexture) {
       return {
         grid: { left: 16, right: 16, top: 20, bottom: 22 },
         xAxis: {
@@ -330,37 +384,78 @@ const Dashboard: React.FC = () => {
           return `${params.name || '未知'}<br/>访问量：${count}`;
         },
       },
-      geo: {
-        map: 'world',
-        roam: true,
-        zoom: 1.1,
-        itemStyle: {
-          areaColor: 'rgba(15,23,42,0.96)',
-          borderColor: 'rgba(100,116,139,0.55)',
-          borderWidth: 0.6,
+      globe: {
+        baseTexture: worldBaseTexture,
+        shading: 'realistic',
+        realisticMaterial: {
+          roughness: 0.72,
+          metalness: 0,
         },
-        emphasis: {
-          itemStyle: { areaColor: 'rgba(56,189,248,0.28)' },
-          label: { show: false },
+        atmosphere: {
+          show: true,
+          color: '#22d3ee',
+          offset: 5,
         },
+        light: {
+          ambient: { intensity: 0.72 },
+          main: {
+            intensity: 1.25,
+            shadow: true,
+            alpha: 32,
+            beta: 145,
+          },
+        },
+        viewControl: {
+          autoRotate: true,
+          autoRotateAfterStill: 2,
+          autoRotateSpeed: 2.2,
+          alpha: 22,
+          beta: -150,
+          distance: 145,
+          minDistance: 95,
+          maxDistance: 210,
+        },
+        postEffect: {
+          enable: true,
+          bloom: { enable: true, intensity: 0.14 },
+        },
+        temporalSuperSampling: { enable: true },
       },
       series: [
         {
           name: '访问点位',
-          type: 'effectScatter',
-          coordinateSystem: 'geo',
+          type: 'scatter3D',
+          coordinateSystem: 'globe',
+          blendMode: 'lighter',
           data: points.map((x) => ({
             name: x.country,
-            value: [x.lon, x.lat, x.count],
+            value: [x.lon, x.lat, Math.max(1, x.count)],
           })),
-          rippleEffect: { brushType: 'stroke', scale: 2.5 },
-          itemStyle: { color: '#22d3ee' },
-          symbolSize: (val: number[]) => Math.max(6, Math.min(24, (val[2] || 0) * 2)),
-          encode: { value: 2 },
+          symbolSize: (val: unknown) => {
+            const count = Array.isArray(val) && typeof val[2] === 'number' ? val[2] : 1;
+            return Math.max(7, Math.min(28, 7 + (count / maxCount) * 18));
+          },
+          itemStyle: {
+            color: '#67e8f9',
+            opacity: 0.96,
+            borderColor: '#e0f2fe',
+            borderWidth: 0.8,
+          },
+          label: {
+            show: points.length <= 6,
+            formatter: '{b}',
+            color: '#bae6fd',
+            distance: 4,
+            fontSize: 10,
+          },
+          emphasis: {
+            label: { show: true },
+            itemStyle: { color: '#facc15' },
+          },
         },
       ],
     };
-  }, [geoSummary, worldMapReady]);
+  }, [geoSummary, worldBaseTexture]);
 
   const topCountries = useMemo(() => (geoSummary?.countries || []).slice(0, 5), [geoSummary]);
 
