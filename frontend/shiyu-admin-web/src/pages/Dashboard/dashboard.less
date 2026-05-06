@@ -9,15 +9,18 @@
   --board-glow: 0 0 40px rgba(56, 189, 248, 0.12);
 
   position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   min-height: calc(100vh - 120px);
-  margin: -12px -24px 0;
+  margin: 0;
   padding: 20px 20px 28px;
   border-radius: 4px;
+  overflow: hidden;
   background:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56, 189, 248, 0.18), transparent),
     radial-gradient(ellipse 60% 40% at 100% 50%, rgba(99, 102, 241, 0.1), transparent),
     linear-gradient(180deg, #050810 0%, #0b1220 45%, #060912 100%);
-  overflow: hidden;
   color: var(--board-text);
   font-family:
     ui-sans-serif,
@@ -47,6 +50,7 @@
     position: absolute;
     left: 0;
     right: 0;
+    width: 100%;
     height: 120px;
     background: linear-gradient(
       180deg,
@@ -54,9 +58,10 @@
       rgba(56, 189, 248, 0.06),
       transparent
     );
-    animation: board-scan 8s linear infinite;
+    animation: board-scan-sweep 10s linear infinite;
     pointer-events: none;
     opacity: 0.35;
+    will-change: top;
   }
 
   .board-header-title {
@@ -210,12 +215,13 @@
   }
 }
 
-@keyframes board-scan {
+/* 相对看板容器自上而下扫光，避免使用 100vh 造成水平/垂直滚动条异常 */
+@keyframes board-scan-sweep {
   0% {
-    transform: translateY(-100%);
+    top: -120px;
   }
   100% {
-    transform: translateY(100vh);
+    top: 100%;
   }
 }
 
@@ -247,7 +253,7 @@
 
 @media (max-width: 768px) {
   .data-board {
-    margin: -8px -12px 0;
+    margin: 0;
     padding: 12px;
   }
 }

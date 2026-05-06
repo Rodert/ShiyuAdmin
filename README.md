@@ -61,7 +61,7 @@
 
 ### 数据仪表盘
 
-运维态势看板页面，聚合用户、角色、部门、操作日志与系统监控等数据，支持全屏查看。截图路径：`img/dashboard.png`。
+运维态势看板页面，聚合用户、角色、部门、操作日志、系统监控与访问地理分布等数据，使用 ECharts 渲染趋势、排行和地图图表，支持全屏查看。截图路径：`img/dashboard.png`。
 
 ![ShiyuAdmin 数据仪表盘](./img/dashboard.png)
 
@@ -101,6 +101,25 @@ cd frontend/shiyu-admin-web
 npm install
 npm run start:dev
 ```
+
+前端依赖请在 `frontend/shiyu-admin-web` 目录内安装。仓库根目录没有前端启动入口，通常不需要在根目录执行 `npm install`，避免生成无关的 `package.json`、`package-lock.json` 和 `node_modules/`。
+
+## 提交规范
+
+提交代码前建议先检查工作区：
+
+```bash
+git status --short
+```
+
+以下文件和目录属于本地依赖、构建产物或环境配置，已通过 `.gitignore` 过滤，不应提交到 Git：
+
+- `node_modules/`
+- `dist/`、`build/`、`target/`、`coverage/`
+- `.umi/`、`.umi-production/`、`.umi-test/`
+- `.env`、`.env.local`、`.env.*.local`
+- `*.log`、`npm-debug.log*`、`yarn-error.log*`、`pnpm-debug.log*`
+- `.DS_Store`、`.idea/`、`.vscode/`
 
 ## 默认账号
 
@@ -144,7 +163,7 @@ npm run start:dev
 | 后端 | Go、Gin、Gorm、Viper、JWT |
 | 数据库 | PostgreSQL、MySQL、SQLite |
 | 缓存 | Redis |
-| 前端 | React、Umi Max、Ant Design Pro、TypeScript |
+| 前端 | React、Umi Max、Ant Design Pro、TypeScript、ECharts |
 | 部署 | Docker Compose、GitHub Actions、GitHub Pages、Render、Fly.io |
 
 ## 项目结构

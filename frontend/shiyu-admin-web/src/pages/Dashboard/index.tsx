@@ -7,6 +7,8 @@ import type { EChartsOption } from 'echarts';
 import * as echarts from 'echarts';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GeoAccessSummary } from '@/services/shiyu-api/dashboard';
+import { getGeoAccessSummary } from '@/services/shiyu-api/dashboard';
 import type { CacheStats, DatabaseStats, OnlineUser } from '@/services/shiyu-api/monitor';
 import { getCacheStats, getDatabaseStats, getOnlineUsers } from '@/services/shiyu-api/monitor';
 import type { OperationLog } from '@/services/shiyu-api/operation_log';
@@ -79,23 +81,6 @@ function ChartShell({
   return <div ref={ref} style={style} />;
 }
 
-function aggregateModulePie(logs: OperationLog[], topN = 6) {
-  const map = new Map<string, number>();
-  for (const log of logs) {
-    const key = (log.module || '其他').trim() || '其他';
-    map.set(key, (map.get(key) || 0) + 1);
-  }
-  const arr = [...map.entries()]
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-  if (arr.length <= topN) {
-    return arr;
-  }
-  const head = arr.slice(0, topN);
-  const rest = arr.slice(topN).reduce((s, x) => s + x.value, 0);
-  return [...head, { name: '其余', value: rest }];
-}
-
 const Dashboard: React.FC = () => {
   const { initialState } = useModel('@@initialState');
   const currentUser = initialState?.currentUser;
@@ -111,6 +96,8 @@ const Dashboard: React.FC = () => {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
+  const [geoSummary, setGeoSummary] = useState<GeoAccessSummary | null>(null);
+  const [worldMapReady, setWorldMapReady] = useState(false);
 
   const boardRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -187,6 +174,10 @@ const Dashboard: React.FC = () => {
       (r) => (r.code === 200 ? r.data : null),
       () => null,
     );
+    const geoP = getGeoAccessSummary({ hours: 24 }, skip).then(
+      (r) => (r.code === 200 ? r.data : null),
+      () => null,
+    );
 
     const results = await Promise.all([
       healthP,
@@ -198,6 +189,7 @@ const Dashboard: React.FC = () => {
       onlineP,
       cacheP,
       dbP,
+      geoP,
     ]);
 
     setHealthOk(results[0] as boolean | null);
@@ -209,7 +201,29 @@ const Dashboard: React.FC = () => {
     setOnlineUsers(results[6] as OnlineUser[]);
     setCacheStats(results[7] as CacheStats | null);
     setDbStats(results[8] as DatabaseStats | null);
+    setGeoSummary(results[9] as GeoAccessSummary | null);
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch('https://fastly.jsdelivr.net/npm/echarts@5/map/json/world.json')
+      .then((res) => res.json())
+      .then((geojson) => {
+        if (!mounted) {
+          return;
+        }
+        echarts.registerMap('world', geojson as never);
+        setWorldMapReady(true);
+      })
+      .catch(() => {
+        if (mounted) {
+          setWorldMapReady(false);
+        }
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -221,7 +235,6 @@ const Dashboard: React.FC = () => {
   const menuCount = countMenuItems(initialState?.menuData);
 
   const hourly = useMemo(() => bucketLogsByHour(logsSample, TIME_SLOTS), [logsSample]);
-  const modulePie = useMemo(() => aggregateModulePie(logsSample), [logsSample]);
 
   const timeAxisLabels = useMemo(
     () =>
@@ -283,42 +296,73 @@ const Dashboard: React.FC = () => {
     [hourly, timeAxisLabels],
   );
 
-  const pieOption: EChartsOption = useMemo(
-    () => ({
+  const geoMapOption: EChartsOption = useMemo(() => {
+    const points = (geoSummary?.countries || []).filter((x) => Number.isFinite(x.lat) && Number.isFinite(x.lon));
+    if (!worldMapReady) {
+      return {
+        grid: { left: 16, right: 16, top: 20, bottom: 22 },
+        xAxis: {
+          type: 'category',
+          axisLabel: { color: 'rgba(148,163,184,0.8)', rotate: 20 },
+          data: points.slice(0, 8).map((x) => x.country || 'Unknown'),
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: { color: 'rgba(148,163,184,0.8)' },
+          splitLine: { lineStyle: { color: 'rgba(148,163,184,0.12)' } },
+        },
+        series: [
+          {
+            type: 'bar',
+            data: points.slice(0, 8).map((x) => x.count),
+            itemStyle: { color: '#22d3ee' },
+          },
+        ],
+      };
+    }
+    return {
+      backgroundColor: 'transparent',
       tooltip: {
         trigger: 'item',
-        backgroundColor: 'rgba(15,23,42,0.92)',
-        borderColor: 'rgba(56,189,248,0.35)',
-        textStyle: { color: '#e2e8f0' },
+        formatter: (params: { name?: string; value?: unknown }) => {
+          const val = Array.isArray(params.value) ? params.value : [];
+          const count = typeof val[2] === 'number' ? val[2] : 0;
+          return `${params.name || '未知'}<br/>访问量：${count}`;
+        },
       },
-      legend: {
-        bottom: 4,
-        textStyle: { color: 'rgba(148,163,184,0.85)', fontSize: 10 },
-        type: 'scroll',
+      geo: {
+        map: 'world',
+        roam: true,
+        zoom: 1.1,
+        itemStyle: {
+          areaColor: 'rgba(15,23,42,0.96)',
+          borderColor: 'rgba(100,116,139,0.55)',
+          borderWidth: 0.6,
+        },
+        emphasis: {
+          itemStyle: { areaColor: 'rgba(56,189,248,0.28)' },
+          label: { show: false },
+        },
       },
       series: [
         {
-          name: '模块',
-          type: 'pie',
-          radius: ['42%', '68%'],
-          center: ['50%', '46%'],
-          itemStyle: {
-            borderRadius: 6,
-            borderColor: '#0f172a',
-            borderWidth: 2,
-          },
-          label: { color: '#cbd5e1', fontSize: 11 },
-          data: modulePie.map((x, i) => ({
-            ...x,
-            itemStyle: {
-              color: ['#22d3ee', '#818cf8', '#c084fc', '#fb923c', '#34d399', '#f472b6', '#94a3b8'][i % 7],
-            },
+          name: '访问点位',
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          data: points.map((x) => ({
+            name: x.country,
+            value: [x.lon, x.lat, x.count],
           })),
+          rippleEffect: { brushType: 'stroke', scale: 2.5 },
+          itemStyle: { color: '#22d3ee' },
+          symbolSize: (val: number[]) => Math.max(6, Math.min(24, (val[2] || 0) * 2)),
+          encode: { value: 2 },
         },
       ],
-    }),
-    [modulePie],
-  );
+    };
+  }, [geoSummary, worldMapReady]);
+
+  const topCountries = useMemo(() => (geoSummary?.countries || []).slice(0, 5), [geoSummary]);
 
   const gaugeHealth = useMemo((): EChartsOption => {
     const pct = healthOk === null ? 50 : healthOk ? 94 : 38;
@@ -528,8 +572,30 @@ const Dashboard: React.FC = () => {
             </Col>
             <Col xs={24} lg={7}>
               <div className="board-panel" style={{ paddingBottom: 8 }}>
-                <div className="board-chart-title">日志模块分布（样本）</div>
-                <ChartShell option={pieOption} style={{ height: 280 }} />
+                <div className="board-chart-title">用户全球访问分布（近 24h）</div>
+                <ChartShell option={geoMapOption} style={{ height: 280 }} />
+                <div style={{ padding: '0 12px 10px' }}>
+                  <div style={{ fontSize: 12, color: 'rgba(148,163,184,0.85)', marginBottom: 8 }}>国家访问 TOP5</div>
+                  {topCountries.length === 0 ? (
+                    <div style={{ fontSize: 12, color: 'rgba(148,163,184,0.72)' }}>暂无可定位访问数据</div>
+                  ) : (
+                    topCountries.map((item, idx) => (
+                      <div
+                        key={`${item.country_code}-${item.country}-${idx}`}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: 12,
+                          color: '#cbd5e1',
+                          marginBottom: 4,
+                        }}
+                      >
+                        <span>{idx + 1}. {item.country || 'Unknown'}</span>
+                        <span style={{ color: '#67e8f9' }}>{item.count}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </Col>
             <Col xs={24} lg={7}>
@@ -601,14 +667,28 @@ const Dashboard: React.FC = () => {
                 <div className="board-chart-title">Redis 与在线用户</div>
                 <div style={{ fontSize: 12, color: 'rgba(226,232,240,0.85)', lineHeight: 1.85, marginBottom: 12 }}>
                   <div>内存 {cacheStats?.used_memory_human || '—'}</div>
-                  <div>键数量 {dash(cacheStats?.db_size as unknown as number)}</div>
+                  <div>键数量 {dash(cacheStats?.db_size)}</div>
                   <div>客户端 {dash(cacheStats?.connected_clients)}</div>
                 </div>
-                <div style={{ maxHeight: 200, overflow: 'auto' }}>
-                  {onlineUsers.length === 0 ? (
-                    <div style={{ color: 'rgba(148,163,184,0.75)', fontSize: 12 }}>暂无在线数据或无权限</div>
+                <div style={{ maxHeight: 200, overflow: 'auto', marginBottom: 10 }}>
+                  {geoSummary?.top_ips?.length ? (
+                    geoSummary.top_ips.slice(0, 5).map((x) => (
+                      <div key={x.ip} className="board-online-item">
+                        <div style={{ fontWeight: 600, color: '#7dd3fc' }}>{x.ip}</div>
+                        <div style={{ color: 'rgba(148,163,184,0.85)', fontSize: 11 }}>
+                          {x.country || 'Unknown'} · {x.city || 'Unknown'} · {x.count} 次
+                        </div>
+                      </div>
+                    ))
                   ) : (
-                    onlineUsers.slice(0, 8).map((u) => (
+                    <div style={{ color: 'rgba(148,163,184,0.75)', fontSize: 12 }}>暂无可定位 IP 数据</div>
+                  )}
+                </div>
+                <div style={{ maxHeight: 140, overflow: 'auto' }}>
+                  {onlineUsers.length === 0 ? (
+                    <div style={{ color: 'rgba(148,163,184,0.75)', fontSize: 12 }}>暂无在线用户</div>
+                  ) : (
+                    onlineUsers.slice(0, 4).map((u) => (
                       <div key={u.user_code} className="board-online-item">
                         <div style={{ fontWeight: 600, color: '#7dd3fc' }}>{u.username}</div>
                         <div style={{ color: 'rgba(148,163,184,0.85)', fontSize: 11 }}>{u.ip || '—'}</div>
