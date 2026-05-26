@@ -22,15 +22,21 @@ type Service struct {
 	db          *gorm.DB
 	redisClient *redis.Client
 	// onlineTTL defines how long a user is considered online since last activity.
-	onlineTTL time.Duration
+	onlineTTL  time.Duration
+	revokedTTL time.Duration
 }
 
 // New creates a new MonitorService.
-func New(redisClient *redis.Client, onlineTTL time.Duration, db *gorm.DB) monitorinterfaces.MonitorService {
+func New(redisClient *redis.Client, onlineTTL time.Duration, db *gorm.DB, revokedTTL ...time.Duration) monitorinterfaces.MonitorService {
+	tokenTTL := onlineTTL
+	if len(revokedTTL) > 0 && revokedTTL[0] > 0 {
+		tokenTTL = revokedTTL[0]
+	}
 	return &Service{
 		db:          db,
 		redisClient: redisClient,
 		onlineTTL:   onlineTTL,
+		revokedTTL:  tokenTTL,
 	}
 }
 
@@ -177,7 +183,7 @@ func (s *Service) ForceLogout(ctx context.Context, sessionID string) error {
 	if err := s.redisClient.Delete(ctx, onlineUserKey(sessionID)); err != nil {
 		return err
 	}
-	return s.redisClient.Set(ctx, revokedSessionKey(sessionID), "1", s.onlineTTL)
+	return s.redisClient.Set(ctx, revokedSessionKey(sessionID), "1", s.revokedTTL)
 }
 
 func (s *Service) IsSessionRevoked(ctx context.Context, sessionID string) (bool, error) {

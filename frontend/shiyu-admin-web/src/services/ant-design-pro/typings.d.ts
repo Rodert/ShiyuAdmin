@@ -30,6 +30,7 @@ declare namespace API {
       role_name?: string;
       role_key?: string;
     }[];
+    permissions?: string[];
     isSuperAdmin?: boolean;
     loginAt?: number;
   };

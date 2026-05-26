@@ -21,19 +21,19 @@ func registerMenuRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permission
 	rg.GET("/menus", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		listMenus(c, menuSvc)
 	})
-	rg.GET("/menus/tree", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
+	rg.GET("/menus/tree", middleware.RequirePermission(permissionSvc, ""), func(c *gin.Context) {
 		listMenuTree(c, menuSvc, userRoleSvc, roleMenuSvc)
 	})
 	rg.GET("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
 		getMenu(c, menuSvc)
 	})
-	rg.POST("/menus", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
+	rg.POST("/menus", middleware.RequirePermission(permissionSvc, "system:menu:create"), func(c *gin.Context) {
 		createMenu(c, menuSvc)
 	})
-	rg.PUT("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
+	rg.PUT("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:update"), func(c *gin.Context) {
 		updateMenu(c, menuSvc)
 	})
-	rg.DELETE("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:list"), func(c *gin.Context) {
+	rg.DELETE("/menus/:code", middleware.RequirePermission(permissionSvc, "system:menu:delete"), func(c *gin.Context) {
 		deleteMenu(c, menuSvc)
 	})
 }
@@ -148,12 +148,15 @@ func collectUserMenuCodes(c *gin.Context, userRoleSvc interfaces.UserRoleService
 	}
 
 	for _, role := range roles {
+		if role == nil || role.Status != 1 {
+			continue
+		}
 		menus, err := roleMenuSvc.GetRoleMenus(c, role.RoleCode)
 		if err != nil {
 			return nil, err
 		}
 		for _, menu := range menus {
-			if menu == nil {
+			if menu == nil || menu.Status != 1 {
 				continue
 			}
 			allowed[menu.MenuCode] = struct{}{}

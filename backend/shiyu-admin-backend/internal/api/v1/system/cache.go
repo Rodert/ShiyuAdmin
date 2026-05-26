@@ -27,7 +27,7 @@ func registerCacheRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permissio
 	rg.GET("/cache/value", middleware.RequirePermission(permissionSvc, "system:cache:list"), func(c *gin.Context) {
 		getCacheValue(c, cacheSvc)
 	})
-	rg.DELETE("/cache/key", middleware.RequirePermission(permissionSvc, "system:cache:list"), func(c *gin.Context) {
+	rg.DELETE("/cache/key", middleware.RequirePermission(permissionSvc, "system:cache:delete"), func(c *gin.Context) {
 		deleteCacheKey(c, cacheSvc)
 	})
 }

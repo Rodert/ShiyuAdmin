@@ -25,6 +25,7 @@ func (r *RoleMenuRepository) GetRoleMenus(ctx context.Context, roleCode string) 
 		Table("sys_menus").
 		Joins("INNER JOIN sys_role_menus ON sys_menus.menu_code = sys_role_menus.menu_code").
 		Where("sys_role_menus.role_code = ?", roleCode).
+		Where("sys_menus.deleted_at IS NULL").
 		Order("sys_menus.id ASC").
 		Find(&menus).Error; err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func (r *RoleMenuRepository) GetMenuRoles(ctx context.Context, menuCode string) 
 		Table("sys_roles").
 		Joins("INNER JOIN sys_role_menus ON sys_roles.role_code = sys_role_menus.role_code").
 		Where("sys_role_menus.menu_code = ?", menuCode).
+		Where("sys_roles.deleted_at IS NULL").
 		Find(&roles).Error; err != nil {
 		return nil, err
 	}
@@ -83,4 +85,3 @@ func (r *RoleMenuRepository) SetRoleMenus(ctx context.Context, roleCode string, 
 		return nil
 	})
 }
-

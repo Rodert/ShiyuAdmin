@@ -12,6 +12,8 @@ import {
   type Menu,
   type UpdateMenuRequest,
 } from '@/services/shiyu-api/menu';
+import { hasPermission } from '@/utils/permission';
+import { useModel } from '@umijs/max';
 import MenuForm from './components/MenuForm';
 
 const MenuManagement: React.FC = () => {
@@ -19,12 +21,22 @@ const MenuManagement: React.FC = () => {
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Menu | null>(null);
   const actionRef = useRef<ActionType>(null);
+  const { initialState } = useModel('@@initialState');
+  const currentUser = initialState?.currentUser;
+  const canCreate = hasPermission(currentUser, 'system:menu:create');
+  const canUpdate = hasPermission(currentUser, 'system:menu:update');
+  const canDelete = hasPermission(currentUser, 'system:menu:delete');
 
   const countMenus = (menus: Menu[]): number => {
-    return menus.reduce((total, menu) => total + 1 + countMenus(menu.children || []), 0);
+    return menus.reduce(
+      (total, menu) => total + 1 + countMenus(menu.children || []),
+      0,
+    );
   };
 
-  const handleCreate = async (values: CreateMenuRequest | UpdateMenuRequest) => {
+  const handleCreate = async (
+    values: CreateMenuRequest | UpdateMenuRequest,
+  ) => {
     try {
       const res = await createMenu(values as CreateMenuRequest);
       if (res.code === 200) {
@@ -35,10 +47,15 @@ const MenuManagement: React.FC = () => {
     } catch (_error) {}
   };
 
-  const handleUpdate = async (values: CreateMenuRequest | UpdateMenuRequest) => {
+  const handleUpdate = async (
+    values: CreateMenuRequest | UpdateMenuRequest,
+  ) => {
     if (!editingRecord) return;
     try {
-      const res = await updateMenu(editingRecord.menu_code, values as UpdateMenuRequest);
+      const res = await updateMenu(
+        editingRecord.menu_code,
+        values as UpdateMenuRequest,
+      );
       if (res.code === 200) {
         message.success('更新成功');
         setUpdateModalVisible(false);
@@ -130,24 +147,28 @@ const MenuManagement: React.FC = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditingRecord(record);
-              setUpdateModalVisible(true);
-            }}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            onClick={() => handleDelete(record)}
-          >
-            删除
-          </Button>
+          {canUpdate && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                setEditingRecord(record);
+                setUpdateModalVisible(true);
+              }}
+            >
+              编辑
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              onClick={() => handleDelete(record)}
+            >
+              删除
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -160,17 +181,21 @@ const MenuManagement: React.FC = () => {
         actionRef={actionRef}
         rowKey="menu_code"
         search={false}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              setCreateModalVisible(true);
-            }}
-          >
-            <PlusOutlined /> 新建
-          </Button>,
-        ]}
+        toolBarRender={() =>
+          canCreate
+            ? [
+                <Button
+                  type="primary"
+                  key="primary"
+                  onClick={() => {
+                    setCreateModalVisible(true);
+                  }}
+                >
+                  <PlusOutlined /> 新建
+                </Button>,
+              ]
+            : []
+        }
         request={async () => {
           const res = await getMenuTree();
           if (res.code === 200 && res.data) {
@@ -215,4 +240,3 @@ const MenuManagement: React.FC = () => {
 };
 
 export default MenuManagement;
-

@@ -30,6 +30,10 @@ func (s *Service) Create(ctx context.Context, log *entity.OperationLog) error {
 
 // Page queries operation logs with pagination.
 func (s *Service) Page(ctx context.Context, req *dto.OperationLogPageRequest) (*vo.PageResult[vo.OperationLogVO], error) {
+	return s.PageWithScope(ctx, req, nil)
+}
+
+func (s *Service) PageWithScope(ctx context.Context, req *dto.OperationLogPageRequest, scope *serviceinterfaces.UserDataScope) (*vo.PageResult[vo.OperationLogVO], error) {
 	if req == nil {
 		req = &dto.OperationLogPageRequest{}
 	}
@@ -43,6 +47,11 @@ func (s *Service) Page(ctx context.Context, req *dto.OperationLogPageRequest) (*
 		EndTime:   req.EndTime,
 		Page:      req.Page,
 		PageSize:  req.PageSize,
+	}
+	if scope != nil && !scope.All {
+		filter.ScopeRestricted = true
+		filter.AllowedUserCode = scope.UserCode
+		filter.AllowedDeptCodes = scope.DeptCodes
 	}
 	logs, total, err := s.repo.List(ctx, filter)
 	if err != nil {

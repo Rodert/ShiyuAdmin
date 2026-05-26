@@ -68,6 +68,7 @@ func (r *RoleRepository) Update(ctx context.Context, role *entity.Role) error {
 	return r.db.WithContext(ctx).
 		Model(&entity.Role{}).
 		Where("role_code = ?", role.RoleCode).
+		Select("role_name", "role_key", "data_scope", "status").
 		Updates(role).Error
 }
 

@@ -9,28 +9,29 @@ import (
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
+	"shiyu-admin-backend/pkg/jwtutil"
 	"shiyu-admin-backend/pkg/response"
 )
 
-func registerUserRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, userSvc interfaces.UserService) {
+func registerUserRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, dataScopeSvc interfaces.DataScopeService, userSvc interfaces.UserService) {
 	if userSvc == nil {
 		return
 	}
 	rg.GET("/users", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
-		listUsers(c, userSvc)
+		listUsers(c, userSvc, dataScopeSvc)
 	})
-	rg.POST("/users", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
+	rg.POST("/users", middleware.RequirePermission(permissionSvc, "system:user:create"), func(c *gin.Context) {
 		createUser(c, userSvc)
 	})
-	rg.PUT("/users/:code", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
+	rg.PUT("/users/:code", middleware.RequirePermission(permissionSvc, "system:user:update"), func(c *gin.Context) {
 		updateUser(c, userSvc)
 	})
-	rg.DELETE("/users/:code", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
+	rg.DELETE("/users/:code", middleware.RequirePermission(permissionSvc, "system:user:delete"), func(c *gin.Context) {
 		deleteUser(c, userSvc)
 	})
 }
 
-func listUsers(c *gin.Context, userSvc interfaces.UserService) {
+func listUsers(c *gin.Context, userSvc interfaces.UserService, dataScopeSvc interfaces.DataScopeService) {
 	var req dto.ListUserRequest
 	req.Page = 1
 	req.PageSize = 10
@@ -45,7 +46,19 @@ func listUsers(c *gin.Context, userSvc interfaces.UserService) {
 		req.PageSize = 10
 	}
 
-	users, total, err := userSvc.List(c, req.Page, req.PageSize)
+	var scope *interfaces.UserDataScope
+	if dataScopeSvc != nil {
+		claimsVal, _ := c.Get(middleware.CurrentUserCtxKey)
+		if claims, ok := claimsVal.(*jwtutil.Claims); ok && claims != nil {
+			resolved, err := dataScopeSvc.ResolveUserScope(c, claims.UserCode, claims.IsSuperAdmin)
+			if err != nil {
+				response.Error(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			scope = resolved
+		}
+	}
+	users, total, err := userSvc.ListWithScope(c, req.Page, req.PageSize, scope)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return

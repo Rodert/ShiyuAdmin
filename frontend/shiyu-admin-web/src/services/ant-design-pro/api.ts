@@ -24,6 +24,7 @@ export async function currentUser(options?: { [key: string]: any }) {
         role_name?: string;
         role_key?: string;
       }[];
+      permissions?: string[];
       is_super_admin?: boolean;
       iat?: number;
     };
@@ -48,6 +49,7 @@ export async function currentUser(options?: { [key: string]: any }) {
     deptName: res.data.dept?.dept_name,
     status: res.data.status,
     roles: res.data.roles || [],
+    permissions: res.data.permissions || [],
     access: res.data.is_super_admin ? "admin" : "user",
     isSuperAdmin: res.data.is_super_admin,
     loginAt: res.data.iat,
@@ -58,7 +60,7 @@ export async function currentUser(options?: { [key: string]: any }) {
 
 /** 退出登录接口 POST /api/login/outLogin */
 export async function outLogin(options?: { [key: string]: any }) {
-  return request<Record<string, any>>("/api/login/outLogin", {
+  return request<Record<string, any>>("/api/v1/system/auth/logout", {
     method: "POST",
     ...(options || {}),
   });

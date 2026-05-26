@@ -16,7 +16,7 @@ import (
 )
 
 // RegisterRoutes wires system routes under /system.
-func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, profileSvc interfaces.ProfileService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService, cacheSvc interfaces.CacheService) {
+func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, dataScopeSvc interfaces.DataScopeService, profileSvc interfaces.ProfileService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService, cacheSvc interfaces.CacheService) {
 	r := rg.Group("/system")
 	r.GET("/ping", ping)
 	r.GET("/health", health)
@@ -44,14 +44,17 @@ func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMid
 		protected.PUT("/profile/password", func(c *gin.Context) {
 			changePassword(c, profileSvc)
 		})
-		registerUserRoutes(protected, permissionSvc, userSvc)
+		protected.POST("/auth/logout", func(c *gin.Context) {
+			logout(c, monitorSvc)
+		})
+		registerUserRoutes(protected, permissionSvc, dataScopeSvc, userSvc)
 		registerRoleRoutes(protected, permissionSvc, roleSvc)
 		registerMenuRoutes(protected, permissionSvc, menuSvc, userRoleSvc, roleMenuSvc)
 		registerDeptRoutes(protected, permissionSvc, deptSvc)
 		registerUserRoleRoutes(protected, permissionSvc, userRoleSvc)
 		registerRoleMenuRoutes(protected, permissionSvc, roleMenuSvc)
 		registerRoleDeptRoutes(protected, permissionSvc, roleDeptSvc)
-		registerOperationLogRoutes(protected, permissionSvc, operationLogSvc)
+		registerOperationLogRoutes(protected, permissionSvc, dataScopeSvc, operationLogSvc)
 		registerMonitorRoutes(protected, permissionSvc, monitorSvc)
 		registerDashboardRoutes(protected, permissionSvc, operationLogSvc)
 		registerDataManageRoutes(protected, dataManageSvc)
@@ -177,6 +180,24 @@ func login(c *gin.Context, authSvc interfaces.AuthService, operationLogSvc inter
 	}
 	response.Success(c, tokenVO)
 	recordLoginOperation(c, operationLogSvc, req.Username, 1, "", start)
+}
+
+func logout(c *gin.Context, monitorSvc interfaces.MonitorService) {
+	sessionID, _ := c.Get("sessionID")
+	if monitorSvc != nil {
+		if err := monitorSvc.ForceLogout(c, stringValue(sessionID)); err != nil {
+			response.Error(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	response.Success(c, gin.H{"logged_out": true})
+}
+
+func stringValue(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
 }
 
 func recordLoginOperation(c *gin.Context, operationLogSvc interfaces.OperationLogService, username string, status int, errorMsg string, start time.Time) {

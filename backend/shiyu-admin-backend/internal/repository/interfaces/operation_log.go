@@ -14,13 +14,16 @@ type OperationLogRepository interface {
 
 // OperationLogFilter defines filters for querying operation logs.
 type OperationLogFilter struct {
-	UserCode  string
-	Username  string
-	Module    string
-	Action    string
-	Status    *int
-	StartTime *int64
-	EndTime   *int64
-	Page      int
-	PageSize  int
+	UserCode         string
+	Username         string
+	Module           string
+	Action           string
+	Status           *int
+	StartTime        *int64
+	EndTime          *int64
+	Page             int
+	PageSize         int
+	ScopeRestricted  bool
+	AllowedUserCode  string
+	AllowedDeptCodes []string
 }

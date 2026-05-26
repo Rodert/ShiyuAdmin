@@ -33,28 +33,34 @@ func (r *OperationLogRepository) List(ctx context.Context, filter *repo.Operatio
 	query := r.db.WithContext(ctx).Model(&entity.OperationLog{})
 
 	if filter != nil {
+		if filter.ScopeRestricted && len(filter.AllowedDeptCodes) > 0 {
+			query = query.Joins("LEFT JOIN sys_users ON sys_operation_logs.user_code = sys_users.user_code")
+		}
 		if filter.UserCode != "" {
-			query = query.Where("user_code = ?", filter.UserCode)
+			query = query.Where("sys_operation_logs.user_code = ?", filter.UserCode)
 		}
 		if filter.Username != "" {
-			query = query.Where("username LIKE ?", "%"+filter.Username+"%")
+			query = query.Where("sys_operation_logs.username LIKE ?", "%"+filter.Username+"%")
 		}
 		if filter.Module != "" {
-			query = query.Where("module = ?", filter.Module)
+			query = query.Where("sys_operation_logs.module = ?", filter.Module)
 		}
 		if filter.Action != "" {
-			query = query.Where("action = ?", filter.Action)
+			query = query.Where("sys_operation_logs.action = ?", filter.Action)
 		}
 		if filter.Status != nil {
-			query = query.Where("status = ?", *filter.Status)
+			query = query.Where("sys_operation_logs.status = ?", *filter.Status)
 		}
 		if filter.StartTime != nil {
 			start := time.Unix(*filter.StartTime, 0)
-			query = query.Where("created_at >= ?", start)
+			query = query.Where("sys_operation_logs.created_at >= ?", start)
 		}
 		if filter.EndTime != nil {
 			end := time.Unix(*filter.EndTime, 0)
-			query = query.Where("created_at <= ?", end)
+			query = query.Where("sys_operation_logs.created_at <= ?", end)
+		}
+		if filter.ScopeRestricted {
+			query = applyOperationLogScope(query, filter.AllowedUserCode, filter.AllowedDeptCodes)
 		}
 	}
 
@@ -86,4 +92,17 @@ func (r *OperationLogRepository) List(ctx context.Context, filter *repo.Operatio
 	}
 
 	return logs, total, nil
+}
+
+func applyOperationLogScope(query *gorm.DB, userCode string, deptCodes []string) *gorm.DB {
+	switch {
+	case userCode != "" && len(deptCodes) > 0:
+		return query.Where("(sys_operation_logs.user_code = ? OR sys_users.dept_code IN ?)", userCode, deptCodes)
+	case userCode != "":
+		return query.Where("sys_operation_logs.user_code = ?", userCode)
+	case len(deptCodes) > 0:
+		return query.Where("sys_users.dept_code IN ?", deptCodes)
+	default:
+		return query.Where("1 = 0")
+	}
 }

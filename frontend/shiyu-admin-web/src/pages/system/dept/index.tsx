@@ -12,6 +12,8 @@ import {
   type Dept,
   type UpdateDeptRequest,
 } from '@/services/shiyu-api/dept';
+import { hasPermission } from '@/utils/permission';
+import { useModel } from '@umijs/max';
 import DeptForm from './components/DeptForm';
 
 const DeptManagement: React.FC = () => {
@@ -19,12 +21,22 @@ const DeptManagement: React.FC = () => {
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Dept | null>(null);
   const actionRef = useRef<ActionType>(null);
+  const { initialState } = useModel('@@initialState');
+  const currentUser = initialState?.currentUser;
+  const canCreate = hasPermission(currentUser, 'system:dept:create');
+  const canUpdate = hasPermission(currentUser, 'system:dept:update');
+  const canDelete = hasPermission(currentUser, 'system:dept:delete');
 
   const countDepts = (depts: Dept[]): number => {
-    return depts.reduce((total, dept) => total + 1 + countDepts(dept.children || []), 0);
+    return depts.reduce(
+      (total, dept) => total + 1 + countDepts(dept.children || []),
+      0,
+    );
   };
 
-  const handleCreate = async (values: CreateDeptRequest | UpdateDeptRequest) => {
+  const handleCreate = async (
+    values: CreateDeptRequest | UpdateDeptRequest,
+  ) => {
     try {
       const res = await createDept(values as CreateDeptRequest);
       if (res.code === 200) {
@@ -35,10 +47,15 @@ const DeptManagement: React.FC = () => {
     } catch (_error) {}
   };
 
-  const handleUpdate = async (values: CreateDeptRequest | UpdateDeptRequest) => {
+  const handleUpdate = async (
+    values: CreateDeptRequest | UpdateDeptRequest,
+  ) => {
     if (!editingRecord) return;
     try {
-      const res = await updateDept(editingRecord.dept_code, values as UpdateDeptRequest);
+      const res = await updateDept(
+        editingRecord.dept_code,
+        values as UpdateDeptRequest,
+      );
       if (res.code === 200) {
         message.success('更新成功');
         setUpdateModalVisible(false);
@@ -100,24 +117,28 @@ const DeptManagement: React.FC = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditingRecord(record);
-              setUpdateModalVisible(true);
-            }}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            onClick={() => handleDelete(record)}
-          >
-            删除
-          </Button>
+          {canUpdate && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                setEditingRecord(record);
+                setUpdateModalVisible(true);
+              }}
+            >
+              编辑
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              type="link"
+              size="small"
+              danger
+              onClick={() => handleDelete(record)}
+            >
+              删除
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -130,17 +151,21 @@ const DeptManagement: React.FC = () => {
         actionRef={actionRef}
         rowKey="dept_code"
         search={false}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              setCreateModalVisible(true);
-            }}
-          >
-            <PlusOutlined /> 新建
-          </Button>,
-        ]}
+        toolBarRender={() =>
+          canCreate
+            ? [
+                <Button
+                  type="primary"
+                  key="primary"
+                  onClick={() => {
+                    setCreateModalVisible(true);
+                  }}
+                >
+                  <PlusOutlined /> 新建
+                </Button>,
+              ]
+            : []
+        }
         request={async () => {
           const res = await getDeptTree();
           if (res.code === 200 && res.data) {
@@ -185,4 +210,3 @@ const DeptManagement: React.FC = () => {
 };
 
 export default DeptManagement;
-

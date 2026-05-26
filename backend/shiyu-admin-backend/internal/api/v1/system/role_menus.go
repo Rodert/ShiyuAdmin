@@ -19,7 +19,7 @@ func registerRoleMenuRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permis
 	rg.GET("/roles/:code/menus", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		getRoleMenus(c, roleMenuSvc)
 	})
-	rg.PUT("/roles/:code/menus", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
+	rg.PUT("/roles/:code/menus", middleware.RequirePermission(permissionSvc, "system:role:assign-menu"), func(c *gin.Context) {
 		setRoleMenus(c, roleMenuSvc)
 	})
 }

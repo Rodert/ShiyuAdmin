@@ -10,16 +10,22 @@ import (
 )
 
 type Service struct {
-	userSvc     interfaces.UserService
-	deptSvc     interfaces.DeptService
-	userRoleSvc interfaces.UserRoleService
+	userSvc       interfaces.UserService
+	deptSvc       interfaces.DeptService
+	userRoleSvc   interfaces.UserRoleService
+	permissionSvc interfaces.PermissionService
 }
 
-func New(userSvc interfaces.UserService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService) interfaces.ProfileService {
+func New(userSvc interfaces.UserService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, permissionSvc ...interfaces.PermissionService) interfaces.ProfileService {
+	var permSvc interfaces.PermissionService
+	if len(permissionSvc) > 0 {
+		permSvc = permissionSvc[0]
+	}
 	return &Service{
-		userSvc:     userSvc,
-		deptSvc:     deptSvc,
-		userRoleSvc: userRoleSvc,
+		userSvc:       userSvc,
+		deptSvc:       deptSvc,
+		userRoleSvc:   userRoleSvc,
+		permissionSvc: permSvc,
 	}
 }
 
@@ -55,6 +61,7 @@ func (s *Service) build(ctx context.Context, user *entity.User) (*vo.ProfileVO, 
 		Status:       user.Status,
 		IsSuperAdmin: user.IsSuperAdmin,
 		Roles:        []vo.ProfileRoleVO{},
+		Permissions:  []string{},
 	}
 
 	if s.deptSvc != nil && user.DeptCode != "" {
@@ -82,6 +89,16 @@ func (s *Service) build(ctx context.Context, user *entity.User) (*vo.ProfileVO, 
 				RoleKey:  role.RoleKey,
 			})
 		}
+	}
+
+	if user.IsSuperAdmin {
+		profile.Permissions = []string{"*:*:*"}
+	} else if s.permissionSvc != nil {
+		perms, err := s.permissionSvc.GetUserPermissions(ctx, user.UserCode)
+		if err != nil {
+			return nil, err
+		}
+		profile.Permissions = perms
 	}
 
 	return profile, nil

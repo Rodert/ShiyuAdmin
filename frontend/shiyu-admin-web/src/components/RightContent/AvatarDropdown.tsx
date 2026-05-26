@@ -3,14 +3,15 @@ import {
   LockOutlined,
   LogoutOutlined,
   UserOutlined,
-} from "@ant-design/icons";
-import { history, useModel } from "@umijs/max";
-import type { MenuProps } from "antd";
-import { Button, Descriptions, Modal, Spin, Tag, Tooltip } from "antd";
-import { createStyles } from "antd-style";
-import React from "react";
-import { flushSync } from "react-dom";
-import HeaderDropdown from "../HeaderDropdown";
+} from '@ant-design/icons';
+import { outLogin } from '@/services/ant-design-pro/api';
+import { history, useModel } from '@umijs/max';
+import type { MenuProps } from 'antd';
+import { Button, Descriptions, Modal, Spin, Tag, Tooltip } from 'antd';
+import { createStyles } from 'antd-style';
+import React from 'react';
+import { flushSync } from 'react-dom';
+import HeaderDropdown from '../HeaderDropdown';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -18,45 +19,45 @@ export type GlobalHeaderRightProps = {
 };
 
 export const AvatarName = () => {
-  const { initialState } = useModel("@@initialState");
+  const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   return <span className="anticon">{currentUser?.name}</span>;
 };
 
 const formatLoginTime = (loginAt?: number) => {
   if (!loginAt) {
-    return "-";
+    return '-';
   }
   const timestamp = loginAt > 10_000_000_000 ? loginAt : loginAt * 1000;
-  return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   }).format(new Date(timestamp));
 };
 
 const useStyles = createStyles(({ token }) => {
   return {
     action: {
-      display: "flex",
-      height: "48px",
-      marginLeft: "auto",
-      overflow: "hidden",
-      alignItems: "center",
-      padding: "0 8px",
-      cursor: "pointer",
+      display: 'flex',
+      height: '48px',
+      marginLeft: 'auto',
+      overflow: 'hidden',
+      alignItems: 'center',
+      padding: '0 8px',
+      cursor: 'pointer',
       borderRadius: token.borderRadius,
-      "&:hover": {
+      '&:hover': {
         backgroundColor: token.colorBgTextHover,
       },
     },
     iconAction: {
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       width: 40,
       height: 40,
       color: token.colorText,
@@ -66,7 +67,7 @@ const useStyles = createStyles(({ token }) => {
 
 export const UserProfileAction: React.FC = () => {
   const { styles } = useStyles();
-  const { initialState } = useModel("@@initialState");
+  const { initialState } = useModel('@@initialState');
   const [open, setOpen] = React.useState(false);
   const currentUser = initialState?.currentUser;
 
@@ -75,8 +76,8 @@ export const UserProfileAction: React.FC = () => {
   }
 
   const roleText = currentUser.isSuperAdmin
-    ? "超级管理员"
-    : currentUser.access || "普通用户";
+    ? '超级管理员'
+    : currentUser.access || '普通用户';
 
   return (
     <>
@@ -98,30 +99,30 @@ export const UserProfileAction: React.FC = () => {
       >
         <Descriptions column={1} size="middle" bordered>
           <Descriptions.Item label="用户名">
-            {currentUser.name || "-"}
+            {currentUser.name || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="昵称">
-            {currentUser.nickname || "-"}
+            {currentUser.nickname || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="邮箱">
-            {currentUser.email || "-"}
+            {currentUser.email || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="手机号">
-            {currentUser.phone || "-"}
+            {currentUser.phone || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="部门">
-            {currentUser.deptName || currentUser.deptCode || "-"}
+            {currentUser.deptName || currentUser.deptCode || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="用户编码">
-            {currentUser.userid || "-"}
+            {currentUser.userid || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="账号类型">
-            <Tag color={currentUser.isSuperAdmin ? "blue" : "default"}>
+            <Tag color={currentUser.isSuperAdmin ? 'blue' : 'default'}>
               {roleText}
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="权限标识">
-            {currentUser.access || "-"}
+            {currentUser.access || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="角色">
             {currentUser.roles && currentUser.roles.length > 0
@@ -130,7 +131,7 @@ export const UserProfileAction: React.FC = () => {
                     {role.role_name || role.role_key || role.role_code}
                   </Tag>
                 ))
-              : "-"}
+              : '-'}
           </Descriptions.Item>
           <Descriptions.Item label="最近登录">
             {formatLoginTime(currentUser.loginAt)}
@@ -149,8 +150,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
    * 退出登录，并且将当前的 url 保存
    */
   const loginOut = async () => {
-    // 清理本地认证信息（当前项目使用 JWT，后端为无状态，退出登录只需删除本地 token）
-    localStorage.removeItem("shiyu_token");
+    try {
+      await outLogin({ skipErrorHandler: true });
+    } catch (_error) {
+      // 即使后端暂时不可用，也要清理本地登录态。
+    }
+    localStorage.removeItem('shiyu_token');
 
     const { search, pathname } = window.location;
     const urlParams = new URL(window.location.href).searchParams;
@@ -158,22 +163,22 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
       redirect: pathname + search,
     });
     /** 此方法会跳转到 redirect 参数所在的位置 */
-    const redirect = urlParams.get("redirect");
+    const redirect = urlParams.get('redirect');
     // Note: There may be security issues, please note
-    if (window.location.pathname !== "/user/login" && !redirect) {
+    if (window.location.pathname !== '/user/login' && !redirect) {
       history.replace({
-        pathname: "/user/login",
+        pathname: '/user/login',
         search: searchParams.toString(),
       });
     }
   };
   const { styles } = useStyles();
 
-  const { initialState, setInitialState } = useModel("@@initialState");
+  const { initialState, setInitialState } = useModel('@@initialState');
 
-  const onMenuClick: MenuProps["onClick"] = (event) => {
+  const onMenuClick: MenuProps['onClick'] = (event) => {
     const { key } = event;
-    if (key === "logout") {
+    if (key === 'logout') {
       flushSync(() => {
         setInitialState((s) => ({ ...s, currentUser: undefined }));
       });
@@ -209,24 +214,24 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({
     ...(menu
       ? [
           {
-            key: "center",
+            key: 'center',
             icon: <UserOutlined />,
-            label: "个人中心",
+            label: '个人中心',
           },
           {
-            key: "password",
+            key: 'password',
             icon: <LockOutlined />,
-            label: "修改密码",
+            label: '修改密码',
           },
           {
-            type: "divider" as const,
+            type: 'divider' as const,
           },
         ]
       : []),
     {
-      key: "logout",
+      key: 'logout',
       icon: <LogoutOutlined />,
-      label: "退出登录",
+      label: '退出登录',
     },
   ];
 

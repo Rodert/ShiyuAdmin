@@ -36,6 +36,13 @@ func (s *Service) List(ctx context.Context, page, pageSize int) ([]*entity.User,
 	return s.repo.List(ctx, page, pageSize)
 }
 
+func (s *Service) ListWithScope(ctx context.Context, page, pageSize int, scope *serviceinterfaces.UserDataScope) ([]*entity.User, int64, error) {
+	if scope == nil || scope.All {
+		return s.repo.List(ctx, page, pageSize)
+	}
+	return s.repo.ListByScope(ctx, page, pageSize, scope.UserCode, scope.DeptCodes)
+}
+
 func (s *Service) Create(ctx context.Context, req *dto.CreateUserRequest) (*entity.User, error) {
 	username := strings.TrimSpace(req.Username)
 	if existing, err := s.repo.GetByUsername(ctx, username); err != nil {

@@ -25,6 +25,7 @@ func (r *RoleDeptRepository) GetRoleDepts(ctx context.Context, roleCode string) 
 		Table("sys_depts").
 		Joins("INNER JOIN sys_role_depts ON sys_depts.dept_code = sys_role_depts.dept_code").
 		Where("sys_role_depts.role_code = ?", roleCode).
+		Where("sys_depts.deleted_at IS NULL").
 		Order("sys_depts.id ASC").
 		Find(&depts).Error; err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func (r *RoleDeptRepository) GetDeptRoles(ctx context.Context, deptCode string) 
 		Table("sys_roles").
 		Joins("INNER JOIN sys_role_depts ON sys_roles.role_code = sys_role_depts.role_code").
 		Where("sys_role_depts.dept_code = ?", deptCode).
+		Where("sys_roles.deleted_at IS NULL").
 		Find(&roles).Error; err != nil {
 		return nil, err
 	}
@@ -83,4 +85,3 @@ func (r *RoleDeptRepository) SetRoleDepts(ctx context.Context, roleCode string, 
 		return nil
 	})
 }
-

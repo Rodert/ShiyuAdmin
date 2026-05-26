@@ -19,7 +19,7 @@ func registerRoleDeptRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permis
 	rg.GET("/roles/:code/depts", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		getRoleDepts(c, roleDeptSvc)
 	})
-	rg.PUT("/roles/:code/depts", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
+	rg.PUT("/roles/:code/depts", middleware.RequirePermission(permissionSvc, "system:role:assign-dept"), func(c *gin.Context) {
 		setRoleDepts(c, roleDeptSvc)
 	})
 }

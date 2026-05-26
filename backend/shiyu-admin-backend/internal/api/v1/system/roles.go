@@ -22,13 +22,13 @@ func registerRoleRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permission
 	rg.GET("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
 		getRole(c, roleSvc)
 	})
-	rg.POST("/roles", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
+	rg.POST("/roles", middleware.RequirePermission(permissionSvc, "system:role:create"), func(c *gin.Context) {
 		createRole(c, roleSvc)
 	})
-	rg.PUT("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
+	rg.PUT("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:update"), func(c *gin.Context) {
 		updateRole(c, roleSvc)
 	})
-	rg.DELETE("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
+	rg.DELETE("/roles/:code", middleware.RequirePermission(permissionSvc, "system:role:delete"), func(c *gin.Context) {
 		deleteRole(c, roleSvc)
 	})
 }

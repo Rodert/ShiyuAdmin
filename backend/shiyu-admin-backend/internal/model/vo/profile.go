@@ -13,6 +13,7 @@ type ProfileVO struct {
 	IsSuperAdmin bool            `json:"is_super_admin"`
 	Dept         *ProfileDeptVO  `json:"dept,omitempty"`
 	Roles        []ProfileRoleVO `json:"roles"`
+	Permissions  []string        `json:"permissions"`
 }
 
 type ProfileDeptVO struct {

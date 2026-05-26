@@ -25,6 +25,7 @@ func (r *UserRoleRepository) GetUserRoles(ctx context.Context, userCode string) 
 		Table("sys_roles").
 		Joins("INNER JOIN sys_user_roles ON sys_roles.role_code = sys_user_roles.role_code").
 		Where("sys_user_roles.user_code = ?", userCode).
+		Where("sys_roles.deleted_at IS NULL").
 		Find(&roles).Error; err != nil {
 		return nil, err
 	}
@@ -37,6 +38,7 @@ func (r *UserRoleRepository) GetRoleUsers(ctx context.Context, roleCode string) 
 		Table("sys_users").
 		Joins("INNER JOIN sys_user_roles ON sys_users.user_code = sys_user_roles.user_code").
 		Where("sys_user_roles.role_code = ?", roleCode).
+		Where("sys_users.deleted_at IS NULL").
 		Find(&users).Error; err != nil {
 		return nil, err
 	}
@@ -85,4 +87,3 @@ func (r *UserRoleRepository) SetUserRoles(ctx context.Context, userCode string, 
 		return nil
 	})
 }
-

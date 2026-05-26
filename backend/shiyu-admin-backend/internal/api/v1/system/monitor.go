@@ -30,7 +30,7 @@ func registerMonitorRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permiss
 	rg.GET("/monitor/online-users", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
 		listOnlineUsers(c, monitorSvc)
 	})
-	rg.DELETE("/monitor/online-users/:session_id", middleware.RequirePermission(permissionSvc, "system:monitor:view"), func(c *gin.Context) {
+	rg.DELETE("/monitor/online-users/:session_id", middleware.RequirePermission(permissionSvc, "system:monitor:kick"), func(c *gin.Context) {
 		forceLogoutOnlineUser(c, monitorSvc)
 	})
 }

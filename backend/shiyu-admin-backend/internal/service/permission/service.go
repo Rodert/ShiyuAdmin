@@ -30,12 +30,15 @@ func (s *Service) GetUserPermissions(ctx context.Context, userCode string) ([]st
 	// Collect all unique permissions
 	permsMap := make(map[string]bool)
 	for _, role := range roles {
+		if role == nil || role.Status != 1 {
+			continue
+		}
 		menus, err := s.roleMenuRepo.GetRoleMenus(ctx, role.RoleCode)
 		if err != nil {
 			return nil, err
 		}
 		for _, menu := range menus {
-			if menu.Perms != "" {
+			if menu != nil && menu.Status == 1 && menu.Perms != "" {
 				permsMap[menu.Perms] = true
 			}
 		}
@@ -62,4 +65,3 @@ func (s *Service) CheckPermission(ctx context.Context, userCode string, perms st
 	}
 	return false, nil
 }
-

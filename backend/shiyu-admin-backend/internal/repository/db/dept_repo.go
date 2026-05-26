@@ -64,6 +64,7 @@ func (r *DeptRepository) Update(ctx context.Context, dept *entity.Dept) error {
 	return r.db.WithContext(ctx).
 		Model(&entity.Dept{}).
 		Where("dept_code = ?", dept.DeptCode).
+		Select("parent_code", "dept_name", "status").
 		Updates(dept).Error
 }
 
@@ -72,4 +73,3 @@ func (r *DeptRepository) DeleteByCode(ctx context.Context, deptCode string) erro
 		Where("dept_code = ?", deptCode).
 		Delete(&entity.Dept{}).Error
 }
-

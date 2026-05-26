@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // User represents a system user.
 type User struct {
@@ -31,7 +35,7 @@ type User struct {
 	// UpdatedAt 更新时间
 	UpdatedAt time.Time `json:"updated_at" gorm:"comment:更新时间"`
 	// DeletedAt 删除时间，软删除标记
-	DeletedAt *time.Time `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
 }
 
 // Role represents a role definition.
@@ -53,7 +57,7 @@ type Role struct {
 	// UpdatedAt 更新时间
 	UpdatedAt time.Time `json:"updated_at" gorm:"comment:更新时间"`
 	// DeletedAt 删除时间，软删除标记
-	DeletedAt *time.Time `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
 }
 
 // Menu represents a menu / permission node.
@@ -83,7 +87,7 @@ type Menu struct {
 	// UpdatedAt 更新时间
 	UpdatedAt time.Time `json:"updated_at" gorm:"comment:更新时间"`
 	// DeletedAt 删除时间，软删除标记
-	DeletedAt *time.Time `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
 }
 
 // Dept represents an organizational department.
@@ -103,7 +107,7 @@ type Dept struct {
 	// UpdatedAt 更新时间
 	UpdatedAt time.Time `json:"updated_at" gorm:"comment:更新时间"`
 	// DeletedAt 删除时间，软删除标记
-	DeletedAt *time.Time `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
+	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index;comment:删除时间，软删除标记"`
 }
 
 // UserRole links users to roles.

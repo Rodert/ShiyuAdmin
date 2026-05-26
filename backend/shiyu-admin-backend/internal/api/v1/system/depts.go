@@ -25,13 +25,13 @@ func registerDeptRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permission
 	rg.GET("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
 		getDept(c, deptSvc)
 	})
-	rg.POST("/depts", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
+	rg.POST("/depts", middleware.RequirePermission(permissionSvc, "system:dept:create"), func(c *gin.Context) {
 		createDept(c, deptSvc)
 	})
-	rg.PUT("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
+	rg.PUT("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:update"), func(c *gin.Context) {
 		updateDept(c, deptSvc)
 	})
-	rg.DELETE("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:list"), func(c *gin.Context) {
+	rg.DELETE("/depts/:code", middleware.RequirePermission(permissionSvc, "system:dept:delete"), func(c *gin.Context) {
 		deleteDept(c, deptSvc)
 	})
 }

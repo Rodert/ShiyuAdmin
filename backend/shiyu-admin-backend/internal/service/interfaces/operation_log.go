@@ -12,4 +12,5 @@ import (
 type OperationLogService interface {
 	Create(ctx context.Context, log *entity.OperationLog) error
 	Page(ctx context.Context, req *dto.OperationLogPageRequest) (*vo.PageResult[vo.OperationLogVO], error)
+	PageWithScope(ctx context.Context, req *dto.OperationLogPageRequest, scope *UserDataScope) (*vo.PageResult[vo.OperationLogVO], error)
 }

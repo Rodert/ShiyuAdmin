@@ -19,7 +19,7 @@ func registerUserRoleRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permis
 	rg.GET("/users/:code/roles", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
 		getUserRoles(c, userRoleSvc)
 	})
-	rg.PUT("/users/:code/roles", middleware.RequirePermission(permissionSvc, "system:user:list"), func(c *gin.Context) {
+	rg.PUT("/users/:code/roles", middleware.RequirePermission(permissionSvc, "system:user:assign-role"), func(c *gin.Context) {
 		setUserRoles(c, userRoleSvc)
 	})
 	rg.GET("/roles/:code/users", middleware.RequirePermission(permissionSvc, "system:role:list"), func(c *gin.Context) {
