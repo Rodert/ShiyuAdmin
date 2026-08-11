@@ -33,17 +33,22 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 | --- | --- | --- |
 | PostgreSQL | `docker-compose.yml` | 默认生产部署，包含 Redis |
 | MySQL 8.4 | `docker-compose.mysql.yml` | 使用 MySQL 的部署环境 |
+| SQL Server 2022 | `docker-compose.sqlserver.yml` | 使用 SQL Server 的部署环境 |
 | SQLite | `docker-compose.sqlite.yml` | 单机轻量部署，无需额外数据库容器 |
 
-三种模式使用同一个 `shiyu-app` 容器，切换前先停止当前模式：
+四种模式使用同一个 `shiyu-app` 容器，切换前先停止当前模式：
 
 ```bash
 docker compose down
 
 docker compose -f docker-compose.mysql.yml up -d
 # 或
+docker compose -f docker-compose.sqlserver.yml up -d
+# 或
 docker compose -f docker-compose.sqlite.yml up -d
 ```
+
+SQL Server Compose 使用 Developer 版本，仅适用于开发和测试，并在启动时创建 `shiyu_admin_scaffold` 数据库。生产环境请使用已授权的 SQL Server 实例并修改账户密码与 TLS 配置。镜像仅提供 `linux/amd64` 架构，Apple Silicon 主机将通过 Docker 的 x86 模拟运行，资源占用会高于 PostgreSQL/MySQL。
 
 ## 服务
 

@@ -103,6 +103,19 @@ SELECT table_name, table_type, table_comment
 FROM information_schema.tables
 WHERE table_schema = DATABASE()
 ORDER BY table_name`
+	case "sqlserver":
+		return `
+SELECT
+  t.table_name,
+  t.table_type,
+  COALESCE(CAST(ep.value AS nvarchar(max)), '') AS table_comment
+FROM information_schema.tables t
+LEFT JOIN sys.extended_properties ep
+  ON ep.major_id = OBJECT_ID(QUOTENAME(t.table_schema) + '.' + QUOTENAME(t.table_name))
+  AND ep.minor_id = 0
+  AND ep.name = 'MS_Description'
+WHERE t.table_schema = 'dbo'
+ORDER BY t.table_name`
 	case "sqlite":
 		return `
 SELECT name AS table_name, type AS table_type, '' AS table_comment
@@ -131,6 +144,25 @@ SELECT column_name, data_type, is_nullable, character_maximum_length, column_def
 FROM information_schema.columns
 WHERE table_schema = DATABASE() AND table_name = ?
 ORDER BY ordinal_position`
+	case "sqlserver":
+		return `
+SELECT
+  c.column_name,
+  c.data_type,
+  c.is_nullable,
+  c.character_maximum_length,
+  CAST(c.column_default AS nvarchar(max)) AS column_default,
+  COALESCE(CAST(ep.value AS nvarchar(max)), '') AS column_comment
+FROM information_schema.columns c
+LEFT JOIN sys.columns sc
+  ON sc.object_id = OBJECT_ID(QUOTENAME(c.table_schema) + '.' + QUOTENAME(c.table_name))
+  AND sc.name = c.column_name
+LEFT JOIN sys.extended_properties ep
+  ON ep.major_id = sc.object_id
+  AND ep.minor_id = sc.column_id
+  AND ep.name = 'MS_Description'
+WHERE c.table_schema = 'dbo' AND c.table_name = ?
+ORDER BY c.ordinal_position`
 	case "sqlite":
 		return `
 SELECT name AS column_name, type AS data_type, "YES" AS is_nullable, NULL AS character_maximum_length, dflt_value AS column_default, '' AS column_comment

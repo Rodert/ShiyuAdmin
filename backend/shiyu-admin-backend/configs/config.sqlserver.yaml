@@ -1,0 +1,34 @@
+server:
+  port: "8080"
+  mode: "release"
+
+database:
+  driver: "sqlserver"
+  host: "shiyu-sqlserver"
+  port: 1433
+  username: "sa"
+  password: "ShiyuAdmin@123"
+  database: "shiyu_admin_scaffold"
+  # 本地 Compose 未启用 TLS；生产环境请使用 true 或 strict。
+  ssl_mode: "disable"
+
+redis:
+  host: "shiyu-redis"
+  port: 6379
+
+auth:
+  use_mock: false
+
+bootstrap:
+  admin_username: "admin"
+  admin_password: "Admin@123"
+  admin_nickname: "超级管理员"
+
+jwt:
+  secret: "shiyu-admin-scaffold-secret-key"
+  expire_time: 7200
+  issuer: "shiyu-admin-scaffold"
+
+log:
+  level: "info"
+  format: "json"

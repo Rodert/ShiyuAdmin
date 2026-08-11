@@ -339,6 +339,8 @@ func databaseNameSQL(driver string) string {
 	switch driver {
 	case "mysql":
 		return "SELECT DATABASE()"
+	case "sqlserver":
+		return "SELECT DB_NAME()"
 	case "sqlite":
 		return "SELECT 'sqlite'"
 	default:
@@ -350,6 +352,8 @@ func databaseVersionSQL(driver string) string {
 	switch driver {
 	case "mysql", "sqlite":
 		return "SELECT VERSION()"
+	case "sqlserver":
+		return "SELECT @@VERSION"
 	default:
 		return "SHOW server_version"
 	}
@@ -359,6 +363,8 @@ func tableCountSQL(driver string) string {
 	switch driver {
 	case "mysql":
 		return "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()"
+	case "sqlserver":
+		return "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'dbo' AND table_type = 'BASE TABLE'"
 	case "sqlite":
 		return "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
 	default:

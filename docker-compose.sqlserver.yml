@@ -1,0 +1,77 @@
+services:
+  shiyu-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: shiyu-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "ShiyuAdmin@123"
+    ports:
+      - "11433:1433"
+    volumes:
+      - shiyu-sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/1433'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks: [shiyu-network]
+
+  shiyu-sqlserver-init:
+    image: mcr.microsoft.com/mssql-tools18:latest
+    platform: linux/amd64
+    container_name: shiyu-sqlserver-init
+    restart: "no"
+    environment:
+      MSSQL_SA_PASSWORD: "ShiyuAdmin@123"
+    depends_on:
+      shiyu-sqlserver:
+        condition: service_healthy
+    command:
+      - /bin/bash
+      - -c
+      - >
+        /opt/mssql-tools18/bin/sqlcmd -S shiyu-sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -C
+        -Q "IF DB_ID(N'shiyu_admin_scaffold') IS NULL CREATE DATABASE [shiyu_admin_scaffold]"
+    networks: [shiyu-network]
+
+  shiyu-redis:
+    image: redis:7
+    container_name: shiyu-redis
+    restart: unless-stopped
+    volumes:
+      - shiyu-redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [shiyu-network]
+
+  shiyu-app:
+    image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
+    container_name: shiyu-app
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      CONFIG_FILE: configs/config.sqlserver.yaml
+    ports:
+      - "18000:80"
+    depends_on:
+      shiyu-sqlserver-init:
+        condition: service_completed_successfully
+      shiyu-redis:
+        condition: service_healthy
+    networks: [shiyu-network]
+
+networks:
+  shiyu-network:
+    driver: bridge
+
+volumes:
+  shiyu-sqlserver-data:
+  shiyu-redis-data:

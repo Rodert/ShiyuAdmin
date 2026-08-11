@@ -126,12 +126,13 @@ npm run start:dev
 
 ## 数据库部署
 
-生产默认使用 PostgreSQL。三种数据库均提供独立 Compose 配置，部署前请先停止当前数据库模式的服务，三种模式不能共享同一个 `shiyu-app` 容器。
+生产默认使用 PostgreSQL。四种数据库均提供独立 Compose 配置，部署前请先停止当前数据库模式的服务，这些模式不能共享同一个 `shiyu-app` 容器。
 
 | 数据库 | Compose 文件 | 适用场景 |
 | --- | --- | --- |
 | PostgreSQL | `docker-compose.yml` | 默认生产部署、完整 Redis 能力 |
 | MySQL 8.4 | `docker-compose.mysql.yml` | 已有 MySQL 基础设施的部署 |
+| SQL Server 2022 | `docker-compose.sqlserver.yml` | 使用 SQL Server 的部署环境 |
 | SQLite | `docker-compose.sqlite.yml` | 单机演示、轻量部署，无需数据库与 Redis 容器 |
 
 ```bash
@@ -141,9 +142,14 @@ docker compose -f docker-compose.yml up -d
 # MySQL
 docker compose -f docker-compose.mysql.yml up -d
 
+# SQL Server
+docker compose -f docker-compose.sqlserver.yml up -d
+
 # SQLite
 docker compose -f docker-compose.sqlite.yml up -d
 ```
+
+SQL Server Compose 默认使用 Developer 版本，仅适用于开发和测试。生产环境请连接已授权的 SQL Server 实例，并修改 `config.sqlserver.yaml` 中的账户密码与 TLS 配置。
 
 ## 提交规范
 

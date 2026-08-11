@@ -2,12 +2,15 @@ package database
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"time"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
@@ -38,6 +41,19 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		dialector = mysql.Open(dsn)
 	case "sqlite":
 		dialector = sqlite.Open(cfg.Database.Database)
+	case "sqlserver", "mssql":
+		dsnURL := &url.URL{
+			Scheme: "sqlserver",
+			User:   url.UserPassword(cfg.Database.Username, cfg.Database.Password),
+			Host:   net.JoinHostPort(cfg.Database.Host, fmt.Sprintf("%d", cfg.Database.Port)),
+		}
+		query := dsnURL.Query()
+		query.Set("database", cfg.Database.Database)
+		if cfg.Database.SSLMode != "" {
+			query.Set("encrypt", cfg.Database.SSLMode)
+		}
+		dsnURL.RawQuery = query.Encode()
+		dialector = sqlserver.Open(dsnURL.String())
 	default:
 		return nil, errors.Errorf("unsupported database driver: %s", cfg.Database.Driver)
 	}
@@ -59,6 +75,3 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	return db, nil
 }
-
-
-
