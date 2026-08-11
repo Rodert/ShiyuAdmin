@@ -1,0 +1,15 @@
+services:
+  shiyu-app:
+    image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
+    container_name: shiyu-app
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      CONFIG_FILE: configs/config.sqlite.yaml
+    ports:
+      - "18000:80"
+    volumes:
+      - shiyu-sqlite-data:/data
+
+volumes:
+  shiyu-sqlite-data:

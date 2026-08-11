@@ -19,13 +19,31 @@ const FilesPage: React.FC = () => {
   const { initialState } = useModel('@@initialState');
   const canUpload = hasPermission(initialState?.currentUser, 'system:file:upload');
   const canDelete = hasPermission(initialState?.currentUser, 'system:file:delete');
+  const openPreview = async (file: MediaFile) => {
+    try {
+      const blob = await getFileBlob(file.file_code, true);
+      if (preview) URL.revokeObjectURL(preview.url);
+      setPreview({ file, url: URL.createObjectURL(blob) });
+    } catch {
+      message.error('该文件暂时无法预览');
+    }
+  };
   const columns: ProColumns<MediaFile>[] = [
-    { title: '文件名', dataIndex: 'original_name', ellipsis: true, copyable: true },
+    {
+      title: '文件名',
+      dataIndex: 'original_name',
+      ellipsis: true,
+      copyable: true,
+      render: (_, record) => (
+        <Typography.Link onClick={() => openPreview(record)} title={`预览 ${record.original_name}`}>
+          {record.original_name}
+        </Typography.Link>
+      ),
+    },
     { title: '类型', dataIndex: 'mime_type', width: 220, ellipsis: true, render: (_, record) => <Tag>{record.mime_type}</Tag> },
     { title: '大小', dataIndex: 'size', width: 110, search: false, render: (_, record) => formatSize(record.size) },
     { title: '上传时间', dataIndex: 'created_at', width: 180, valueType: 'dateTime', search: false },
-    { title: '操作', valueType: 'option', width: 180, render: (_, record) => [
-      !recycled && <Button key="preview" type="link" onClick={async () => { try { const blob = await getFileBlob(record.file_code, true); setPreview({ file: record, url: URL.createObjectURL(blob) }); } catch { message.error('该文件暂时无法预览'); } }}>预览</Button>,
+    { title: '操作', valueType: 'option', width: 140, render: (_, record) => [
       !recycled && <Button key="download" type="link" onClick={async () => { try { const blob = await getFileBlob(record.file_code); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = record.original_name; link.click(); URL.revokeObjectURL(url); } catch { message.error('下载失败'); } }}>下载</Button>,
       !recycled && canDelete && <Button key="delete" type="link" danger onClick={() => Modal.confirm({ title: '移入回收站', content: `确定删除「${record.original_name}」吗？`, onOk: async () => { await deleteFile(record.file_code); message.success('已移入回收站'); actionRef.current?.reload(); } })}>删除</Button>,
       recycled && <Button key="restore" type="link" onClick={async () => { await restoreFile(record.file_code); message.success('已恢复'); actionRef.current?.reload(); }}>恢复</Button>,

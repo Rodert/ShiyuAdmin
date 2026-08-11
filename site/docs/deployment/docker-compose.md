@@ -27,6 +27,24 @@ docker compose up -d --no-build
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
+## 数据库模式
+
+| 数据库 | Compose 文件 | 适用场景 |
+| --- | --- | --- |
+| PostgreSQL | `docker-compose.yml` | 默认生产部署，包含 Redis |
+| MySQL 8.4 | `docker-compose.mysql.yml` | 使用 MySQL 的部署环境 |
+| SQLite | `docker-compose.sqlite.yml` | 单机轻量部署，无需额外数据库容器 |
+
+三种模式使用同一个 `shiyu-app` 容器，切换前先停止当前模式：
+
+```bash
+docker compose down
+
+docker compose -f docker-compose.mysql.yml up -d
+# 或
+docker compose -f docker-compose.sqlite.yml up -d
+```
+
 ## 服务
 
 | 服务 | 默认地址 |

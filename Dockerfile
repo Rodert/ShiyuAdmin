@@ -11,14 +11,16 @@ FROM golang:1.23-alpine AS backend-builder
 
 WORKDIR /app
 ENV GOPROXY=https://proxy.golang.org,direct
+RUN apk add --no-cache gcc musl-dev sqlite-dev
 COPY backend/shiyu-admin-backend/go.mod backend/shiyu-admin-backend/go.sum ./
 RUN go mod download
 COPY backend/shiyu-admin-backend/ ./
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags='-s -w' -o /server ./cmd/server
+RUN CGO_ENABLED=1 GOOS=linux go build -trimpath -ldflags='-s -w' -o /server ./cmd/server
 
 FROM nginx:alpine
 
-RUN apk add --no-cache ca-certificates tzdata supervisor
+RUN apk add --no-cache ca-certificates tzdata supervisor sqlite-libs
+RUN mkdir -p /data
 ENV TZ=Asia/Shanghai \
     CONFIG_FILE=configs/config.docker.yaml
 

@@ -1,0 +1,33 @@
+server:
+  port: "8080"
+  mode: "release"
+
+database:
+  driver: "mysql"
+  host: "shiyu-mysql"
+  port: 3306
+  username: "shiyu"
+  password: "shiyu123"
+  database: "shiyu_admin_scaffold"
+  timezone: "Asia/Shanghai"
+
+redis:
+  host: "shiyu-redis"
+  port: 6379
+
+auth:
+  use_mock: false
+
+bootstrap:
+  admin_username: "admin"
+  admin_password: "Admin@123"
+  admin_nickname: "超级管理员"
+
+jwt:
+  secret: "shiyu-admin-scaffold-secret-key"
+  expire_time: 7200
+  issuer: "shiyu-admin-scaffold"
+
+log:
+  level: "info"
+  format: "json"

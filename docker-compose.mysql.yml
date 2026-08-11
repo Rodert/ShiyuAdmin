@@ -1,0 +1,58 @@
+services:
+  shiyu-mysql:
+    image: mysql:8.4
+    container_name: shiyu-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: shiyu_admin_scaffold
+      MYSQL_USER: shiyu
+      MYSQL_PASSWORD: shiyu123
+      MYSQL_ROOT_PASSWORD: root123
+    ports:
+      - "13306:3306"
+    volumes:
+      - shiyu-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [shiyu-network]
+
+  shiyu-redis:
+    image: redis:7
+    container_name: shiyu-redis
+    restart: unless-stopped
+    volumes:
+      - shiyu-redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [shiyu-network]
+
+  shiyu-app:
+    image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
+    container_name: shiyu-app
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      CONFIG_FILE: configs/config.mysql.yaml
+    ports:
+      - "18000:80"
+    depends_on:
+      shiyu-mysql:
+        condition: service_healthy
+      shiyu-redis:
+        condition: service_healthy
+    networks: [shiyu-network]
+
+networks:
+  shiyu-network:
+    driver: bridge
+
+volumes:
+  shiyu-mysql-data:
+  shiyu-redis-data:

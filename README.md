@@ -124,6 +124,27 @@ npm run start:dev
 
 前端依赖请在 `frontend/shiyu-admin-web` 目录内安装。仓库根目录没有前端启动入口，通常不需要在根目录执行 `npm install`，避免生成无关的 `package.json`、`package-lock.json` 和 `node_modules/`。
 
+## 数据库部署
+
+生产默认使用 PostgreSQL。三种数据库均提供独立 Compose 配置，部署前请先停止当前数据库模式的服务，三种模式不能共享同一个 `shiyu-app` 容器。
+
+| 数据库 | Compose 文件 | 适用场景 |
+| --- | --- | --- |
+| PostgreSQL | `docker-compose.yml` | 默认生产部署、完整 Redis 能力 |
+| MySQL 8.4 | `docker-compose.mysql.yml` | 已有 MySQL 基础设施的部署 |
+| SQLite | `docker-compose.sqlite.yml` | 单机演示、轻量部署，无需数据库与 Redis 容器 |
+
+```bash
+# PostgreSQL（默认）
+docker compose -f docker-compose.yml up -d
+
+# MySQL
+docker compose -f docker-compose.mysql.yml up -d
+
+# SQLite
+docker compose -f docker-compose.sqlite.yml up -d
+```
+
 ## 提交规范
 
 提交代码前建议先检查工作区：

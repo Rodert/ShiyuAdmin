@@ -1,7 +1,7 @@
-import { PlusOutlined } from '@ant-design/icons';
+import { CaretDownOutlined, CaretRightOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
-import { Button, message, Modal, Space } from 'antd';
+import { Button, message, Modal, Space, Tooltip } from 'antd';
 import React, { useRef, useState } from 'react';
 import {
   createMenu,
@@ -86,7 +86,9 @@ const MenuManagement: React.FC = () => {
       title: '菜单编码',
       dataIndex: 'menu_code',
       key: 'menu_code',
-      width: 120,
+      width: 220,
+      ellipsis: true,
+      render: (_, record) => <span className="menu-code">{record.menu_code}</span>,
     },
     {
       title: '菜单名称',
@@ -213,7 +215,21 @@ const MenuManagement: React.FC = () => {
         }}
         columns={columns}
         pagination={false}
-        expandable={{ defaultExpandAllRows: false }}
+        expandable={{
+          defaultExpandAllRows: false,
+          expandIcon: ({ expanded, onExpand, record }) => (
+            <Tooltip title={expanded ? '收起子菜单' : '展开子菜单'}>
+              <Button
+                aria-label={expanded ? '收起子菜单' : '展开子菜单'}
+                className="menu-tree-toggle"
+                icon={expanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
+                onClick={(event) => onExpand(record, event)}
+                size="small"
+                type="text"
+              />
+            </Tooltip>
+          ),
+        }}
       />
 
       <MenuForm
