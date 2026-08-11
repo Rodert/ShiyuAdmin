@@ -1,7 +1,7 @@
 import { CaretDownOutlined, CaretRightOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ProColumns, ActionType } from '@ant-design/pro-components';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
-import { Button, message, Modal, Space, Tooltip } from 'antd';
+import { Button, message, Modal, Space, Tooltip, Typography } from 'antd';
 import React, { useRef, useState } from 'react';
 import {
   createMenu,
@@ -26,6 +26,19 @@ const MenuManagement: React.FC = () => {
   const canCreate = hasPermission(currentUser, 'system:menu:create');
   const canUpdate = hasPermission(currentUser, 'system:menu:update');
   const canDelete = hasPermission(currentUser, 'system:menu:delete');
+
+  const renderCopyableText = (value?: string) => {
+    const text = value || '-';
+    return (
+      <Typography.Text
+        className="menu-copyable-text"
+        copyable={value ? { text: value, tooltips: ['复制', '已复制'] } : false}
+        ellipsis={{ tooltip: text }}
+      >
+        {text}
+      </Typography.Text>
+    );
+  };
 
   const countMenus = (menus: Menu[]): number => {
     return menus.reduce(
@@ -86,18 +99,19 @@ const MenuManagement: React.FC = () => {
       title: '菜单编码',
       dataIndex: 'menu_code',
       key: 'menu_code',
-      width: 220,
+      width: 140,
       ellipsis: true,
-      render: (_, record) => <span className="menu-code">{record.menu_code}</span>,
+      render: (_, record) => renderCopyableText(record.menu_code),
     },
     {
       title: '菜单名称',
       dataIndex: 'menu_name',
       key: 'menu_name',
-      width: 150,
+      width: 120,
+      ellipsis: true,
       render: (_, record) => (
         <span className={record.children?.length ? 'menu-name-parent' : undefined}>
-          {record.menu_name}
+          {renderCopyableText(record.menu_name)}
         </span>
       ),
     },
@@ -105,7 +119,7 @@ const MenuManagement: React.FC = () => {
       title: '菜单类型',
       dataIndex: 'menu_type',
       key: 'menu_type',
-      width: 100,
+      width: 72,
       valueEnum: {
         M: { text: '目录' },
         C: { text: '菜单' },
@@ -116,32 +130,41 @@ const MenuManagement: React.FC = () => {
       title: '权限标识',
       dataIndex: 'perms',
       key: 'perms',
-      width: 150,
+      width: 130,
+      ellipsis: true,
+      responsive: ['xxl'],
+      render: (_, record) => renderCopyableText(record.perms),
     },
     {
       title: '路径',
       dataIndex: 'path',
       key: 'path',
-      width: 200,
+      width: 140,
+      ellipsis: true,
+      responsive: ['xl'],
+      render: (_, record) => renderCopyableText(record.path),
     },
     {
       title: '组件',
       dataIndex: 'component',
       key: 'component',
-      width: 200,
+      width: 160,
+      ellipsis: true,
+      responsive: ['xxl'],
+      render: (_, record) => renderCopyableText(record.component),
     },
     {
       title: '排序',
       dataIndex: 'sort_order',
       key: 'sort_order',
-      width: 72,
+      width: 64,
       search: false,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 80,
+      width: 72,
       valueEnum: {
         1: { text: '启用', status: 'Success' },
         0: { text: '禁用', status: 'Error' },
@@ -150,8 +173,7 @@ const MenuManagement: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 180,
-      fixed: 'right',
+      width: 116,
       render: (_, record) => (
         <Space>
           {canUpdate && (
@@ -224,6 +246,7 @@ const MenuManagement: React.FC = () => {
           className: record.children?.length ? 'menu-tree-parent-row' : '',
         })}
         pagination={false}
+        tableLayout="fixed"
         expandable={{
           defaultExpandAllRows: false,
           indentSize: 20,

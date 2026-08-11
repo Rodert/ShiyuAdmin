@@ -76,11 +76,15 @@ ol {
   list-style: none;
 }
 
-.menu-code {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.menu-copyable-text.ant-typography {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: bottom;
+}
+
+.menu-copyable-text .ant-typography-ellipsis {
+  min-width: 0;
 }
 
 .menu-management-table .menu-tree-parent-row > td {
