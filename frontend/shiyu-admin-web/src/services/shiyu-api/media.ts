@@ -24,4 +24,11 @@ export async function uploadFile(file: File) {
 
 export async function deleteFile(code: string) { return request('/api/v1/system/files/' + code, { method: 'DELETE' }); }
 export async function restoreFile(code: string) { return request('/api/v1/system/files/' + code + '/restore', { method: 'POST' }); }
-export const fileDownloadURL = (code: string) => '/api/v1/system/files/' + code + '/download';
+export async function getFileBlob(code: string, preview = false) {
+  const token = localStorage.getItem('shiyu_token');
+  const response = await fetch(`/api/v1/system/files/${code}/${preview ? 'preview' : 'download'}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) throw new Error('文件加载失败');
+  return response.blob();
+}

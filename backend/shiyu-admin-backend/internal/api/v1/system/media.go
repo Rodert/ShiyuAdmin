@@ -45,6 +45,7 @@ func registerMediaRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permissio
 	files.GET("/recycle-bin", middleware.RequirePermission(permissionSvc, "system:file:delete"), func(c *gin.Context) { listFiles(c, db, true) })
 	files.POST("/upload", middleware.RequirePermission(permissionSvc, "system:file:upload"), func(c *gin.Context) { uploadFile(c, db) })
 	files.GET("/:code/download", middleware.RequirePermission(permissionSvc, "system:file:list"), func(c *gin.Context) { downloadFile(c, db) })
+	files.GET("/:code/preview", middleware.RequirePermission(permissionSvc, "system:file:list"), func(c *gin.Context) { previewFile(c, db) })
 	files.DELETE("/:code", middleware.RequirePermission(permissionSvc, "system:file:delete"), func(c *gin.Context) { deleteFile(c, db) })
 	files.POST("/:code/restore", middleware.RequirePermission(permissionSvc, "system:file:delete"), func(c *gin.Context) { restoreFile(c, db) })
 }
@@ -193,6 +194,22 @@ func downloadFile(c *gin.Context, db *gorm.DB) {
 		return
 	}
 	c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": f.OriginalName}))
+	c.File(filepath.Join(s.BasePath, f.ObjectKey))
+}
+
+func previewFile(c *gin.Context, db *gorm.DB) {
+	var f entity.MediaFile
+	if db.Where("file_code = ?", c.Param("code")).First(&f).Error != nil {
+		response.Error(c, 404, "文件不存在")
+		return
+	}
+	var s entity.StorageConfig
+	if db.First(&s, f.StorageID).Error != nil || s.Driver != "local" {
+		response.Error(c, 501, "当前文件存储驱动不支持预览")
+		return
+	}
+	c.Header("Content-Type", f.MimeType)
+	c.Header("Content-Disposition", mime.FormatMediaType("inline", map[string]string{"filename": f.OriginalName}))
 	c.File(filepath.Join(s.BasePath, f.ObjectKey))
 }
 func deleteFile(c *gin.Context, db *gorm.DB) {
