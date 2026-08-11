@@ -42,16 +42,11 @@ services:
 
   # 单一应用容器：Nginx 提供前端并代理 API 到同容器内的 Go 后端
   shiyu-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: ${SHIYU_IMAGE:-shiyu-admin:local}
+    image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
     container_name: shiyu-app
     restart: unless-stopped
     ports:
       - "18000:80"
-    volumes:
-      - ./backend/shiyu-admin-backend/configs:/app/configs:ro
     environment:
       - TZ=Asia/Shanghai
       - CONFIG_FILE=configs/config.docker.yaml

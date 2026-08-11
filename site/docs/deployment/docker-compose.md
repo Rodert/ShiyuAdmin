@@ -5,7 +5,7 @@ description: 使用 Docker Compose 部署 Shiyu Admin
 
 # Docker Compose
 
-Docker Compose 是本项目推荐的本地体验方式。
+`docker-compose.yml` 是生产部署配置，默认拉取 GHCR 镜像。
 
 ```bash
 git clone https://github.com/Rodert/ShiyuAdmin.git
@@ -19,6 +19,12 @@ GitHub 推送会自动发布镜像至 `ghcr.io/<GitHub 所有者>/<仓库名>`�
 export SHIYU_IMAGE=ghcr.io/rodert/shiyuadmin:latest
 docker compose pull shiyu-app
 docker compose up -d --no-build
+```
+
+本地从源码构建时，叠加 `docker-compose.local.yml`：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 ## 服务

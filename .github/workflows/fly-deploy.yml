@@ -1,12 +1,9 @@
 name: Deploy to Fly.io
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - 'fly.toml'
-      - '.github/workflows/fly-deploy.yml'
+  # GHCR is the default push-time publication target. Keep Fly deployment
+  # available only for repositories that explicitly configure FLY_API_TOKEN.
+  workflow_dispatch:
 
 jobs:
   deploy:

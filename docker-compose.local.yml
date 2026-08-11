@@ -1,0 +1,8 @@
+services:
+  shiyu-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: shiyu-admin:local
+    volumes:
+      - ./backend/shiyu-admin-backend/configs:/app/configs:ro

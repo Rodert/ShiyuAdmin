@@ -72,19 +72,23 @@
 
 <a id="quick-start"></a>
 
-### 方式一：Docker 一键启动
+### 方式一：Docker Compose 本地启动
 
 本地只需要安装 Docker 和 Docker Compose。
 
 ```bash
 git clone https://github.com/Rodert/ShiyuAdmin.git
 cd ShiyuAdmin
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 每次推送都会由 GitHub Actions 构建统一应用镜像并发布到 GitHub Container Registry：
 `ghcr.io/<GitHub 所有者>/<仓库名>`。镜像会带有上海时区构建时间标签
-`YYYYMMDD-HHmmss`、提交 SHA 标签；默认分支还会发布 `latest`。服务器部署时可指定该镜像并禁止本地构建：
+`YYYYMMDD-HHmmss`、提交 SHA 标签；默认分支还会发布 `latest`。
+
+### 方式二：Docker Compose 生产部署
+
+生产配置 `docker-compose.yml` 默认拉取 GHCR 的 `latest` 镜像，不会从源码构建：
 
 ```bash
 export SHIYU_IMAGE=ghcr.io/rodert/shiyuadmin:latest
@@ -98,7 +102,7 @@ docker compose up -d --no-build
 - 后端接口：<http://localhost:18000/api/v1>
 - 健康检查：<http://localhost:18000/api/v1/system/health>
 
-### 方式二：本地开发
+### 方式三：本地开发
 
 后端：
 

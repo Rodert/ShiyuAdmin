@@ -25,9 +25,9 @@ echo ""
 # 启动服务
 echo "🚀 正在启动服务..."
 if docker compose version &> /dev/null; then
-    docker compose up -d
+    docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 else
-    docker-compose up -d
+    docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 fi
 
 if [ $? -eq 0 ]; then
@@ -43,11 +43,10 @@ if [ $? -eq 0 ]; then
     echo "  - 用户名: admin"
     echo "  - 密码:   Admin@123"
     echo ""
-    echo "📝 查看日志: docker compose logs -f"
-    echo "🛑 停止服务: docker compose down"
+    echo "📝 查看日志: docker compose -f docker-compose.yml -f docker-compose.local.yml logs -f"
+    echo "🛑 停止服务: docker compose -f docker-compose.yml -f docker-compose.local.yml down"
 else
     echo ""
-    echo "❌ 服务启动失败，请查看日志: docker compose logs"
+    echo "❌ 服务启动失败，请查看日志: docker compose -f docker-compose.yml -f docker-compose.local.yml logs"
     exit 1
 fi
-

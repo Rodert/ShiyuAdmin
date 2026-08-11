@@ -12,7 +12,7 @@ description: 使用 Docker Compose 或本地开发方式启动 Shiyu Admin
 ```bash
 git clone https://github.com/Rodert/ShiyuAdmin.git
 cd ShiyuAdmin
-docker compose up -d
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 启动后访问：
@@ -46,6 +46,6 @@ npm run start:dev
 
 ```bash
 git status --short
-docker compose ps
-docker compose logs shiyu-app
+docker compose -f docker-compose.yml -f docker-compose.local.yml ps
+docker compose -f docker-compose.yml -f docker-compose.local.yml logs shiyu-app
 ```

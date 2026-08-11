@@ -1,6 +1,6 @@
 # Docker Compose 一键启动指南
 
-本项目使用 Docker Compose 一键启动应用容器、数据库和 Redis。应用容器同时包含前端和后端。
+`docker-compose.yml` 用于生产部署并拉取 GHCR 镜像；`docker-compose.local.yml` 用于本地从源码构建。应用容器同时包含前端和后端。
 
 ## 前置要求
 
@@ -12,20 +12,20 @@
 ### 1. 启动所有服务
 
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 ### 2. 查看服务状态
 
 ```bash
-docker-compose ps
+docker-compose -f docker-compose.yml -f docker-compose.local.yml ps
 ```
 
 ### 3. 查看日志
 
 ```bash
 # 查看所有服务日志
-docker-compose logs -f
+docker-compose -f docker-compose.yml -f docker-compose.local.yml logs -f
 
 # 查看特定服务日志
 docker-compose logs -f shiyu-app
@@ -87,13 +87,13 @@ docker-compose up -d shiyu-postgres shiyu-redis
 
 ```bash
 # 重新构建所有服务
-docker-compose build
+docker-compose -f docker-compose.yml -f docker-compose.local.yml build
 
 # 重新构建特定服务
-docker-compose build shiyu-app
+docker-compose -f docker-compose.yml -f docker-compose.local.yml build shiyu-app
 
 # 重新构建并启动
-docker-compose up -d --build
+docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 ## 数据持久化
