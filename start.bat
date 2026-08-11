@@ -25,9 +25,9 @@ if %errorlevel% equ 0 (
     echo ✅ 服务启动成功！
     echo.
     echo 📋 服务信息：
-    echo   - 前端应用: http://localhost:8000
-    echo   - 后端 API:  http://localhost:8080
-    echo   - 健康检查: http://localhost:8080/api/v1/system/health
+    echo   - 应用:       http://localhost:18000
+    echo   - 后端 API:  http://localhost:18000/api/v1
+    echo   - 健康检查: http://localhost:18000/api/v1/system/health
     echo.
     echo 👤 默认账号：
     echo   - 用户名: admin

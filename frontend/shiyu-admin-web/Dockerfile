@@ -1,5 +1,5 @@
 # 构建阶段
-FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/node:20-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -30,7 +30,7 @@ ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 RUN npm run build
 
 # 运行阶段
-FROM crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/nginx:alpine
+FROM nginx:alpine
 
 # 安装 envsubst 用于替换环境变量
 RUN apk add --no-cache gettext

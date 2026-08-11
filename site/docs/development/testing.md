@@ -17,7 +17,7 @@ go test ./...
 ```bash
 docker compose up -d
 docker compose ps
-curl http://localhost:8080/api/v1/system/health
+curl http://localhost:18000/api/v1/system/health
 ```
 
 ## 相关文档

@@ -82,11 +82,21 @@ cd ShiyuAdmin
 docker compose up -d
 ```
 
+每次推送都会由 GitHub Actions 构建统一应用镜像并发布到 GitHub Container Registry：
+`ghcr.io/<GitHub 所有者>/<仓库名>`。镜像会带有上海时区构建时间标签
+`YYYYMMDD-HHmmss`、提交 SHA 标签；默认分支还会发布 `latest`。服务器部署时可指定该镜像并禁止本地构建：
+
+```bash
+export SHIYU_IMAGE=ghcr.io/rodert/shiyuadmin:latest
+docker compose pull shiyu-app
+docker compose up -d --no-build
+```
+
 启动后访问：
 
-- 前端后台：<http://localhost:8000>
-- 后端接口：<http://localhost:8080>
-- 健康检查：<http://localhost:8080/api/v1/system/health>
+- 前端后台：<http://localhost:18000>
+- 后端接口：<http://localhost:18000/api/v1>
+- 健康检查：<http://localhost:18000/api/v1/system/health>
 
 ### 方式二：本地开发
 

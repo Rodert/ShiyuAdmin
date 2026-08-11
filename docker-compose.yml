@@ -3,7 +3,7 @@ version: "3.9"
 services:
   # PostgreSQL 数据库
   shiyu-postgres:
-    image: crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/postgres:15
+    image: postgres:15
     container_name: shiyu-postgres
     restart: unless-stopped
     environment:
@@ -24,7 +24,7 @@ services:
 
   # Redis 缓存
   shiyu-redis:
-    image: crpi-4otucz63tm2q5dhq.cn-beijing.personal.cr.aliyuncs.com/library-shiyu/redis:7
+    image: redis:7
     container_name: shiyu-redis
     restart: unless-stopped
     ports:
@@ -40,17 +40,18 @@ services:
     networks:
       - shiyu-network
 
-  # 后端服务
-  shiyu-backend:
+  # 单一应用容器：Nginx 提供前端并代理 API 到同容器内的 Go 后端
+  shiyu-app:
     build:
-      context: ./backend/shiyu-admin-backend
+      context: .
       dockerfile: Dockerfile
-    container_name: shiyu-backend
+    image: ${SHIYU_IMAGE:-shiyu-admin:local}
+    container_name: shiyu-app
     restart: unless-stopped
     ports:
-      - "18080:8080"
+      - "18000:80"
     volumes:
-      - ./backend/shiyu-admin-backend/configs:/root/configs
+      - ./backend/shiyu-admin-backend/configs:/app/configs:ro
     environment:
       - TZ=Asia/Shanghai
       - CONFIG_FILE=configs/config.docker.yaml
@@ -60,25 +61,11 @@ services:
       shiyu-redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v1/system/health || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/api/v1/system/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - shiyu-network
-
-  # 前端服务
-  shiyu-frontend:
-    build:
-      context: ./frontend/shiyu-admin-web
-      dockerfile: Dockerfile
-    container_name: shiyu-frontend
-    restart: unless-stopped
-    ports:
-      - "18000:80"
-    depends_on:
-      - shiyu-backend
     networks:
       - shiyu-network
 
@@ -106,4 +93,3 @@ volumes:
     driver: local
   shiyu-redis-data:
     driver: local
-

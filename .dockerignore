@@ -1,0 +1,9 @@
+.git
+.github
+**/node_modules
+**/dist
+**/.umi
+site
+docs
+img
+test-results

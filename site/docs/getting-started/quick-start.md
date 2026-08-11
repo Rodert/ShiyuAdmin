@@ -19,9 +19,9 @@ docker compose up -d
 
 | 服务 | 地址 |
 | --- | --- |
-| 前端后台 | [localhost:8000](http://localhost:8000) |
-| 后端接口 | [localhost:8080](http://localhost:8080) |
-| 健康检查 | [localhost:8080/api/v1/system/health](http://localhost:8080/api/v1/system/health) |
+| 前端后台 | [localhost:18000](http://localhost:18000) |
+| 后端接口 | [localhost:18000/api/v1](http://localhost:18000/api/v1) |
+| 健康检查 | [localhost:18000/api/v1/system/health](http://localhost:18000/api/v1/system/health) |
 
 ## 本地开发
 
@@ -47,5 +47,5 @@ npm run start:dev
 ```bash
 git status --short
 docker compose ps
-docker compose logs backend
+docker compose logs shiyu-app
 ```

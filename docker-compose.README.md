@@ -1,6 +1,6 @@
 # Docker Compose 一键启动指南
 
-本项目使用 Docker Compose 一键启动所有服务，包括数据库、Redis、后端和前端。
+本项目使用 Docker Compose 一键启动应用容器、数据库和 Redis。应用容器同时包含前端和后端。
 
 ## 前置要求
 
@@ -28,8 +28,7 @@ docker-compose ps
 docker-compose logs -f
 
 # 查看特定服务日志
-docker-compose logs -f shiyu-backend
-docker-compose logs -f shiyu-frontend
+docker-compose logs -f shiyu-app
 docker-compose logs -f shiyu-postgres
 docker-compose logs -f shiyu-redis
 ```
@@ -54,15 +53,14 @@ docker-compose down -v
 |---------|--------|------|------|
 | shiyu-postgres | shiyu-postgres | 5432 | PostgreSQL 数据库 |
 | shiyu-redis | shiyu-redis | 6379 | Redis 缓存 |
-| shiyu-backend | shiyu-backend | 8080 | Go 后端 API 服务 |
-| shiyu-frontend | shiyu-frontend | 8000 | React 前端应用 |
+| shiyu-app | shiyu-app | 18000 | React 前端和 Go 后端 API |
 
 ### 访问地址
 
-- **前端应用**: http://localhost:8000
-- **后端 API**: http://localhost:8080
-- **API 文档**: http://localhost:8000/umi/plugin/openapi
-- **健康检查**: http://localhost:8080/api/v1/system/health
+- **前端应用**: http://localhost:18000
+- **后端 API**: http://localhost:18000/api/v1
+- **API 文档**: http://localhost:18000/umi/plugin/openapi
+- **健康检查**: http://localhost:18000/api/v1/system/health
 
 ### 默认账号
 
@@ -92,8 +90,7 @@ docker-compose up -d shiyu-postgres shiyu-redis
 docker-compose build
 
 # 重新构建特定服务
-docker-compose build shiyu-backend
-docker-compose build shiyu-frontend
+docker-compose build shiyu-app
 
 # 重新构建并启动
 docker-compose up -d --build
@@ -120,18 +117,14 @@ docker-compose down -v
 
 ```yaml
 ports:
-  - "8001:80"  # 前端改为 8001
-  - "8081:8080"  # 后端改为 8081
+  - "18001:80"  # 应用改为 18001
 ```
 
 ### 2. 查看服务日志
 
 ```bash
-# 查看后端错误
-docker-compose logs shiyu-backend
-
-# 查看前端错误
-docker-compose logs shiyu-frontend
+# 查看应用错误
+docker-compose logs shiyu-app
 
 # 查看数据库连接
 docker-compose logs shiyu-postgres
@@ -144,14 +137,14 @@ docker-compose logs shiyu-postgres
 docker-compose restart
 
 # 重启特定服务
-docker-compose restart shiyu-backend
+docker-compose restart shiyu-app
 ```
 
 ### 4. 进入容器调试
 
 ```bash
-# 进入后端容器
-docker exec -it shiyu-backend sh
+# 进入应用容器
+docker exec -it shiyu-app sh
 
 # 进入数据库容器
 docker exec -it shiyu-postgres psql -U shiyu -d shiyu_admin_scaffold
