@@ -26,10 +26,18 @@ const maxUploadSize int64 = 2 << 30
 
 var allowedMIMETypes = map[string]bool{
 	"image/jpeg": true, "image/png": true, "image/gif": true, "image/webp": true,
-	"application/pdf": true, "text/plain": true, "text/csv": true,
-	"application/zip": true, "application/x-zip-compressed": true,
-	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true,
-	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":       true,
+	"image/bmp": true, "image/x-icon": true, "image/avif": true,
+	"video/mp4": true, "video/webm": true, "video/ogg": true, "video/quicktime": true, "video/x-msvideo": true,
+	"audio/mpeg": true, "audio/wav": true, "audio/wave": true, "audio/ogg": true, "audio/webm": true, "audio/aac": true, "audio/mp4": true, "audio/flac": true,
+	"application/pdf": true, "application/json": true, "application/xml": true,
+	"text/plain": true, "text/csv": true, "text/xml": true,
+	"application/zip": true, "application/x-zip-compressed": true, "application/x-7z-compressed": true, "application/x-rar-compressed": true, "application/x-tar": true, "application/gzip": true, "application/x-gzip": true,
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   true,
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         true,
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation": true,
+	"application/vnd.oasis.opendocument.text":                                   true,
+	"application/vnd.oasis.opendocument.spreadsheet":                            true,
+	"application/vnd.oasis.opendocument.presentation":                           true,
 }
 
 func registerMediaRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, db *gorm.DB) {
