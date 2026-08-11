@@ -83,19 +83,39 @@ ol {
   white-space: nowrap;
 }
 
-.menu-tree-toggle.ant-btn {
-  align-items: center;
-  color: rgba(0, 0, 0, 0.55);
-  display: inline-flex;
-  height: 24px;
-  justify-content: center;
-  padding: 0;
-  width: 24px;
+.menu-management-table .menu-tree-parent-row > td {
+  background: rgba(0, 0, 0, 0.012);
 }
 
-.menu-tree-toggle.ant-btn:hover {
-  background: rgba(22, 119, 255, 0.08);
+.menu-name-parent {
+  font-weight: 500;
+}
+
+.menu-management-table .menu-tree-parent-row:hover > td {
+  background: rgba(22, 119, 255, 0.035);
+}
+
+.menu-tree-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  height: 20px;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+}
+
+.menu-tree-toggle:hover {
   color: #1677ff;
+}
+
+.menu-tree-toggle:focus-visible {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {

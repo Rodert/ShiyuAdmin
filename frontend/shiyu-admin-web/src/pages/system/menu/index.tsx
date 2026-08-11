@@ -95,6 +95,11 @@ const MenuManagement: React.FC = () => {
       dataIndex: 'menu_name',
       key: 'menu_name',
       width: 150,
+      render: (_, record) => (
+        <span className={record.children?.length ? 'menu-name-parent' : undefined}>
+          {record.menu_name}
+        </span>
+      ),
     },
     {
       title: '菜单类型',
@@ -179,6 +184,7 @@ const MenuManagement: React.FC = () => {
   return (
     <PageContainer>
       <ProTable<Menu>
+        className="menu-management-table"
         headerTitle="菜单管理"
         actionRef={actionRef}
         rowKey="menu_code"
@@ -214,19 +220,23 @@ const MenuManagement: React.FC = () => {
           };
         }}
         columns={columns}
+        onRow={(record) => ({
+          className: record.children?.length ? 'menu-tree-parent-row' : '',
+        })}
         pagination={false}
         expandable={{
           defaultExpandAllRows: false,
+          indentSize: 20,
           expandIcon: ({ expanded, onExpand, record }) => (
             <Tooltip title={expanded ? '收起子菜单' : '展开子菜单'}>
-              <Button
+              <button
                 aria-label={expanded ? '收起子菜单' : '展开子菜单'}
                 className="menu-tree-toggle"
-                icon={expanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
                 onClick={(event) => onExpand(record, event)}
-                size="small"
-                type="text"
-              />
+                type="button"
+              >
+                {expanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
+              </button>
             </Tooltip>
           ),
         }}
