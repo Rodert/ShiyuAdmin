@@ -2,8 +2,8 @@
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
-COPY frontend/shiyu-admin-web/package.json frontend/shiyu-admin-web/package-lock.json ./
-RUN npm ci --legacy-peer-deps --no-audit
+COPY frontend/shiyu-admin-web/package.json ./
+RUN npm install --legacy-peer-deps --no-audit --loglevel=error
 COPY frontend/shiyu-admin-web/ ./
 RUN npm run build
 
