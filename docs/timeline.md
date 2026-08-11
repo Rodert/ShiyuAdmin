@@ -62,7 +62,6 @@
     - 创建 `fly.toml`：Fly.io 应用配置文件
     - 创建 `backend/shiyu-admin-backend/configs/config.fly.yaml`：Fly.io 专用配置
     - 创建 `docs/fly-deployment.md`：详细的 Fly.io 部署指南
-    - 创建 `.github/workflows/fly-deploy.yml`：GitHub Actions 自动部署工作流
   - 更新 `README.md`，将推荐部署方式改为 Fly.io
   - Fly.io 优势：
     - 无需银行卡（只需信用卡验证，不扣费）

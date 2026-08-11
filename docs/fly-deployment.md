@@ -258,11 +258,7 @@ Fly.io 平台专用后端配置文件，特点：
 
 ### 4. 自动部署不工作
 
-**问题**：推送代码到 GitHub 后没有自动部署。
-
-**解决方案**：
-- 配置 GitHub Actions 工作流（见下方）
-- 或手动部署：`fly deploy`
+本项目不包含 Fly.io 自动部署工作流；需要时请手动执行 `fly deploy`。
 
 ### 5. 构建失败
 
@@ -272,38 +268,6 @@ Fly.io 平台专用后端配置文件，特点：
 - 查看构建日志：`fly logs`
 - 确认 Dockerfile 路径正确
 - 确认 Docker Context 正确
-
----
-
-## GitHub Actions 自动部署
-
-创建 `.github/workflows/fly-deploy.yml`：
-
-```yaml
-name: Deploy to Fly.io
-
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - 'fly.toml'
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      
-      - run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-```
-
-在 GitHub 仓库 Settings → Secrets 中添加 `FLY_API_TOKEN`：
-- 获取 Token：`fly auth token`
 
 ---
 
