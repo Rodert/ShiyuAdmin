@@ -19,6 +19,34 @@ import defaultSettings from '../config/defaultSettings';
 import { errorConfig } from './requestErrorConfig';
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+const themeSettingsStorageKey = 'shiyu_theme_settings';
+
+const themeColorList = [
+  { key: 'shiyu-blue', color: '#1677FF', title: '科技蓝' },
+  { key: 'shiyu-cyan', color: '#08979C', title: '青绿' },
+  { key: 'shiyu-green', color: '#389E0D', title: '活力绿' },
+  { key: 'shiyu-orange', color: '#D46B08', title: '暖橙' },
+  { key: 'shiyu-red', color: '#CF1322', title: '赤红' },
+];
+
+function getThemeSettings(): Partial<LayoutSettings> {
+  if (typeof window === 'undefined') {
+    return defaultSettings as Partial<LayoutSettings>;
+  }
+
+  try {
+    const stored = localStorage.getItem(themeSettingsStorageKey);
+    return stored
+      ? { ...defaultSettings, ...JSON.parse(stored) }
+      : (defaultSettings as Partial<LayoutSettings>);
+  } catch (_error) {
+    return defaultSettings as Partial<LayoutSettings>;
+  }
+}
+
+function saveThemeSettings(settings: Partial<LayoutSettings>) {
+  localStorage.setItem(themeSettingsStorageKey, JSON.stringify(settings));
+}
 
 /**
  * @see https://umijs.org/docs/api/runtime-config#getinitialstate
@@ -30,6 +58,7 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
+  const settings = getThemeSettings();
   const buildMenuData = (menus: APIMenu[]): MenuDataItem[] => {
     return (menus || [])
       .filter((m) => m.status === 1 && m.menu_type !== 'F')
@@ -74,12 +103,12 @@ export async function getInitialState(): Promise<{
       fetchUserInfo,
       currentUser,
       menuData,
-      settings: defaultSettings as Partial<LayoutSettings>,
+      settings,
     };
   }
   return {
     fetchUserInfo,
-    settings: defaultSettings as Partial<LayoutSettings>,
+    settings,
   };
 }
 
@@ -151,19 +180,22 @@ export const layout: RunTimeLayoutConfig = ({
       return (
         <>
           {children}
-          {isDev && (
-            <SettingDrawer
-              disableUrlParams
-              enableDarkTheme
-              settings={initialState?.settings}
-              onSettingChange={(settings) => {
-                setInitialState((preInitialState) => ({
-                  ...preInitialState,
-                  settings,
-                }));
-              }}
-            />
-          )}
+          <SettingDrawer
+            disableUrlParams
+            enableDarkTheme
+            themeOnly
+            hideHintAlert
+            hideCopyButton
+            colorList={themeColorList}
+            settings={initialState?.settings}
+            onSettingChange={(settings) => {
+              saveThemeSettings(settings);
+              setInitialState((preInitialState) => ({
+                ...preInitialState,
+                settings,
+              }));
+            }}
+          />
         </>
       );
     },

@@ -30,6 +30,8 @@ func AutoMigrate(db *gorm.DB) error {
 		&entity.RoleMenu{},
 		&entity.RoleDept{},
 		&entity.OperationLog{},
+		&entity.StorageConfig{},
+		&entity.MediaFile{},
 	)
 }
 
@@ -84,6 +86,9 @@ func EnsureAdminUser(db *gorm.DB, cfg *config.Config) error {
 func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+	if err := ensureDefaultLocalStorage(ctx, db); err != nil {
+		return err
+	}
 
 	adminRole := entity.Role{
 		RoleCode:  "ROLE_ADMIN",
@@ -201,6 +206,35 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			Perms:      "system:operation-log:list",
 			Status:     1,
 			SortOrder:  35,
+		},
+		{
+			MenuCode:   "system-file",
+			ParentCode: "system",
+			MenuName:   "文件管理",
+			MenuType:   "C",
+			Path:       "/system/files",
+			Component:  "/system/files",
+			Perms:      "system:file:list",
+			Status:     1,
+			SortOrder:  36,
+		},
+		{
+			MenuCode:   "system-file-upload",
+			ParentCode: "system-file",
+			MenuName:   "文件上传",
+			MenuType:   "F",
+			Perms:      "system:file:upload",
+			Status:     1,
+			SortOrder:  3601,
+		},
+		{
+			MenuCode:   "system-file-delete",
+			ParentCode: "system-file",
+			MenuName:   "文件删除",
+			MenuType:   "F",
+			Perms:      "system:file:delete",
+			Status:     1,
+			SortOrder:  3602,
 		},
 		{
 			MenuCode:  "system-monitor",
@@ -566,4 +600,21 @@ func ensureUserRole(ctx context.Context, db *gorm.DB, userCode string, roleCode 
 		}
 	}
 	return nil
+}
+
+func ensureDefaultLocalStorage(ctx context.Context, db *gorm.DB) error {
+	var count int64
+	if err := db.WithContext(ctx).Model(&entity.StorageConfig{}).Count(&count).Error; err != nil {
+		return fmt.Errorf("query storage configs failed: %w", err)
+	}
+	if count > 0 {
+		return nil
+	}
+	return db.WithContext(ctx).Create(&entity.StorageConfig{
+		Name:      "本地存储",
+		Driver:    "local",
+		BasePath:  "./data/uploads",
+		IsDefault: true,
+		Status:    1,
+	}).Error
 }

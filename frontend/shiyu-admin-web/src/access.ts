@@ -26,6 +26,7 @@ export default function access(
       hasPermission('system:menu:list') ||
       hasPermission('system:dept:list') ||
       hasPermission('system:operation-log:list'),
+    canViewFiles: hasPermission('system:file:list'),
     canViewSystemUser: hasPermission('system:user:list'),
     canViewSystemRole: hasPermission('system:role:list'),
     canViewSystemMenu: hasPermission('system:menu:list'),

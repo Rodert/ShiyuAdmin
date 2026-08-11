@@ -83,6 +83,11 @@ export default [
         component: './system/operation-log',
         access: 'canViewOperationLog',
       },
+      {
+        path: '/system/files',
+        component: './system/files',
+        access: 'canViewFiles',
+      },
     ],
   },
   { path: '/', redirect: '/welcome' },
