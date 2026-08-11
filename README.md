@@ -24,6 +24,8 @@
     <a href="https://github.com/Rodert/ShiyuAdmin/issues/new?labels=bug">反馈 Bug</a>
     ·
     <a href="https://github.com/Rodert/ShiyuAdmin/issues/new?labels=enhancement">功能建议</a>
+    ·
+    <a href="https://qm.qq.com/q/39M7yoLxba"><strong>加入 QQ 群</strong></a>
   </p>
 
 
@@ -47,6 +49,7 @@
 - GitHub 主仓库：<https://github.com/Rodert/ShiyuAdmin>
 - Gitee 国内镜像：<https://gitee.com/rodert/ShiyuAdmin>
 - GitCode 国内镜像：<https://gitcode.com/JavaPub/ShiyuAdmin>
+- QQ 群：1097104678，[点击加入 ShiyuAdmin 通用后台管理系统](https://qm.qq.com/q/39M7yoLxba)
 
 > 仓库说明：GitHub 为主仓库，Issue / PR / Release 以 GitHub 为准；Gitee 和 GitCode 用于国内访问、克隆和同步备份。
 
