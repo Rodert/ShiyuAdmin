@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -203,7 +204,7 @@ func TestApplicationLifecycle(t *testing.T) {
 		var menu entity.Menu
 		require.NoError(t, a.db.Where("menu_code = ?", "welcome").First(&menu).Error)
 		require.Equal(t, "自定义首页", menu.MenuName)
-		require.NoError(t, a.db.Create(&bootstrap.Migration{Version: bootstrap.SchemaVersion + 1}).Error)
+		require.NoError(t, a.db.Create(&bootstrap.Migration{Version: bootstrap.SchemaVersion + 1, AppliedAt: time.Now()}).Error)
 		require.ErrorContains(t, bootstrap.Migrate(a.db, a.cfg), "newer")
 		require.NoError(t, a.db.Delete(&bootstrap.Migration{}, bootstrap.SchemaVersion+1).Error)
 	})

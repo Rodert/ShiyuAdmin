@@ -25,6 +25,8 @@ npm run test:acceptance
 
 后端集成测试使用 SQLite；CI 使用 `TEST_CONFIG_FILE` 选择独立测试数据库，禁止将此变量指向生产数据库。
 
+SQLite 连接使用 WAL 和立即写事务，避免其他连接提交后旧读快照无法升级为写事务。`pkg/database` 的回归测试使用两个独立连接验证写锁取得时机和提交后的读写结果；普通查询仍可利用 WAL 并发读取。
+
 CI 定义：`.github/workflows/validate.yml`。镜像发布依赖此工作流通过。CI 会验证四种数据库，并通过容器重建检查密钥、文件、系统设置、审批及重提记录、通知和回收站持久化。浏览器任务固定 Ubuntu 24.04，避免 Playwright 1.59 不支持 Ubuntu 26.04 导致安装失败。后端最低 Go 1.24。
 
 以下保留的是旧版测试笔记，其中默认账号及旧 Playwright/Jest 模板流程不再适用于 0.2。

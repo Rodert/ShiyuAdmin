@@ -45,7 +45,10 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		if strings.Contains(cfg.Database.Database, "?") {
 			separator = "&"
 		}
-		dialector = sqlite.Open(cfg.Database.Database + separator + "_busy_timeout=5000&_journal_mode=WAL")
+		// Reserve the writer before a transaction reads. In WAL mode a deferred
+		// read snapshot cannot become a writer after another connection commits,
+		// even with busy_timeout; this also matters across independent DB pools.
+		dialector = sqlite.Open(cfg.Database.Database + separator + "_busy_timeout=5000&_journal_mode=WAL&_txlock=immediate")
 	case "sqlserver", "mssql":
 		dsnURL := &url.URL{
 			Scheme: "sqlserver",
