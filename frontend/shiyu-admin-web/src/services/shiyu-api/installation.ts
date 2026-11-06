@@ -5,6 +5,7 @@ export type InstallationStatus = {
   logo_url: string;
   timezone: string;
   max_upload_mb: number;
+  file_retention_days: number;
   name: string;
   checks: { database: boolean; storage: boolean };
 };

@@ -1,6 +1,10 @@
-import { request } from '@umijs/max';
+import { request } from "@umijs/max";
 
 export interface MediaFile {
+  purpose: string;
+  purge_pending: boolean;
+  purged_at?: string;
+  deleted_at?: string;
   id: number;
   file_code: string;
   original_name: string;
@@ -12,23 +16,89 @@ export interface MediaFile {
   created_at: string;
 }
 
-export async function getFiles(params: { page?: number; page_size?: number; keyword?: string; recycled?: boolean }) {
-  return request<{ code: number; data: { items: MediaFile[]; total: number } }>('/api/v1/system/files' + (params.recycled ? '/recycle-bin' : ''), { method: 'GET', params });
+export async function getFiles(params: {
+  page?: number;
+  page_size?: number;
+  keyword?: string;
+  recycled?: boolean;
+}) {
+  return request<{ code: number; data: { items: MediaFile[]; total: number } }>(
+    "/api/v1/system/files" + (params.recycled ? "/recycle-bin" : ""),
+    { method: "GET", params }
+  );
 }
 
 export async function uploadFile(file: File) {
   const form = new FormData();
-  form.append('file', file);
-  return request<{ code: number; data: MediaFile; message?: string }>('/api/v1/system/files/upload', { method: 'POST', data: form, requestType: 'form' });
+  form.append("file", file);
+  return request<{ code: number; data: MediaFile; message?: string }>(
+    "/api/v1/system/files/upload",
+    { method: "POST", data: form, requestType: "form" }
+  );
 }
 
-export async function deleteFile(code: string) { return request('/api/v1/system/files/' + code, { method: 'DELETE' }); }
-export async function restoreFile(code: string) { return request('/api/v1/system/files/' + code + '/restore', { method: 'POST' }); }
-export async function getFileBlob(code: string, preview = false) {
-  const token = localStorage.getItem('shiyu_token');
-  const response = await fetch(`/api/v1/system/files/${code}/${preview ? 'preview' : 'download'}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+export async function deleteFile(code: string) {
+  return request("/api/v1/system/files/" + code, { method: "DELETE" });
+}
+export async function restoreFile(code: string) {
+  return request("/api/v1/system/files/" + code + "/restore", {
+    method: "POST",
   });
-  if (!response.ok) throw new Error('文件加载失败');
+}
+export async function getFileBlob(code: string, preview = false) {
+  const token = localStorage.getItem("shiyu_token");
+  const response = await fetch(
+    `/api/v1/system/files/${code}/${preview ? "preview" : "download"}`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
+  if (!response.ok) throw new Error("文件加载失败");
   return response.blob();
 }
+
+export type FileAmount = { count: number; bytes: number };
+export type FileUsage = {
+  active: FileAmount;
+  recycled: FileAmount;
+  unused: FileAmount;
+  cleanable: FileAmount;
+  retention_days: number;
+};
+export const getFileUsage = (work = false) =>
+  request<{ data: FileUsage }>(
+    work
+      ? "/api/v1/system/work/attachments/usage"
+      : "/api/v1/system/files/usage"
+  );
+export const getUnusedAttachments = (params: {
+  page: number;
+  page_size: number;
+  recycled: boolean;
+}) =>
+  request<{ data: { items: MediaFile[]; total: number } }>(
+    "/api/v1/system/work/attachments",
+    { params }
+  );
+export const recycleAttachment = (code: string) =>
+  request(`/api/v1/system/work/attachments/${encodeURIComponent(code)}`, {
+    method: "DELETE",
+  });
+export const restoreAttachment = (code: string) =>
+  request(
+    `/api/v1/system/work/attachments/${encodeURIComponent(code)}/restore`,
+    { method: "POST" }
+  );
+export const getCleanupCandidates = (params: {
+  page: number;
+  page_size: number;
+}) =>
+  request<{ data: { items: MediaFile[]; total: number } }>(
+    "/api/v1/system/files/cleanup",
+    { params }
+  );
+export const purgeFiles = (file_codes: string[]) =>
+  request<{ data: { file_code: string; purged: boolean; message?: string }[] }>(
+    "/api/v1/system/files/cleanup",
+    { method: "POST", data: { file_codes } }
+  );

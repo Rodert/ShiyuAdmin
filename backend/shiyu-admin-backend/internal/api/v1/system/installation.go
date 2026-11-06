@@ -76,7 +76,7 @@ func (h *InstallationHandler) status(c *gin.Context) {
 		response.Error(c, 503, "数据库检查失败")
 		return
 	}
-	response.Success(c, gin.H{"installed": item.InstalledAt != nil, "name": item.Name, "logo_url": item.LogoURL, "timezone": item.Timezone, "max_upload_mb": item.MaxUploadMB,
+	response.Success(c, gin.H{"installed": item.InstalledAt != nil, "name": item.Name, "logo_url": item.LogoURL, "timezone": item.Timezone, "max_upload_mb": item.MaxUploadMB, "file_retention_days": item.FileRetentionDays,
 		"checks": gin.H{"database": true, "storage": CheckStorage(filepath.Join(h.Config.DataDir, "uploads")) == nil}})
 }
 

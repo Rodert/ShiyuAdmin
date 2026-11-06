@@ -1,3 +1,4 @@
+import { verifyMaintenanceFlow } from './maintenance-flow';
 import { verifyTeamFlow } from './team-flow';
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
@@ -35,6 +36,7 @@ test('首次安装、登录、版本信息、上传与会话退出', async ({ pa
   await page.locator('input[type=file]').setInputFiles({ name: 'browser-proof.txt', mimeType: 'text/plain', buffer: Buffer.from('P0 browser upload') });
   await expect(page.getByText('browser-proof.txt', { exact: true })).toBeVisible();
   await verifyTeamFlow(page, testInfo);
+  await verifyMaintenanceFlow(page, testInfo);
   expect(failures, '安装、设置、申请与审批不应出现接口错误').toEqual([]);
   const token = await page.evaluate(() => localStorage.getItem('shiyu_token'));
   const result = await page.request.post('/api/v1/system/auth/logout', { headers: { Authorization: `Bearer ${token}` } });

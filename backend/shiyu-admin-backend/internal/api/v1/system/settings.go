@@ -17,14 +17,15 @@ import (
 )
 
 type settingsInput struct {
-	Name        string `json:"name"`
-	LogoURL     string `json:"logo_url"`
-	Timezone    string `json:"timezone"`
-	MaxUploadMB int    `json:"max_upload_mb"`
+	Name              string `json:"name"`
+	LogoURL           string `json:"logo_url"`
+	Timezone          string `json:"timezone"`
+	MaxUploadMB       int    `json:"max_upload_mb"`
+	FileRetentionDays int    `json:"file_retention_days"`
 }
 
 func settingsView(item entity.Installation) settingsInput {
-	return settingsInput{Name: item.Name, LogoURL: item.LogoURL, Timezone: item.Timezone, MaxUploadMB: item.MaxUploadMB}
+	return settingsInput{Name: item.Name, LogoURL: item.LogoURL, Timezone: item.Timezone, MaxUploadMB: item.MaxUploadMB, FileRetentionDays: item.FileRetentionDays}
 }
 func validLogo(raw string) bool {
 	if len(raw) > 512 || strings.ContainsAny(raw, "\\\r\n\t") {
@@ -66,10 +67,22 @@ func registerSettingsRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	})
 	settings.PUT("", func(c *gin.Context) {
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 8*1024)
-		var input settingsInput
-		if c.ShouldBindJSON(&input) != nil {
+		var payload struct {
+			settingsInput
+			Retention *int `json:"file_retention_days"`
+		}
+		if c.ShouldBindJSON(&payload) != nil {
 			response.Error(c, 400, "设置格式不正确")
 			return
+		}
+		input := payload.settingsInput
+		if payload.Retention != nil && (*payload.Retention < 7 || *payload.Retention > 365) {
+			response.Error(c, 400, "回收站保留期须为 7–365 天")
+			return
+		}
+		input.FileRetentionDays = -1
+		if payload.Retention != nil {
+			input.FileRetentionDays = *payload.Retention
 		}
 		input.Name, input.LogoURL = strings.TrimSpace(input.Name), strings.TrimSpace(input.LogoURL)
 		if input.Name == "" || len([]rune(input.Name)) > 64 || !validLogo(input.LogoURL) || input.MaxUploadMB < 1 || input.MaxUploadMB > 2048 {
@@ -89,9 +102,12 @@ func registerSettingsRoutes(r *gin.RouterGroup, db *gorm.DB) {
 			if err := database.ForUpdate(tx, "sys_installation").First(&old, 1).Error; err != nil {
 				return err
 			}
+			if input.FileRetentionDays == -1 {
+				input.FileRetentionDays = old.FileRetentionDays
+			}
 			before, _ := json.Marshal(settingsView(old))
 			after, _ := json.Marshal(input)
-			if err := tx.Model(&entity.Installation{}).Where("id = ?", 1).Updates(map[string]any{"name": input.Name, "logo_url": input.LogoURL, "timezone": input.Timezone, "max_upload_mb": input.MaxUploadMB}).Error; err != nil {
+			if err := tx.Model(&entity.Installation{}).Where("id = ?", 1).Updates(map[string]any{"name": input.Name, "logo_url": input.LogoURL, "timezone": input.Timezone, "max_upload_mb": input.MaxUploadMB, "file_retention_days": input.FileRetentionDays}).Error; err != nil {
 				return err
 			}
 			return tx.Create(&entity.SettingsChange{ActorCode: currentUserCodeFromContext(c), Before: string(before), After: string(after)}).Error

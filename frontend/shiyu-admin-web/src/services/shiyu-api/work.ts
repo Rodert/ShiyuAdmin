@@ -4,6 +4,7 @@ const base = "/api/v1/system/work";
 type Result<T> = { code: number; data: T };
 export type WorkStatus = "pending" | "approved" | "rejected" | "withdrawn";
 export type WorkItem = {
+  source_request_id: string;
   id: string;
   title: string;
   content: string;
@@ -36,6 +37,8 @@ export const getPeople = (keyword = "") =>
   request<Result<Person[]>>(`${base}/people`, { params: { keyword } });
 export const getRequests = (params: {
   view: string;
+  keyword?: string;
+  status?: string;
   page?: number;
   page_size?: number;
 }) =>
@@ -45,6 +48,7 @@ export const getRequests = (params: {
 export const getWorkDetail = (id: string) =>
   request<Result<WorkDetail>>(`${base}/requests/${encodeURIComponent(id)}`);
 export const createRequest = (data: {
+  source_request_id?: string;
   title: string;
   content: string;
   approver_code: string;

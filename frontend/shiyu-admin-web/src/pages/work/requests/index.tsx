@@ -1,3 +1,4 @@
+import { UnusedAttachments } from "@/components/FileLifecycle";
 import {
   actOnRequest,
   createRequest,
@@ -64,7 +65,24 @@ export default function Requests() {
   const selectedId = params.get("id");
   const [rows, setRows] = useState<WorkItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const keyword = params.get("keyword") || "";
+  const status = params.get("status") || "";
+  const pageNumber = Number(params.get("page") || 1);
+  const page =
+    Number.isInteger(pageNumber) && pageNumber > 0 && pageNumber <= 1000000
+      ? pageNumber
+      : 1;
+  const navigate = (values: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(location.search);
+    Object.entries(values).forEach(([key, value]) => {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    });
+    history.push(`/work/requests?${next.toString()}`);
+  };
+  const setPage = (value: number) => navigate({ page: String(value) });
+  const [unusedOpen, setUnusedOpen] = useState(false);
+  const [sourceId, setSourceId] = useState<string>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [detail, setDetail] = useState<WorkDetail>();
@@ -83,8 +101,7 @@ export default function Requests() {
     undefined
   );
   const changeView = (next: string) => {
-    setPage(1);
-    history.push(`/work/requests?view=${next}`);
+    navigate({ view: next, page: undefined, status: undefined, id: undefined });
   };
   const reload = () => {
     setRevision((n) => n + 1);
@@ -94,7 +111,7 @@ export default function Requests() {
     let active = true;
     setLoading(true);
     setError(false);
-    getRequests({ view, page, page_size: 20 })
+    getRequests({ view, page, page_size: 20, keyword, status })
       .then(({ data }) => {
         if (active) {
           setRows(data.items);
@@ -110,7 +127,7 @@ export default function Requests() {
     return () => {
       active = false;
     };
-  }, [view, page, revision]);
+  }, [view, page, revision, keyword, status]);
   useEffect(() => {
     let active = true;
     setDetail(undefined);
@@ -139,7 +156,7 @@ export default function Requests() {
         .catch(() => {});
     }, 250);
   };
-  const closeDetail = () => history.push(`/work/requests?view=${view}`);
+  const closeDetail = () => navigate({ id: undefined });
   return (
     <PageContainer
       title="事项与审批"
@@ -151,6 +168,7 @@ export default function Requests() {
             type="primary"
             onClick={() => {
               form.resetFields();
+              setSourceId(undefined);
               setFiles([]);
               setCreating(true);
               searchPeople("");
@@ -159,6 +177,7 @@ export default function Requests() {
             新建申请
           </Button>
           <Button onClick={reload}>刷新</Button>
+          <Button onClick={() => setUnusedOpen(true)}>我的未使用附件</Button>
         </Space>
         <Tabs
           activeKey={view}
@@ -169,6 +188,55 @@ export default function Requests() {
             { key: "handled", label: "已结束的审批" },
           ]}
         />
+        <Space wrap style={{ marginBottom: 16 }}>
+          <Input.Search
+            key={keyword}
+            aria-label="搜索事项"
+            placeholder="标题、申请人或审批人"
+            defaultValue={keyword}
+            maxLength={120}
+            allowClear
+            enterButton="搜索"
+            onSearch={(value) =>
+              navigate({
+                keyword: value.trim(),
+                page: undefined,
+                id: undefined,
+              })
+            }
+            style={{ width: 320 }}
+          />
+          <Select
+            aria-label="筛选事项状态"
+            placeholder="全部状态"
+            allowClear
+            value={status || undefined}
+            disabled={view === "pending"}
+            style={{ width: 150 }}
+            onChange={(value) =>
+              navigate({ status: value, page: undefined, id: undefined })
+            }
+            options={Object.entries(statusLabels)
+              .filter(
+                ([key]) =>
+                  key !== "submitted" &&
+                  (view !== "handled" || key !== "pending")
+              )
+              .map(([value, label]) => ({ value, label }))}
+          />
+          <Button
+            onClick={() =>
+              navigate({
+                keyword: undefined,
+                status: undefined,
+                page: undefined,
+                id: undefined,
+              })
+            }
+          >
+            重置筛选
+          </Button>
+        </Space>
         {error ? (
           <Alert type="error" message="事项加载失败，请点击刷新重试" />
         ) : (
@@ -190,12 +258,7 @@ export default function Requests() {
                 title: "事项",
                 dataIndex: "title",
                 render: (text, row) => (
-                  <Button
-                    type="link"
-                    onClick={() =>
-                      history.push(`/work/requests?view=${view}&id=${row.id}`)
-                    }
-                  >
+                  <Button type="link" onClick={() => navigate({ id: row.id })}>
                     {text}
                   </Button>
                 ),
@@ -219,7 +282,7 @@ export default function Requests() {
         )}
       </Card>
       <Modal
-        title="新建申请"
+        title={sourceId ? "重新提交申请" : "新建申请"}
         open={creating}
         onCancel={() => {
           if (!saving && !uploading) setCreating(false);
@@ -241,10 +304,10 @@ export default function Requests() {
             try {
               const { data } = await createRequest({
                 ...values,
+                source_request_id: sourceId,
                 file_codes: files.map((f) => f.file_code),
               });
               setCreating(false);
-              setPage(1);
               history.push(`/work/requests?view=mine&id=${data.id}`);
               reload();
               message.success("申请已提交，审批人将收到站内通知");
@@ -255,6 +318,14 @@ export default function Requests() {
             }
           }}
         >
+          {sourceId && (
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message="已复制原申请的标题、说明和附件。请选择审批人，修改后提交为一份新申请；原审批记录保持不变。"
+            />
+          )}
           <Form.Item
             name="title"
             label="事项标题"
@@ -291,7 +362,7 @@ export default function Requests() {
             label="附件"
             extra={`最多 10 个文件，每个不超过 ${
               initialState?.installation?.max_upload_mb || 2048
-            } MiB。提交后附件作为审批凭证保留。`}
+            } MiB。提交后保留为审批凭证；取消或移除后的新附件可在“我的未使用附件”中继续使用或清理。`}
           >
             <Upload
               showUploadList={false}
@@ -322,6 +393,13 @@ export default function Requests() {
             >
               <Button loading={uploading}>上传附件</Button>
             </Upload>
+            <Button
+              disabled={saving || uploading}
+              onClick={() => setUnusedOpen(true)}
+              style={{ marginTop: 8 }}
+            >
+              选择已上传附件
+            </Button>
             <List
               size="small"
               dataSource={files}
@@ -459,6 +537,41 @@ export default function Requests() {
                 )}
               </Space>
             )}
+            {detail.source_request_id && (
+              <Typography.Paragraph type="secondary">
+                本申请由历史申请重新提交。
+                {detail.applicant_code === user && (
+                  <Button
+                    type="link"
+                    onClick={() => navigate({ id: detail.source_request_id })}
+                  >
+                    查看原申请
+                  </Button>
+                )}
+              </Typography.Paragraph>
+            )}
+            {detail.applicant_code === user &&
+              ["rejected", "withdrawn"].includes(detail.status) && (
+                <Button
+                  type="primary"
+                  style={{ marginBottom: 16 }}
+                  onClick={() => {
+                    form.resetFields();
+                    form.setFieldsValue({
+                      title: detail.title,
+                      content: detail.content,
+                      approver_code: undefined,
+                    });
+                    setFiles(detail.attachments);
+                    setSourceId(detail.id);
+                    closeDetail();
+                    setCreating(true);
+                    searchPeople("");
+                  }}
+                >
+                  修改后重新提交
+                </Button>
+              )}
             <Typography.Title level={5}>审批记录</Typography.Title>
             <Timeline
               items={detail.events.map((e) => ({
@@ -527,6 +640,29 @@ export default function Requests() {
           rows={4}
         />
       </Modal>
+      <UnusedAttachments
+        open={unusedOpen}
+        onClose={() => setUnusedOpen(false)}
+        onPick={
+          creating
+            ? (file) => {
+                if (files.some((item) => item.file_code === file.file_code)) {
+                  message.info("该附件已在本次申请中");
+                  return;
+                }
+                if (files.length >= 10) {
+                  message.warning("最多关联 10 个附件");
+                  return;
+                }
+                setFiles((old) => [
+                  ...old,
+                  { file_code: file.file_code, name: file.original_name },
+                ]);
+                setUnusedOpen(false);
+              }
+            : undefined
+        }
+      />
     </PageContainer>
   );
 }

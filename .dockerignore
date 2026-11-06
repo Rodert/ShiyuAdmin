@@ -8,7 +8,9 @@ docs
 img
 test-results
 
-**/data
+# Runtime data only: **/data also removes src/pages/monitor/data.
+/data
+/backend/shiyu-admin-backend/data
 **/*.db
 **/*.log
 **/playwright-report

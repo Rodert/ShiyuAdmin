@@ -11,7 +11,7 @@ import (
 	"shiyu-admin-backend/internal/model/entity"
 )
 
-const SchemaVersion = 2
+const SchemaVersion = 3
 
 // Migration records only completed migrations. Forward-only changes require a backup to roll back.
 type Migration struct {
@@ -43,7 +43,15 @@ func Migrate(db *gorm.DB, cfg *config.Config) error {
 		if err := db.AutoMigrate(&entity.Installation{}, &entity.SettingsChange{}, &entity.WorkRequest{}, &entity.WorkEvent{}, &entity.WorkAttachment{}, &entity.Notification{}); err != nil {
 			return err
 		}
-		return db.Create(&Migration{Version: 2, AppliedAt: time.Now()}).Error
+		if err := db.Create(&Migration{Version: 2, AppliedAt: time.Now()}).Error; err != nil {
+			return err
+		}
+	}
+	if current < 3 {
+		if err := db.AutoMigrate(&entity.Installation{}, &entity.MediaFile{}, &entity.WorkRequest{}); err != nil {
+			return err
+		}
+		return db.Create(&Migration{Version: 3, AppliedAt: time.Now()}).Error
 	}
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -16,10 +17,11 @@ import (
 
 type Service struct{ DB *gorm.DB }
 type CreateInput struct {
-	Title        string   `json:"title"`
-	Content      string   `json:"content"`
-	ApproverCode string   `json:"approver_code"`
-	FileCodes    []string `json:"file_codes"`
+	SourceRequestID string   `json:"source_request_id"`
+	Title           string   `json:"title"`
+	Content         string   `json:"content"`
+	ApproverCode    string   `json:"approver_code"`
+	FileCodes       []string `json:"file_codes"`
 }
 type Detail struct {
 	entity.WorkRequest
@@ -70,8 +72,20 @@ func (s *Service) Create(ctx context.Context, user string, in CreateInput) (*ent
 		return nil, err
 	}
 	item := &entity.WorkRequest{ID: hex.EncodeToString(bytes), Title: in.Title, Content: in.Content,
-		ApplicantCode: user, ApproverCode: in.ApproverCode, Status: "pending"}
+		ApplicantCode: user, ApproverCode: in.ApproverCode, Status: "pending", SourceRequestID: in.SourceRequestID}
 	err := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if in.SourceRequestID != "" {
+			var source entity.WorkRequest
+			if err := tx.Where("id = ? AND applicant_code = ?", in.SourceRequestID, user).First(&source).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return notFound()
+				}
+				return err
+			}
+			if source.Status != "rejected" && source.Status != "withdrawn" {
+				return invalid("仅已驳回或已撤回的申请可以重新提交")
+			}
+		}
 		var applicant, approver entity.User
 		if err := tx.Where("user_code = ? AND status = ?", user, 1).First(&applicant).Error; err != nil {
 			return err
@@ -85,13 +99,14 @@ func (s *Service) Create(ctx context.Context, user string, in CreateInput) (*ent
 		item.ApplicantName, item.ApproverName = name(applicant), name(approver)
 		attachments := []entity.WorkAttachment{}
 		seen := map[string]bool{}
+		sort.Strings(in.FileCodes) // Consistent lock order for concurrent submissions sharing attachments.
 		for _, code := range in.FileCodes {
 			if seen[code] {
 				return invalid("附件不能重复")
 			}
 			seen[code] = true
 			var f entity.MediaFile
-			err := database.ForUpdate(tx, "sys_media_files").Where("file_code = ? AND uploader_code = ?", code, user).First(&f).Error
+			err := database.ForUpdate(tx, "sys_media_files").Where("file_code = ? AND uploader_code = ? AND purge_pending = ? AND purged_at IS NULL", code, user, false).First(&f).Error
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return invalid("附件不存在或不属于当前用户")
 			}
@@ -115,7 +130,13 @@ func (s *Service) Create(ctx context.Context, user string, in CreateInput) (*ent
 	})
 	return item, err
 }
-func (s *Service) List(ctx context.Context, user, view string, page, size int) ([]entity.WorkRequest, int64, error) {
+
+type ListFilter struct {
+	Keyword string
+	Status  string
+}
+
+func (s *Service) List(ctx context.Context, user, view string, page, size int, filter ListFilter) ([]entity.WorkRequest, int64, error) {
 	q := s.DB.WithContext(ctx).Model(&entity.WorkRequest{})
 	switch view {
 	case "mine":
@@ -126,6 +147,20 @@ func (s *Service) List(ctx context.Context, user, view string, page, size int) (
 		q = q.Where("approver_code = ? AND status <> ?", user, "pending")
 	default:
 		return nil, 0, invalid("不支持的事项列表")
+	}
+	keyword := strings.TrimSpace(filter.Keyword)
+	if len([]rune(keyword)) > 120 {
+		return nil, 0, invalid("搜索词不能超过 120 字")
+	}
+	if filter.Status != "" {
+		if filter.Status != "pending" && filter.Status != "approved" && filter.Status != "rejected" && filter.Status != "withdrawn" {
+			return nil, 0, invalid("不支持的事项状态")
+		}
+		q = q.Where("status = ?", filter.Status)
+	}
+	if keyword != "" {
+		pattern := "%" + strings.NewReplacer("!", "!!", "%", "!%", "_", "!_", "[", "![").Replace(keyword) + "%"
+		q = q.Where("(LOWER(title) LIKE LOWER(?) ESCAPE '!' OR LOWER(applicant_name) LIKE LOWER(?) ESCAPE '!' OR LOWER(approver_name) LIKE LOWER(?) ESCAPE '!')", pattern, pattern, pattern)
 	}
 	var total int64
 	items := []entity.WorkRequest{}

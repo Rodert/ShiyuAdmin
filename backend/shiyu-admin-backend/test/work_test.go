@@ -225,7 +225,7 @@ func TestUpgradeFromSchemaOne(t *testing.T) {
 	require.Equal(t, 2048, settings.MaxUploadMB)
 	var count int64
 	require.NoError(t, db.Model(&bootstrap.Migration{}).Count(&count).Error)
-	require.EqualValues(t, 2, count)
+	require.EqualValues(t, bootstrap.SchemaVersion, count)
 	require.NoError(t, db.Model(&entity.Menu{}).Where("menu_code = ?", "custom-menu").Count(&count).Error)
 	require.EqualValues(t, 1, count)
 	require.True(t, db.Migrator().HasTable(&entity.WorkRequest{}))

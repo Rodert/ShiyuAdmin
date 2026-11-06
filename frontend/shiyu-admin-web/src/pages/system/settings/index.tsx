@@ -21,6 +21,7 @@ type Settings = {
   logo_url: string;
   timezone: string;
   max_upload_mb: number;
+  file_retention_days: number;
 };
 type Change = {
   id: number;
@@ -34,6 +35,7 @@ const names: Record<string, string> = {
   logo_url: "Logo",
   timezone: "时区",
   max_upload_mb: "上传上限（MiB）",
+  file_retention_days: "回收站保留期（天）",
 };
 const describeChange = (row: Change) => {
   try {
@@ -172,6 +174,14 @@ export default function SystemSettings() {
               extra="适用于文件管理和事项附件。反向代理如有更小限制，仍需同时调整代理配置。"
             >
               <InputNumber min={1} max={2048} precision={0} />
+            </Form.Item>
+            <Form.Item
+              name="file_retention_days"
+              label="回收站保留期（天）"
+              rules={[{ required: true }]}
+              extra="7–365 天，从移入回收站时计算。到期后仍需管理员确认清理，不会自动删除。"
+            >
+              <InputNumber min={7} max={365} precision={0} />
             </Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={saving}>

@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -17,8 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"shiyu-admin-backend/internal/apperrors"
-	"shiyu-admin-backend/pkg/database"
+	filesvc "shiyu-admin-backend/internal/service/files"
 
 	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/entity"
@@ -53,6 +51,7 @@ func registerMediaRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permissio
 	storage.GET("", func(c *gin.Context) { listStorages(c, db) })
 	storage.POST("", func(c *gin.Context) { createStorage(c, db) })
 
+	registerFileLifecycle(rg, db, permissionSvc)
 	files := rg.Group("/files")
 	files.GET("", middleware.RequirePermission(permissionSvc, "system:file:list"), func(c *gin.Context) { listFiles(c, db, false) })
 	files.GET("/recycle-bin", middleware.RequirePermission(permissionSvc, "system:file:delete"), func(c *gin.Context) { listFiles(c, db, true) })
@@ -104,7 +103,7 @@ func listFiles(c *gin.Context, db *gorm.DB, deleted bool) {
 	var total int64
 	q := fileScope(c, db).Model(&entity.MediaFile{})
 	if deleted {
-		q = q.Unscoped().Where("deleted_at IS NOT NULL")
+		q = q.Unscoped().Where("deleted_at IS NOT NULL AND purged_at IS NULL")
 	}
 	if keyword := strings.TrimSpace(c.Query("keyword")); keyword != "" {
 		q = q.Where("LOWER(original_name) LIKE LOWER(?)", "%"+keyword+"%")
@@ -120,7 +119,8 @@ func listFiles(c *gin.Context, db *gorm.DB, deleted bool) {
 	response.Success(c, gin.H{"items": items, "total": total, "page": page, "page_size": size})
 }
 
-func uploadFile(c *gin.Context, db *gorm.DB) {
+func uploadFile(c *gin.Context, db *gorm.DB) { uploadFileForPurpose(c, db, "general") }
+func uploadFileForPurpose(c *gin.Context, db *gorm.DB, purpose string) {
 	var settings entity.Installation
 	if err := db.WithContext(c.Request.Context()).First(&settings, 1).Error; err != nil {
 		writeServiceError(c, err)
@@ -200,7 +200,7 @@ func uploadFile(c *gin.Context, db *gorm.DB) {
 		response.Error(c, 500, "保存文件失败")
 		return
 	}
-	item := &entity.MediaFile{FileCode: code, StorageID: storage.ID, OriginalName: filepath.Base(header.Filename), ObjectKey: objectKey, MimeType: mimeType, Size: n, SHA256: hex.EncodeToString(hash.Sum(nil)), AccessLevel: "private", UploaderCode: currentUserCodeFromContext(c)}
+	item := &entity.MediaFile{Purpose: purpose, FileCode: code, StorageID: storage.ID, OriginalName: filepath.Base(header.Filename), ObjectKey: objectKey, MimeType: mimeType, Size: n, SHA256: hex.EncodeToString(hash.Sum(nil)), AccessLevel: "private", UploaderCode: currentUserCodeFromContext(c)}
 	if err := db.Create(item).Error; err != nil {
 		os.Remove(target)
 		response.Error(c, 500, "保存文件元数据失败")
@@ -240,37 +240,15 @@ func previewFile(c *gin.Context, db *gorm.DB) {
 	c.File(filepath.Join(s.BasePath, f.ObjectKey))
 }
 func deleteFile(c *gin.Context, db *gorm.DB) {
-	err := db.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
-		var file entity.MediaFile
-		if err := database.ForUpdate(fileScope(c, tx), "sys_media_files").Where("file_code = ?", c.Param("code")).First(&file).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return apperrors.New(404, "not_found", "文件不存在或不可访问")
-			}
-			return err
-		}
-		var linked int64
-		if err := tx.Model(&entity.WorkAttachment{}).Where("file_code = ?", file.FileCode).Count(&linked).Error; err != nil {
-			return err
-		}
-		if linked > 0 {
-			return apperrors.NewConflict("file_in_use", "文件已关联审批事项，需保留作为审批凭证")
-		}
-		return tx.Delete(&file).Error
-	})
-	if err != nil {
+	if err := (&filesvc.Service{DB: db}).Recycle(c.Request.Context(), mediaScope(c), c.Param("code")); err != nil {
 		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, gin.H{"deleted": true})
 }
 func restoreFile(c *gin.Context, db *gorm.DB) {
-	result := fileScope(c, db).Unscoped().Model(&entity.MediaFile{}).Where("file_code = ? AND deleted_at IS NOT NULL", c.Param("code")).Update("deleted_at", nil)
-	if result.Error != nil {
-		response.Error(c, 500, "恢复失败")
-		return
-	}
-	if result.RowsAffected == 0 {
-		response.Error(c, 404, "文件不存在或不可恢复")
+	if err := (&filesvc.Service{DB: db}).Restore(c.Request.Context(), mediaScope(c), c.Param("code")); err != nil {
+		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, gin.H{"restored": true})

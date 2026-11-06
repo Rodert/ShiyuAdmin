@@ -165,15 +165,35 @@ func applyPostgresSchemaComments(db *gorm.DB) error {
 }
 
 func applyMySQLTableComments(db *gorm.DB) error {
-	for _, table := range schemaComments {
-		if err := db.Exec(
-			fmt.Sprintf("ALTER TABLE `%s` COMMENT = ?", strings.ReplaceAll(table.table, "`", "``")),
-			table.comment,
-		).Error; err != nil {
+	// MySQL DDL requires a literal here; prepared-statement placeholders fail.
+	// Read SQL mode on the same connection used to execute the escaped literals.
+	return db.Connection(func(conn *gorm.DB) error {
+		var mode string
+		if err := conn.Raw("SELECT @@SESSION.sql_mode").Scan(&mode).Error; err != nil {
 			return err
 		}
+		noBackslashEscapes := false
+		for _, item := range strings.Split(mode, ",") {
+			if strings.EqualFold(strings.TrimSpace(item), "NO_BACKSLASH_ESCAPES") {
+				noBackslashEscapes = true
+			}
+		}
+		for _, table := range schemaComments {
+			statement := fmt.Sprintf("ALTER TABLE `%s` COMMENT = %s",
+				strings.ReplaceAll(table.table, "`", "``"), quoteMySQLString(table.comment, noBackslashEscapes))
+			if err := conn.Exec(statement).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func quoteMySQLString(value string, noBackslashEscapes bool) string {
+	if !noBackslashEscapes {
+		value = strings.ReplaceAll(value, `\`, `\\`)
 	}
-	return nil
+	return `'` + strings.ReplaceAll(value, `'`, `''`) + `'`
 }
 
 func quotePostgresIdent(name string) string {

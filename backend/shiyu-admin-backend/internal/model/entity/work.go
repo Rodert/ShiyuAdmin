@@ -4,16 +4,17 @@ import "time"
 
 // Work records deliberately have no delete endpoint: decisions remain auditable.
 type WorkRequest struct {
-	ID            string    `json:"id" gorm:"primaryKey;size:32"`
-	Title         string    `json:"title" gorm:"size:120;not null"`
-	Content       string    `json:"content" gorm:"type:text;not null"`
-	ApplicantCode string    `json:"applicant_code" gorm:"size:32;index:idx_work_applicant;not null"`
-	ApplicantName string    `json:"applicant_name" gorm:"size:64;not null"`
-	ApproverCode  string    `json:"approver_code" gorm:"size:32;index:idx_work_approver_status;not null"`
-	ApproverName  string    `json:"approver_name" gorm:"size:64;not null"`
-	Status        string    `json:"status" gorm:"size:16;index:idx_work_approver_status;not null"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	SourceRequestID string    `json:"source_request_id" gorm:"size:32;not null;default:'';index"`
+	ID              string    `json:"id" gorm:"primaryKey;size:32"`
+	Title           string    `json:"title" gorm:"size:120;not null"`
+	Content         string    `json:"content" gorm:"type:text;not null"`
+	ApplicantCode   string    `json:"applicant_code" gorm:"size:32;index:idx_work_applicant;not null"`
+	ApplicantName   string    `json:"applicant_name" gorm:"size:64;not null"`
+	ApproverCode    string    `json:"approver_code" gorm:"size:32;index:idx_work_approver_status;not null"`
+	ApproverName    string    `json:"approver_name" gorm:"size:64;not null"`
+	Status          string    `json:"status" gorm:"size:16;index:idx_work_approver_status;not null"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 func (WorkRequest) TableName() string { return "work_requests" }

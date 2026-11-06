@@ -30,7 +30,7 @@ func registerWorkRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	})
 	w.GET("/requests", func(c *gin.Context) {
 		page, size := workPagination(c)
-		items, total, err := svc.List(c.Request.Context(), currentUserCodeFromContext(c), c.DefaultQuery("view", "mine"), page, size)
+		items, total, err := svc.List(c.Request.Context(), currentUserCodeFromContext(c), c.DefaultQuery("view", "mine"), page, size, work.ListFilter{Keyword: c.Query("keyword"), Status: c.Query("status")})
 		if err != nil {
 			writeServiceError(c, err)
 			return
@@ -75,7 +75,7 @@ func registerWorkRoutes(r *gin.RouterGroup, db *gorm.DB) {
 		}
 		response.Success(c, gin.H{"updated": true})
 	})
-	w.POST("/attachments/upload", func(c *gin.Context) { uploadFile(c, db) })
+	w.POST("/attachments/upload", func(c *gin.Context) { uploadFileForPurpose(c, db, "work") })
 	w.GET("/requests/:id/attachments/:code", func(c *gin.Context) {
 		item, err := svc.Get(c.Request.Context(), currentUserCodeFromContext(c), c.Param("id"))
 		if err != nil {

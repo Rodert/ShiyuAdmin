@@ -196,6 +196,7 @@ func TestApplicationLifecycle(t *testing.T) {
 		a.request(t, "GET", "/profile", manager, nil, 401)
 	})
 	t.Run("team settings and approval lifecycle", func(t *testing.T) { testWorkManagement(t, a, admin) })
+	t.Run("file maintenance and resubmission", func(t *testing.T) { testFileMaintenance(t, a, admin) })
 	t.Run("migration is idempotent and refuses downgrade", func(t *testing.T) {
 		require.NoError(t, a.db.Model(&entity.Menu{}).Where("menu_code = ?", "welcome").Update("menu_name", "自定义首页").Error)
 		require.NoError(t, bootstrap.Migrate(a.db, a.cfg))

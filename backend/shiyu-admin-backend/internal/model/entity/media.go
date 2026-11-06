@@ -28,6 +28,9 @@ func (StorageConfig) TableName() string { return "sys_storage_configs" }
 
 // MediaFile contains the metadata and physical storage location of an upload.
 type MediaFile struct {
+	Purpose      string         `json:"purpose" gorm:"size:16;not null;default:general;index"`
+	PurgePending bool           `json:"purge_pending" gorm:"not null;default:false"`
+	PurgedAt     *time.Time     `json:"purged_at" gorm:"index"`
 	ID           int64          `json:"id" gorm:"primaryKey;autoIncrement"`
 	FileCode     string         `json:"file_code" gorm:"size:40;uniqueIndex;not null"`
 	StorageID    int64          `json:"storage_id" gorm:"index;not null"`
