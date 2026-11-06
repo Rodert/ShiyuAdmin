@@ -4,10 +4,10 @@ export default defineConfig({
   testDir: './e2e-p0',
   outputDir: '.p0-test-results',
   workers: 1,
-  timeout: 60000,
+  timeout: 120000,
   forbidOnly: !!process.env.CI,
   reporter: 'list',
-  use: { baseURL: 'http://127.0.0.1:18800', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+  use: { actionTimeout: 15000, baseURL: 'http://127.0.0.1:18800', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : {} } }],
   webServer: [
     { command: 'node scripts/p0-backend.mjs', url: 'http://127.0.0.1:18808/api/v1/system/health', timeout: 180000, reuseExistingServer: false },

@@ -18,14 +18,15 @@ export default function access(
   return {
     authenticated: !!currentUser,
     canAdmin: !!currentUser && currentUser.access === 'admin',
-    canViewWelcome: hasPermission('welcome:view'),
+    canViewWelcome: !!currentUser,
+    canManageSettings: !!currentUser?.isSuperAdmin,
     canViewDashboard: hasPermission('dashboard:view'),
     canViewSystem:
       hasPermission('system:user:list') ||
       hasPermission('system:role:list') ||
       hasPermission('system:menu:list') ||
       hasPermission('system:dept:list') ||
-      hasPermission('system:operation-log:list'),
+      hasPermission('system:operation-log:list') || hasPermission('system:file:list'),
     canViewFiles: hasPermission('system:file:list'),
     canViewSystemUser: hasPermission('system:user:list'),
     canViewSystemRole: hasPermission('system:role:list'),

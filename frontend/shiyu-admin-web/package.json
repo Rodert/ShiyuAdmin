@@ -29,7 +29,8 @@
     "test:coverage": "npm run jest -- --coverage",
     "test:update": "npm run jest -- -u",
     "tsc": "tsc --noEmit",
-    "test:p0": "playwright test --config=playwright.p0.config.ts"
+    "test:p0": "playwright test --config=playwright.p0.config.ts",
+    "test:acceptance": "playwright test --config=playwright.p0.config.ts"
   },
   "browserslist": [
     "defaults"

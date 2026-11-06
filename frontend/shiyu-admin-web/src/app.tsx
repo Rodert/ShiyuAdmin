@@ -1,3 +1,4 @@
+import NotificationBell from '@/components/NotificationBell';
 import { getInstallation, type InstallationStatus } from '@/services/shiyu-api/installation';
 import {
   AvatarDropdown,
@@ -139,7 +140,7 @@ export const layout: RunTimeLayoutConfig = ({
   setInitialState,
 }) => {
   return {
-    actionsRender: () => [<UserProfileAction key="profile" />],
+    actionsRender: () => [<NotificationBell key="notifications" />, <UserProfileAction key="profile" />],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
@@ -194,11 +195,16 @@ export const layout: RunTimeLayoutConfig = ({
         ]
       : [],
     menuHeaderRender: undefined,
-    menuDataRender: (_menuData) => {
-      if (initialState?.menuData && initialState.menuData.length > 0) {
-        return initialState.menuData;
+    menuDataRender: () => {
+      if (!initialState?.currentUser || initialState.currentUser.requirePasswordChange) return [];
+      const menus = (initialState.menuData || []).filter((m) => !['/welcome', '/work'].includes(m.path || '')).map((m) => ({ ...m }));
+      if (initialState.currentUser.isSuperAdmin) {
+        const system = menus.find((m) => m.path === '/system');
+        const settings = { name: '系统设置', path: '/system/settings' };
+        if (system) system.children = [...(system.children || []).filter((m) => m.path !== settings.path), settings];
+        else menus.push({ name: '系统管理', path: '/system', children: [settings] });
       }
-      return [];
+      return [{ name: '工作台', path: '/welcome' }, { name: '事项与审批', path: '/work/requests' }, { name: '站内通知', path: '/work/notifications' }, ...menus];
     },
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
@@ -229,6 +235,7 @@ export const layout: RunTimeLayoutConfig = ({
     },
     ...initialState?.settings,
     title: initialState?.installation?.name || defaultSettings.title,
+    logo: initialState?.installation?.logo_url || '/logo-v2.png',
   };
 };
 

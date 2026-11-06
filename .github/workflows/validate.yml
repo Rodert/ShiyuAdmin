@@ -80,7 +80,7 @@ jobs:
           with open(path, 'w') as f: json.dump(config, f)
           with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('TEST_CONFIG_FILE=' + path + '\n')
           PY
-      - name: Test authentication, permissions, files and upgrades
+      - name: Test authentication, permissions, approvals, settings and upgrades
         working-directory: backend/shiyu-admin-backend
         run: go test -race -count=1 ./...
       - name: Vet
@@ -111,9 +111,9 @@ jobs:
       - name: Install browser
         working-directory: frontend/shiyu-admin-web
         run: npx playwright install --with-deps chromium
-      - name: Browser lifecycle tests
+      - name: Browser installation and team workflow tests
         working-directory: frontend/shiyu-admin-web
-        run: npm run test:p0
+        run: npm run test:acceptance
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

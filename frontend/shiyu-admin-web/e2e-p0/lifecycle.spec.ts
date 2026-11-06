@@ -1,3 +1,4 @@
+import { verifyTeamFlow } from './team-flow';
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,14 +27,15 @@ test('首次安装、登录、版本信息、上传与会话退出', async ({ pa
   await page.getByRole('button', { name: '进入控制台' }).click();
   await expect(page).toHaveURL(/\/welcome$/);
   await page.getByRole('link', { name: '版本与升级' }).click();
-  await expect(page.getByText('0.2.0', { exact: true })).toBeVisible();
+  await expect(page.getByText('0.3.0-dev', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('version.png'), fullPage: true });
   await page.getByRole('tab', { name: '升级与回退' }).click();
   await expect(page.getByText('旧版默认上传目录', { exact: false })).toBeVisible();
   await page.goto('/system/files');
   await page.locator('input[type=file]').setInputFiles({ name: 'browser-proof.txt', mimeType: 'text/plain', buffer: Buffer.from('P0 browser upload') });
   await expect(page.getByText('browser-proof.txt', { exact: true })).toBeVisible();
-  expect(failures, '安装和登录不应出现接口错误').toEqual([]);
+  await verifyTeamFlow(page, testInfo);
+  expect(failures, '安装、设置、申请与审批不应出现接口错误').toEqual([]);
   const token = await page.evaluate(() => localStorage.getItem('shiyu_token'));
   const result = await page.request.post('/api/v1/system/auth/logout', { headers: { Authorization: `Bearer ${token}` } });
   expect(result.status()).toBe(200);

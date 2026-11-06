@@ -74,6 +74,8 @@ func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMid
 		registerDataManageRoutes(protected, dataManageSvc)
 		registerCacheRoutes(protected, permissionSvc, cacheSvc)
 		registerMediaRoutes(protected, permissionSvc, db)
+		registerSettingsRoutes(protected, db)
+		registerWorkRoutes(protected, db)
 	}
 }
 

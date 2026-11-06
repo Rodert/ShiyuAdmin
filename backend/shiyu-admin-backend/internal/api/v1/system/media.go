@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -15,6 +17,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"shiyu-admin-backend/internal/apperrors"
+	"shiyu-admin-backend/pkg/database"
 
 	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/entity"
@@ -117,10 +121,24 @@ func listFiles(c *gin.Context, db *gorm.DB, deleted bool) {
 }
 
 func uploadFile(c *gin.Context, db *gorm.DB) {
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadSize+1024*1024)
+	var settings entity.Installation
+	if err := db.WithContext(c.Request.Context()).First(&settings, 1).Error; err != nil {
+		writeServiceError(c, err)
+		return
+	}
+	limit := int64(settings.MaxUploadMB) * 1024 * 1024
+	if limit < 1 || limit > maxUploadSize {
+		limit = maxUploadSize
+	}
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit+1024*1024)
+	defer func() {
+		if c.Request.MultipartForm != nil {
+			_ = c.Request.MultipartForm.RemoveAll()
+		}
+	}()
 	header, err := c.FormFile("file")
 	if err != nil {
-		response.Error(c, 400, "请选择要上传的文件，单文件不能超过 2 GiB")
+		response.Error(c, 400, fmt.Sprintf("请选择文件，单文件不能超过 %d MiB", settings.MaxUploadMB))
 		return
 	}
 	file, err := header.Open()
@@ -155,11 +173,11 @@ func uploadFile(c *gin.Context, db *gorm.DB) {
 		return
 	}
 	hash := sha256.New()
-	n, copyErr := io.Copy(io.MultiWriter(tmp, hash), io.LimitReader(file, maxUploadSize+1))
+	n, copyErr := io.Copy(io.MultiWriter(tmp, hash), io.LimitReader(file, limit+1))
 	closeErr := tmp.Close()
-	if copyErr != nil || closeErr != nil || n > maxUploadSize {
+	if copyErr != nil || closeErr != nil || n > limit {
 		os.Remove(tmp.Name())
-		response.Error(c, 400, "文件上传失败或超过 2 GiB 限制")
+		response.Error(c, 400, fmt.Sprintf("文件上传失败或超过 %d MiB 限制", settings.MaxUploadMB))
 		return
 	}
 	probeFile, probeErr := os.Open(tmp.Name())
@@ -222,13 +240,25 @@ func previewFile(c *gin.Context, db *gorm.DB) {
 	c.File(filepath.Join(s.BasePath, f.ObjectKey))
 }
 func deleteFile(c *gin.Context, db *gorm.DB) {
-	result := fileScope(c, db).Where("file_code = ?", c.Param("code")).Delete(&entity.MediaFile{})
-	if result.Error != nil {
-		response.Error(c, 500, "删除失败")
-		return
-	}
-	if result.RowsAffected == 0 {
-		response.Error(c, 404, "文件不存在或不可访问")
+	err := db.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
+		var file entity.MediaFile
+		if err := database.ForUpdate(fileScope(c, tx), "sys_media_files").Where("file_code = ?", c.Param("code")).First(&file).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return apperrors.New(404, "not_found", "文件不存在或不可访问")
+			}
+			return err
+		}
+		var linked int64
+		if err := tx.Model(&entity.WorkAttachment{}).Where("file_code = ?", file.FileCode).Count(&linked).Error; err != nil {
+			return err
+		}
+		if linked > 0 {
+			return apperrors.NewConflict("file_in_use", "文件已关联审批事项，需保留作为审批凭证")
+		}
+		return tx.Delete(&file).Error
+	})
+	if err != nil {
+		writeServiceError(c, err)
 		return
 	}
 	response.Success(c, gin.H{"deleted": true})

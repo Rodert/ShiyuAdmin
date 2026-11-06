@@ -1,4 +1,4 @@
-# 当前验证入口（0.2）
+# 当前验证入口（0.3 开发版）
 
 后端：
 
@@ -16,8 +16,10 @@ npm ci --legacy-peer-deps
 npm run tsc
 npm run build
 npx playwright install chromium
-npm run test:p0
+npm run test:acceptance
 ```
+
+验收覆盖首次安装、登录、版本、文件上传、设置保存、角色模板、双账号提交和审批、附件下载、消息跳转及退出。`test:p0` 保留为兼容入口。后端额外验证并发处理、参与人隔离、数据库升级和 SQLite 备份恢复。
 
 浏览器测试自动启动临时 SQLite 后端和构建产物预览，使用 18800/18808 端口，需要可用的 Go 编译器（或设置 `GO_BIN`）。测试数据与开发数据库隔离。退出时清理临时运行目录；失败截图和追踪位于 `.p0-test-results/`。
 

@@ -19,7 +19,7 @@ export default [
     path: '/welcome',
     icon: 'smile',
     component: './Welcome',
-    access: 'canViewWelcome',
+    access: 'authenticated',
   },
   {
     path: '/dashboard',
@@ -56,10 +56,19 @@ export default [
   },
   { path: '/cockpit', redirect: '/dashboard' },
   {
+    path: '/work',
+    access: 'authenticated',
+    routes: [
+      { path: '/work/requests', component: './work/requests' },
+      { path: '/work/notifications', component: './work/notifications' },
+    ],
+  },
+  {
     path: '/system',
     icon: 'setting',
     access: 'canViewSystem',
     routes: [
+      { path: '/system/settings', component: './system/settings', access: 'canManageSettings' },
       {
         path: '/system/user',
         component: './system/user',

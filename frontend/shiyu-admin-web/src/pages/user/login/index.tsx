@@ -313,7 +313,7 @@ const Login: React.FC = () => {
       <section className={styles.loginPanel}>
         <div className={styles.loginCard}>
           <div className={styles.brand}>
-            <img className={styles.logo} alt="Shiyu Admin logo" src="/logo.png" />
+            <img className={styles.logo} alt="系统 Logo" src={initialState?.installation?.logo_url || '/logo-v2.png'} />
             <div>
               <h2 className={styles.brandTitle}>{initialState?.installation?.name || 'Shiyu Admin'}</h2>
               <div className={styles.brandSubtitle}>仕宇通用管理后台</div>

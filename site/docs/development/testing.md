@@ -34,7 +34,7 @@ npm ci --legacy-peer-deps
 npm run tsc
 npm run build
 npx playwright install chromium
-npm run test:p0
+npm run test:acceptance
 ```
 
 浏览器测试使用独立临时 SQLite 数据库，覆盖安装、登录、版本页、上传和退出。需要 Go 编译器，默认使用 18800/18808 端口，不连接开发数据库。后端测试还覆盖数据范围、账号会话撤销、文件隔离、重启持久化、旧版升级和密钥安全。

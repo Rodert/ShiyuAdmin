@@ -11,7 +11,7 @@ import (
 	"shiyu-admin-backend/internal/model/entity"
 )
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 // Migration records only completed migrations. Forward-only changes require a backup to roll back.
 type Migration struct {
@@ -34,9 +34,21 @@ func Migrate(db *gorm.DB, cfg *config.Config) error {
 	if current > SchemaVersion {
 		return fmt.Errorf("database schema %d is newer than supported %d; restore the matching backup before downgrading", current, SchemaVersion)
 	}
-	if current == SchemaVersion {
-		return nil
+	if current < 1 {
+		if err := migrateBaseline(db, cfg); err != nil {
+			return err
+		}
 	}
+	if current < 2 {
+		if err := db.AutoMigrate(&entity.Installation{}, &entity.SettingsChange{}, &entity.WorkRequest{}, &entity.WorkEvent{}, &entity.WorkAttachment{}, &entity.Notification{}); err != nil {
+			return err
+		}
+		return db.Create(&Migration{Version: 2, AppliedAt: time.Now()}).Error
+	}
+	return nil
+}
+
+func migrateBaseline(db *gorm.DB, cfg *config.Config) error {
 	if err := AutoMigrate(db); err != nil {
 		return err
 	}
@@ -87,6 +99,6 @@ func Migrate(db *gorm.DB, cfg *config.Config) error {
 				}
 			}
 		}
-		return tx.Create(&Migration{Version: SchemaVersion, AppliedAt: time.Now()}).Error
+		return tx.Create(&Migration{Version: 1, AppliedAt: time.Now()}).Error
 	})
 }

@@ -2,6 +2,9 @@ import { request } from '@umijs/max';
 
 export type InstallationStatus = {
   installed: boolean;
+  logo_url: string;
+  timezone: string;
+  max_upload_mb: number;
   name: string;
   checks: { database: boolean; storage: boolean };
 };

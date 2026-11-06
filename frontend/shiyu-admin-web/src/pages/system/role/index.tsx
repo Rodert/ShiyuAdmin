@@ -1,8 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns } from '@ant-design/pro-components';
-import { PageContainer, ProTable } from '@ant-design/pro-components';
-import { Button, message, Modal } from 'antd';
-import React, { useRef, useState } from 'react';
 import {
   createRole,
   deleteRole,
@@ -11,59 +6,62 @@ import {
   type CreateRoleRequest,
   type Role,
   type UpdateRoleRequest,
-} from '@/services/shiyu-api/role';
-import { hasPermission } from '@/utils/permission';
-import { useModel } from '@umijs/max';
-import RoleForm from './components/RoleForm';
+} from "@/services/shiyu-api/role";
+import { hasPermission } from "@/utils/permission";
+import { PlusOutlined } from "@ant-design/icons";
+import type { ActionType, ProColumns } from "@ant-design/pro-components";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import { useModel } from "@umijs/max";
+import { Button, message, Modal } from "antd";
+import React, { useRef, useState } from "react";
+import RoleForm from "./components/RoleForm";
 
 const RoleManagement: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<Role | null>(null);
   const actionRef = useRef<ActionType>(null);
-  const { initialState } = useModel('@@initialState');
+  const { initialState } = useModel("@@initialState");
   const currentUser = initialState?.currentUser;
-  const canCreate = hasPermission(currentUser, 'system:role:create');
-  const canUpdate = hasPermission(currentUser, 'system:role:update');
-  const canDelete = hasPermission(currentUser, 'system:role:delete');
-  const canAssignMenus = hasPermission(currentUser, 'system:role:assign-menu');
+  const canCreate = hasPermission(currentUser, "system:role:create");
+  const canUpdate = hasPermission(currentUser, "system:role:update");
+  const canDelete = hasPermission(currentUser, "system:role:delete");
+  const canAssignMenus = hasPermission(currentUser, "system:role:assign-menu");
 
   const handleCreate = async (
     values: CreateRoleRequest | UpdateRoleRequest,
-  ): Promise<void> => {
+    savedCode?: string
+  ): Promise<string> => {
+    if (savedCode) {
+      await updateRole(savedCode, values);
+      return savedCode;
+    }
     const res = await createRole(values as CreateRoleRequest);
-    if (res.code === 200) {
-      message.success('创建成功');
-      setCreateModalVisible(false);
-      actionRef.current?.reload();
-    }
+    return res.data.role_code;
   };
-
   const handleUpdate = async (
-    values: CreateRoleRequest | UpdateRoleRequest,
-  ): Promise<void> => {
-    if (!editingRecord) return;
-    const res = await updateRole(
-      editingRecord.role_code,
-      values as UpdateRoleRequest,
-    );
-    if (res.code === 200) {
-      message.success('更新成功');
-      setUpdateModalVisible(false);
-      setEditingRecord(null);
-      actionRef.current?.reload();
-    }
+    values: CreateRoleRequest | UpdateRoleRequest
+  ): Promise<string> => {
+    if (!editingRecord) throw new Error("未选择角色");
+    await updateRole(editingRecord.role_code, values as UpdateRoleRequest);
+    return editingRecord.role_code;
+  };
+  const handleSaved = () => {
+    setCreateModalVisible(false);
+    setUpdateModalVisible(false);
+    setEditingRecord(null);
+    actionRef.current?.reload();
   };
 
   const handleDelete = (record: Role) => {
     Modal.confirm({
-      title: '确认删除',
+      title: "确认删除",
       content: `确定要删除角色 "${record.role_name}" 吗？`,
       onOk: async () => {
         try {
           const res = await deleteRole(record.role_code);
           if (res.code === 200) {
-            message.success('删除成功');
+            message.success("删除成功");
             actionRef.current?.reload();
           }
         } catch (_error) {}
@@ -73,44 +71,52 @@ const RoleManagement: React.FC = () => {
 
   const columns: ProColumns<Role>[] = [
     {
-      title: '角色编码',
-      dataIndex: 'role_code',
-      key: 'role_code',
+      title: "角色编码",
+      dataIndex: "role_code",
+      key: "role_code",
       width: 120,
     },
     {
-      title: '角色名称',
-      dataIndex: 'role_name',
-      key: 'role_name',
+      title: "角色名称",
+      dataIndex: "role_name",
+      key: "role_name",
       width: 120,
     },
     {
-      title: '角色标识',
-      dataIndex: 'role_key',
-      key: 'role_key',
+      title: "角色标识",
+      dataIndex: "role_key",
+      key: "role_key",
       width: 120,
     },
     {
-      title: '数据权限',
-      dataIndex: 'data_scope',
-      key: 'data_scope',
+      title: "数据权限",
+      dataIndex: "data_scope",
+      valueEnum: {
+        all: { text: "全部数据" },
+        dept: { text: "本部门" },
+        dept_and_child: { text: "部门及以下" },
+        deptAndChild: { text: "部门及以下" },
+        self: { text: "仅本人" },
+        custom: { text: "指定部门" },
+      },
+      key: "data_scope",
       width: 120,
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: "状态",
+      dataIndex: "status",
+      key: "status",
       width: 80,
       valueEnum: {
-        1: { text: '启用', status: 'Success' },
-        0: { text: '禁用', status: 'Error' },
+        1: { text: "启用", status: "Success" },
+        0: { text: "禁用", status: "Error" },
       },
     },
     {
-      title: '操作',
-      key: 'action',
+      title: "操作",
+      key: "action",
       width: 180,
-      fixed: 'right',
+      fixed: "right",
       render: (_, record) =>
         [
           canUpdate && (
@@ -148,7 +154,7 @@ const RoleManagement: React.FC = () => {
         actionRef={actionRef}
         rowKey="role_code"
         search={{
-          labelWidth: 'auto',
+          labelWidth: "auto",
         }}
         toolBarRender={() =>
           canCreate
@@ -190,6 +196,7 @@ const RoleManagement: React.FC = () => {
         visible={createModalVisible}
         onCancel={() => setCreateModalVisible(false)}
         onSubmit={handleCreate}
+        onSaved={handleSaved}
         title="新建角色"
         canAssignMenus={canAssignMenus}
       />
@@ -202,6 +209,7 @@ const RoleManagement: React.FC = () => {
             setEditingRecord(null);
           }}
           onSubmit={handleUpdate}
+          onSaved={handleSaved}
           title="编辑角色"
           initialValues={editingRecord}
           canAssignMenus={canAssignMenus}
