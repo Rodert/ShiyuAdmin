@@ -8,5 +8,7 @@ export const hasPermission = (
   if (currentUser.isSuperAdmin) {
     return true;
   }
+  if (permission === 'system:user:assign-role' ||
+      (['system:role:', 'system:menu:', 'system:dept:'].some((prefix) => permission.startsWith(prefix)) && !permission.endsWith(':list'))) return false;
   return currentUser.permissions?.includes(permission) ?? false;
 };

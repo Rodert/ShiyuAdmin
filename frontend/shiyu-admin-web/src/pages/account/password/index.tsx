@@ -5,14 +5,14 @@ import {
   ProForm,
   ProFormText,
 } from "@ant-design/pro-components";
-import { history } from "@umijs/max";
-import { message } from "antd";
+import { Alert, message } from "antd";
 import React from "react";
 
 const ChangePassword: React.FC = () => {
   return (
     <PageContainer>
       <ProCard>
+        <Alert type="info" showIcon message="使用默认密码的账号须先设置独立密码。修改后所有旧登录会话将失效。" style={{ marginBottom: 24 }} />
         <ProForm
           style={{ maxWidth: 520 }}
           onFinish={async (values) => {
@@ -23,7 +23,7 @@ const ChangePassword: React.FC = () => {
             if (res.code === 200) {
               message.success("密码修改成功，请重新登录");
               localStorage.removeItem("shiyu_token");
-              history.replace("/user/login");
+              window.location.assign("/user/login");
               return true;
             }
             return false;
@@ -39,7 +39,7 @@ const ChangePassword: React.FC = () => {
             label="新密码"
             rules={[
               { required: true, message: "请输入新密码" },
-              { min: 6, message: "密码至少 6 位" },
+              { min: 12, max: 72, message: "密码至少 12 位，最多 72 字节" },
             ]}
           />
           <ProFormText.Password

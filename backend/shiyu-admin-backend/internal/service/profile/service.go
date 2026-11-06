@@ -51,17 +51,18 @@ func (s *Service) ChangePassword(ctx context.Context, userCode string, req *dto.
 
 func (s *Service) build(ctx context.Context, user *entity.User) (*vo.ProfileVO, error) {
 	profile := &vo.ProfileVO{
-		UserCode:     user.UserCode,
-		Username:     user.Username,
-		Nickname:     user.Nickname,
-		Email:        user.Email,
-		Phone:        user.Phone,
-		Avatar:       user.Avatar,
-		DeptCode:     user.DeptCode,
-		Status:       user.Status,
-		IsSuperAdmin: user.IsSuperAdmin,
-		Roles:        []vo.ProfileRoleVO{},
-		Permissions:  []string{},
+		RequirePasswordChange: user.RequirePasswordChange,
+		UserCode:              user.UserCode,
+		Username:              user.Username,
+		Nickname:              user.Nickname,
+		Email:                 user.Email,
+		Phone:                 user.Phone,
+		Avatar:                user.Avatar,
+		DeptCode:              user.DeptCode,
+		Status:                user.Status,
+		IsSuperAdmin:          user.IsSuperAdmin,
+		Roles:                 []vo.ProfileRoleVO{},
+		Permissions:           []string{},
 	}
 
 	if s.deptSvc != nil && user.DeptCode != "" {

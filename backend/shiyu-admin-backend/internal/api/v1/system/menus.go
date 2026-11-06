@@ -39,7 +39,7 @@ func registerMenuRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permission
 }
 
 func listMenus(c *gin.Context, svc interfaces.MenuService) {
-	menus, err := svc.List(c)
+	menus, err := svc.List(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -52,7 +52,7 @@ func listMenus(c *gin.Context, svc interfaces.MenuService) {
 }
 
 func listMenuTree(c *gin.Context, menuSvc interfaces.MenuService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService) {
-	menus, err := menuSvc.ListTree(c)
+	menus, err := menuSvc.ListTree(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -87,7 +87,7 @@ func listMenuTree(c *gin.Context, menuSvc interfaces.MenuService, userRoleSvc in
 }
 
 func getMenu(c *gin.Context, svc interfaces.MenuService) {
-	menu, err := svc.GetByCode(c, c.Param("code"))
+	menu, err := svc.GetByCode(c.Request.Context(), c.Param("code"))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -105,7 +105,7 @@ func createMenu(c *gin.Context, svc interfaces.MenuService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	menu, err := svc.Create(c, &req)
+	menu, err := svc.Create(c.Request.Context(), &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -119,7 +119,7 @@ func updateMenu(c *gin.Context, svc interfaces.MenuService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	menu, err := svc.Update(c, c.Param("code"), &req)
+	menu, err := svc.Update(c.Request.Context(), c.Param("code"), &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -132,7 +132,7 @@ func updateMenu(c *gin.Context, svc interfaces.MenuService) {
 }
 
 func deleteMenu(c *gin.Context, svc interfaces.MenuService) {
-	if err := svc.Delete(c, c.Param("code")); err != nil {
+	if err := svc.Delete(c.Request.Context(), c.Param("code")); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -142,7 +142,7 @@ func deleteMenu(c *gin.Context, svc interfaces.MenuService) {
 func collectUserMenuCodes(c *gin.Context, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, userCode string) (map[string]struct{}, error) {
 	allowed := make(map[string]struct{})
 
-	roles, err := userRoleSvc.GetUserRoles(c, userCode)
+	roles, err := userRoleSvc.GetUserRoles(c.Request.Context(), userCode)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func collectUserMenuCodes(c *gin.Context, userRoleSvc interfaces.UserRoleService
 		if role == nil || role.Status != 1 {
 			continue
 		}
-		menus, err := roleMenuSvc.GetRoleMenus(c, role.RoleCode)
+		menus, err := roleMenuSvc.GetRoleMenus(c.Request.Context(), role.RoleCode)
 		if err != nil {
 			return nil, err
 		}

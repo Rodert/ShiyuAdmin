@@ -8,6 +8,8 @@ import (
 
 // User represents a system user.
 type User struct {
+	SessionVersion        int64 `json:"-" gorm:"column:auth_version;not null;default:0"`
+	RequirePasswordChange bool  `json:"require_password_change" gorm:"not null;default:false"`
 	// ID 主键ID，自增
 	ID int64 `json:"id" gorm:"primaryKey;autoIncrement;comment:主键ID，自增"`
 	// UserCode 用户编码，业务唯一标识，用于表关联

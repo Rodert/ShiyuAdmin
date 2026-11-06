@@ -3,6 +3,7 @@
 
 declare namespace API {
   type CurrentUser = {
+    requirePasswordChange?: boolean;
     name?: string;
     nickname?: string;
     avatar?: string;

@@ -2,12 +2,12 @@
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
-COPY frontend/shiyu-admin-web/package.json ./
-RUN npm install --legacy-peer-deps --no-audit --loglevel=error
+COPY frontend/shiyu-admin-web/package.json frontend/shiyu-admin-web/package-lock.json ./
+RUN npm ci --legacy-peer-deps --no-audit --loglevel=error
 COPY frontend/shiyu-admin-web/ ./
 RUN npm run build
 
-FROM golang:1.23-alpine AS backend-builder
+FROM golang:1.27.3-alpine AS backend-builder
 
 WORKDIR /app
 ENV GOPROXY=https://proxy.golang.org,direct
@@ -15,7 +15,9 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev
 COPY backend/shiyu-admin-backend/go.mod backend/shiyu-admin-backend/go.sum ./
 RUN go mod download
 COPY backend/shiyu-admin-backend/ ./
-RUN CGO_ENABLED=1 GOOS=linux go build -trimpath -ldflags='-s -w' -o /server ./cmd/server
+ARG COMMIT=development
+ARG BUILD_TIME=unknown
+RUN CGO_ENABLED=1 GOOS=linux go build -trimpath -ldflags="-s -w -X shiyu-admin-backend/internal/release.Commit=${COMMIT} -X shiyu-admin-backend/internal/release.BuildTime=${BUILD_TIME}" -o /server ./cmd/server
 
 FROM nginx:alpine
 

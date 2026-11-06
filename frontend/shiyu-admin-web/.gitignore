@@ -17,7 +17,6 @@ yarn-error.log
 /coverage
 .idea
 yarn.lock
-package-lock.json
 *bak
 .vscode
 
@@ -38,3 +37,10 @@ screenshot
 .firebase
 
 build
+
+/playwright-report/
+/test-results/
+
+.p0-e2e.json
+
+.p0-test-results/

@@ -9,7 +9,7 @@ services:
       MYSQL_PASSWORD: shiyu123
       MYSQL_ROOT_PASSWORD: root123
     ports:
-      - "13306:3306"
+      - "127.0.0.1:13306:3306"
     volumes:
       - shiyu-mysql-data:/var/lib/mysql
     healthcheck:
@@ -37,8 +37,11 @@ services:
     image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
     container_name: shiyu-app
     restart: unless-stopped
+    volumes:
+      - shiyu-app-data:/app/data
     environment:
       TZ: Asia/Shanghai
+      SHIYU_JWT_SECRET: ${SHIYU_JWT_SECRET:-}
       CONFIG_FILE: configs/config.mysql.yaml
     ports:
       - "18000:80"
@@ -54,5 +57,6 @@ networks:
     driver: bridge
 
 volumes:
+  shiyu-app-data:
   shiyu-mysql-data:
   shiyu-redis-data:

@@ -34,11 +34,11 @@ auth:
 
 bootstrap:
   admin_username: "admin"
-  admin_password: "Admin@123"
+  admin_password: "" # 管理员通过安装向导创建
   admin_nickname: "超级管理员"
 
 jwt:
-  secret: "${JWT_SECRET}"  # 在 Fly.io 中设置环境变量
+  secret: "" # 自动生成并持久化；可用 SHIYU_JWT_SECRET 覆盖
   expire_time: 7200
   issuer: "shiyu-admin-scaffold"
 

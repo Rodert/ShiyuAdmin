@@ -1,4 +1,4 @@
-import { useLocation } from '@umijs/max';
+import { Link, useLocation } from '@umijs/max';
 import React from 'react';
 
 /** 仪表盘全屏沉浸式展示时隐藏全局页脚，避免底边出一条浅色横带 */
@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
         color: 'rgba(0, 0, 0, 0.35)',
       }}
     >
-      项目来源：
+      <Link to="/account/version">版本与升级</Link> · 项目来源：
       <a
         href="https://github.com/Rodert/ShiyuAdmin"
         target="_blank"

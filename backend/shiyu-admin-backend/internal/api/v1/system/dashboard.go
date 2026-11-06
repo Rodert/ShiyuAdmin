@@ -70,16 +70,16 @@ var (
 	geoCache            sync.Map
 )
 
-func registerDashboardRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, operationLogSvc interfaces.OperationLogService) {
+func registerDashboardRoutes(rg *gin.RouterGroup, permissionSvc interfaces.PermissionService, operationLogSvc interfaces.OperationLogService, scopes interfaces.DataScopeService) {
 	if operationLogSvc == nil {
 		return
 	}
 	rg.GET("/dashboard/geo-access", middleware.RequirePermission(permissionSvc, "dashboard:view"), func(c *gin.Context) {
-		getGeoAccessSummary(c, operationLogSvc)
+		getGeoAccessSummary(c, operationLogSvc, scopes)
 	})
 }
 
-func getGeoAccessSummary(c *gin.Context, operationLogSvc interfaces.OperationLogService) {
+func getGeoAccessSummary(c *gin.Context, operationLogSvc interfaces.OperationLogService, scopes interfaces.DataScopeService) {
 	window := 24
 	if rawWindow := strings.TrimSpace(c.Query("hours")); rawWindow != "" {
 		var parsed int
@@ -90,11 +90,15 @@ func getGeoAccessSummary(c *gin.Context, operationLogSvc interfaces.OperationLog
 	}
 
 	start := time.Now().Add(-time.Duration(window) * time.Hour).Unix()
-	pageResult, err := operationLogSvc.Page(c, &dto.OperationLogPageRequest{
+	scope, ok := requestScope(c, scopes)
+	if !ok {
+		return
+	}
+	pageResult, err := operationLogSvc.PageWithScope(c.Request.Context(), &dto.OperationLogPageRequest{
 		Page:      1,
 		PageSize:  100,
 		StartTime: &start,
-	})
+	}, scope)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return

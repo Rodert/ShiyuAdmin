@@ -45,7 +45,7 @@ func loginDataMonitor(c *gin.Context, svc interfaces.DataManageService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	if !svc.VerifyCredential(c, req.Username, req.Password) {
+	if !svc.VerifyCredential(c.Request.Context(), req.Username, req.Password) {
 		response.Error(c, http.StatusUnauthorized, "数据库用户名或密码错误")
 		return
 	}
@@ -53,7 +53,7 @@ func loginDataMonitor(c *gin.Context, svc interfaces.DataManageService) {
 }
 
 func listTables(c *gin.Context, svc interfaces.DataManageService) {
-	items, err := svc.ListTables(c)
+	items, err := svc.ListTables(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -82,7 +82,7 @@ func listTableRows(c *gin.Context, svc interfaces.DataManageService) {
 		size = 10
 	}
 
-	result, err := svc.PageTableData(c, table, page, size)
+	result, err := svc.PageTableData(c.Request.Context(), table, page, size)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -104,7 +104,7 @@ func listTableColumns(c *gin.Context, svc interfaces.DataManageService) {
 		response.Error(c, http.StatusBadRequest, "表名不能为空")
 		return
 	}
-	items, err := svc.ListColumns(c, table)
+	items, err := svc.ListColumns(c.Request.Context(), table)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return

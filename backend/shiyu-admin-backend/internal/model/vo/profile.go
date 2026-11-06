@@ -2,18 +2,19 @@ package vo
 
 // ProfileVO is the current user's profile response.
 type ProfileVO struct {
-	UserCode     string          `json:"user_code"`
-	Username     string          `json:"username"`
-	Nickname     string          `json:"nickname"`
-	Email        string          `json:"email"`
-	Phone        string          `json:"phone"`
-	Avatar       string          `json:"avatar"`
-	DeptCode     string          `json:"dept_code"`
-	Status       int             `json:"status"`
-	IsSuperAdmin bool            `json:"is_super_admin"`
-	Dept         *ProfileDeptVO  `json:"dept,omitempty"`
-	Roles        []ProfileRoleVO `json:"roles"`
-	Permissions  []string        `json:"permissions"`
+	RequirePasswordChange bool            `json:"require_password_change"`
+	UserCode              string          `json:"user_code"`
+	Username              string          `json:"username"`
+	Nickname              string          `json:"nickname"`
+	Email                 string          `json:"email"`
+	Phone                 string          `json:"phone"`
+	Avatar                string          `json:"avatar"`
+	DeptCode              string          `json:"dept_code"`
+	Status                int             `json:"status"`
+	IsSuperAdmin          bool            `json:"is_super_admin"`
+	Dept                  *ProfileDeptVO  `json:"dept,omitempty"`
+	Roles                 []ProfileRoleVO `json:"roles"`
+	Permissions           []string        `json:"permissions"`
 }
 
 type ProfileDeptVO struct {

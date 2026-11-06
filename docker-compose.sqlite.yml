@@ -5,11 +5,14 @@ services:
     restart: unless-stopped
     environment:
       TZ: Asia/Shanghai
+      SHIYU_JWT_SECRET: ${SHIYU_JWT_SECRET:-}
       CONFIG_FILE: configs/config.sqlite.yaml
     ports:
       - "18000:80"
     volumes:
       - shiyu-sqlite-data:/data
+      - shiyu-app-data:/app/data
 
 volumes:
+  shiyu-app-data:
   shiyu-sqlite-data:

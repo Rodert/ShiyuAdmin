@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"shiyu-admin-backend/internal/apperrors"
+	"shiyu-admin-backend/internal/config"
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/entity"
 	repointerfaces "shiyu-admin-backend/internal/repository/interfaces"
@@ -44,6 +45,9 @@ func (s *Service) ListWithScope(ctx context.Context, page, pageSize int, scope *
 }
 
 func (s *Service) Create(ctx context.Context, req *dto.CreateUserRequest) (*entity.User, error) {
+	if err := config.ValidatePassword(req.Password); err != nil {
+		return nil, apperrors.New(http.StatusBadRequest, "bad_request", err.Error())
+	}
 	username := strings.TrimSpace(req.Username)
 	if existing, err := s.repo.GetByUsername(ctx, username); err != nil {
 		return nil, err
@@ -112,6 +116,10 @@ func (s *Service) Update(ctx context.Context, userCode string, req *dto.UpdateUs
 		user.Status = *req.Status
 	}
 	if req.Password != nil && *req.Password != "" {
+		if err := config.ValidatePassword(*req.Password); err != nil {
+			return nil, apperrors.New(http.StatusBadRequest, "bad_request", err.Error())
+		}
+		user.RequirePasswordChange = false
 		hashed, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, err
@@ -165,7 +173,13 @@ func (s *Service) ChangePassword(ctx context.Context, userCode string, req *dto.
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
 		return apperrors.New(http.StatusBadRequest, "invalid_old_password", "原密码不正确")
 	}
-	newPassword := strings.TrimSpace(req.NewPassword)
+	newPassword := req.NewPassword
+	if err := config.ValidatePassword(newPassword); err != nil {
+		return apperrors.New(http.StatusBadRequest, "bad_request", err.Error())
+	}
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(newPassword)) == nil {
+		return apperrors.New(http.StatusBadRequest, "bad_request", "新密码不能与原密码相同")
+	}
 	if newPassword == "" {
 		return apperrors.New(http.StatusBadRequest, "bad_request", "新密码不能为空")
 	}
@@ -174,6 +188,7 @@ func (s *Service) ChangePassword(ctx context.Context, userCode string, req *dto.
 		return err
 	}
 	user.Password = string(hashed)
+	user.RequirePasswordChange = false
 	return s.repo.Update(ctx, user)
 }
 

@@ -1,0 +1,147 @@
+name: Validate Application
+
+on:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, postgres, mysql, sqlserver]
+    services:
+      postgres:
+        image: ${{ matrix.database == 'postgres' && 'postgres:16' || '' }}
+        env:
+          POSTGRES_USER: shiyu
+          POSTGRES_PASSWORD: shiyu-ci-password
+          POSTGRES_DB: shiyu_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U shiyu -d shiyu_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      mysql:
+        image: ${{ matrix.database == 'mysql' && 'mysql:8.4' || '' }}
+        env:
+          MYSQL_ROOT_PASSWORD: shiyu-ci-password
+          MYSQL_DATABASE: shiyu_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -pshiyu-ci-password"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+      sqlserver:
+        image: ${{ matrix.database == 'sqlserver' && 'mcr.microsoft.com/mssql/server:2022-latest' || '' }}
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Developer
+          MSSQL_SA_PASSWORD: Shiyu-CI-Password2026!
+        ports: ['1433:1433']
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/1433'"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache-dependency-path: backend/shiyu-admin-backend/go.sum
+      - name: Create SQL Server test database
+        if: matrix.database == 'sqlserver'
+        env:
+          CONTAINER_ID: ${{ job.services.sqlserver.id }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker exec "$CONTAINER_ID" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Shiyu-CI-Password2026!' -C -Q 'CREATE DATABASE shiyu_test' -b; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Configure integration database
+        if: matrix.database != 'sqlite'
+        env:
+          TEST_DATABASE: ${{ matrix.database }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          driver = os.environ['TEST_DATABASE']
+          ports = {'postgres': 5432, 'mysql': 3306, 'sqlserver': 1433}
+          users = {'postgres': 'shiyu', 'mysql': 'root', 'sqlserver': 'sa'}
+          config = {'database': {'driver': driver, 'host': '127.0.0.1', 'port': ports[driver],
+                    'username': users[driver], 'password': 'Shiyu-CI-Password2026!' if driver == 'sqlserver' else 'shiyu-ci-password',
+                    'database': 'shiyu_test', 'ssl_mode': 'disable', 'timezone': 'UTC'}}
+          path = os.path.join(os.environ['RUNNER_TEMP'], 'integration.yaml')
+          with open(path, 'w') as f: json.dump(config, f)
+          with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('TEST_CONFIG_FILE=' + path + '\n')
+          PY
+      - name: Test authentication, permissions, files and upgrades
+        working-directory: backend/shiyu-admin-backend
+        run: go test -race -count=1 ./...
+      - name: Vet
+        working-directory: backend/shiyu-admin-backend
+        run: go vet ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.3'
+          cache-dependency-path: backend/shiyu-admin-backend/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/shiyu-admin-web/package-lock.json
+      - name: Install locked dependencies
+        working-directory: frontend/shiyu-admin-web
+        run: npm ci --legacy-peer-deps
+      - name: Typecheck and build
+        working-directory: frontend/shiyu-admin-web
+        run: |
+          npm run tsc
+          npm run build
+      - name: Install browser
+        working-directory: frontend/shiyu-admin-web
+        run: npx playwright install --with-deps chromium
+      - name: Browser lifecycle tests
+        working-directory: frontend/shiyu-admin-web
+        run: npm run test:p0
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failures
+          path: frontend/shiyu-admin-web/.p0-test-results
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate deployment configurations
+        run: |
+          for mode in docker-compose.yml docker-compose.sqlite.yml docker-compose.mysql.yml docker-compose.sqlserver.yml; do
+            docker compose -f "$mode" config --quiet
+          done
+      - name: Build unified application
+        run: docker build -t shiyu-admin:p0 .
+      - name: Verify container initialization
+        env:
+          SHIYU_IMAGE: shiyu-admin:p0
+        run: |
+          docker compose -f docker-compose.sqlite.yml up -d
+          python3 scripts/ci-container-smoke.py prepare
+          docker compose -f docker-compose.sqlite.yml up -d --force-recreate shiyu-app
+          python3 scripts/ci-container-smoke.py verify
+      - name: Container logs
+        if: failure()
+        run: docker compose -f docker-compose.sqlite.yml logs
+      - name: Stop test deployment
+        if: always()
+        run: docker compose -f docker-compose.sqlite.yml down --volumes

@@ -33,7 +33,7 @@ func registerCacheRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permissio
 }
 
 func listCacheDatabases(c *gin.Context, svc interfaces.CacheService) {
-	items, err := svc.ListDatabases(c)
+	items, err := svc.ListDatabases(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -55,7 +55,7 @@ func listCacheKeys(c *gin.Context, svc interfaces.CacheService) {
 		count = 200
 	}
 
-	result, err := svc.ListKeys(c, db, c.DefaultQuery("pattern", "*"), c.DefaultQuery("type", "all"), count)
+	result, err := svc.ListKeys(c.Request.Context(), db, c.DefaultQuery("pattern", "*"), c.DefaultQuery("type", "all"), count)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -78,7 +78,7 @@ func getCacheValue(c *gin.Context, svc interfaces.CacheService) {
 		return
 	}
 
-	result, err := svc.GetValue(c, db, key)
+	result, err := svc.GetValue(c.Request.Context(), db, key)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -97,7 +97,7 @@ func deleteCacheKey(c *gin.Context, svc interfaces.CacheService) {
 		response.Error(c, http.StatusBadRequest, "key 不能为空")
 		return
 	}
-	if err := svc.DeleteKey(c, db, key); err != nil {
+	if err := svc.DeleteKey(c.Request.Context(), db, key); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}

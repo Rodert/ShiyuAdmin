@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -40,7 +41,11 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		)
 		dialector = mysql.Open(dsn)
 	case "sqlite":
-		dialector = sqlite.Open(cfg.Database.Database)
+		separator := "?"
+		if strings.Contains(cfg.Database.Database, "?") {
+			separator = "&"
+		}
+		dialector = sqlite.Open(cfg.Database.Database + separator + "_busy_timeout=5000&_journal_mode=WAL")
 	case "sqlserver", "mssql":
 		dsnURL := &url.URL{
 			Scheme: "sqlserver",
@@ -71,6 +76,9 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		return nil, errors.Wrap(err, "get sql.DB")
 	}
 	sqlDB.SetMaxOpenConns(50)
+	if cfg.Database.Driver == "sqlite" {
+		sqlDB.SetMaxOpenConns(1)
+	}
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	return db, nil

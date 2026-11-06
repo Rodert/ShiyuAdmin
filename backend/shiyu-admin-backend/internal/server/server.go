@@ -1,8 +1,14 @@
 package server
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +18,7 @@ import (
 	"shiyu-admin-backend/internal/bootstrap"
 	"shiyu-admin-backend/internal/config"
 	"shiyu-admin-backend/internal/middleware"
+	"shiyu-admin-backend/internal/model/entity"
 	repoDB "shiyu-admin-backend/internal/repository/db"
 	repoInterfaces "shiyu-admin-backend/internal/repository/interfaces"
 	repoMock "shiyu-admin-backend/internal/repository/mock"
@@ -36,12 +43,15 @@ import (
 	redisclient "shiyu-admin-backend/pkg/redis"
 )
 
-// Run starts the HTTP server with baseline middleware and routes.
-func Run(cfg *config.Config) error {
+// NewEngine builds the application with production authentication and installation gates.
+func NewEngine(cfg *config.Config) (*gin.Engine, error) {
 	if cfg == nil {
-		return fmt.Errorf("config is required")
+		return nil, fmt.Errorf("config is required")
 	}
 
+	if err := config.PrepareSecurity(cfg); err != nil {
+		return nil, err
+	}
 	logger.Init(cfg.Log.Level, cfg.Log.Format, cfg.Log.RetentionDays, cfg.Log.FilePath, cfg.Log.MaxSizeMB)
 
 	if cfg.Server.Mode != "" {
@@ -49,6 +59,9 @@ func Run(cfg *config.Config) error {
 	}
 
 	engine := gin.New()
+	if err := engine.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
+		return nil, err
+	}
 	engine.Use(gin.Recovery())
 	engine.Use(middleware.Trace())
 	engine.Use(middleware.RequestLogger())
@@ -60,19 +73,10 @@ func Run(cfg *config.Config) error {
 	if !cfg.Auth.UseMock {
 		db, err = database.Connect(cfg)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if err := bootstrap.AutoMigrate(db); err != nil {
-			return err
-		}
-		if err := bootstrap.ApplySchemaComments(db); err != nil {
-			return err
-		}
-		if err := bootstrap.EnsureAdminUser(db, cfg); err != nil {
-			return err
-		}
-		if err := bootstrap.EnsureRBACSeed(db, cfg); err != nil {
-			return err
+		if err := bootstrap.Migrate(db, cfg); err != nil {
+			return nil, err
 		}
 		// Initialize Redis client for monitoring and caching (optional).
 		redisClient, err = redisclient.NewClient(cfg)
@@ -163,17 +167,60 @@ func Run(cfg *config.Config) error {
 	authMiddleware := middleware.Auth(cfg.JWT.Secret, monitorSvcVar)
 
 	api := engine.Group("/api/v1")
+	if db != nil {
+		var installation entity.Installation
+		if err := db.First(&installation, 1).Error; err != nil {
+			return nil, err
+		}
+		token := ""
+		if installation.InstalledAt == nil {
+			token, err = config.LoadOrCreateSecret(filepath.Join(cfg.DataDir, "setup-token"))
+			if err != nil {
+				return nil, err
+			}
+			logger.Info(nil, "请打开安装页；安装授权码保存在数据目录的 setup-token 文件中")
+		}
+		handler := &system.InstallationHandler{DB: db, Config: cfg, Token: token}
+		api.Use(handler.Gate())
+		handler.Register(api)
+	}
+	var guards []gin.HandlerFunc
+	if db != nil {
+		guards = append(guards, middleware.AccountState(db, cfg.JWT.Secret))
+	}
 	{
-		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, dataScopeSvcVar, profileSvc, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar, cacheSvcVar, db)
+		system.RegisterRoutes(api, authSvc, authMiddleware, permissionSvcVar, dataScopeSvcVar, profileSvc, userSvc, roleSvc, menuSvc, deptSvc, userRoleSvcVar, roleMenuSvcVar, roleDeptSvcVar, operationLogSvcVar, monitorSvcVar, dataManageSvcVar, cacheSvcVar, db, guards...)
 	}
 
+	return engine, nil
+}
+
+func Run(cfg *config.Config) error {
+	engine, err := NewEngine(cfg)
+	if err != nil {
+		return err
+	}
 	port := cfg.Server.Port
-	if envPort := os.Getenv("SHIYU_HTTP_PORT"); envPort != "" {
-		port = envPort
+	if v := os.Getenv("SHIYU_HTTP_PORT"); v != "" {
+		port = v
 	}
 	if port == "" {
 		port = "8080"
 	}
-	addr := fmt.Sprintf(":%s", port)
-	return engine.Run(addr)
+	srv := &http.Server{Addr: ":" + port, Handler: engine, ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	done := make(chan error, 1)
+	go func() { done <- srv.ListenAndServe() }()
+	select {
+	case err := <-done:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+		shutdown, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		return srv.Shutdown(shutdown)
+	}
 }

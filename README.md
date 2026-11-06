@@ -85,7 +85,7 @@ cd ShiyuAdmin
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
-每次推送都会由 GitHub Actions 构建统一应用镜像并发布到 GitHub Container Registry：
+每次推送通过后端测试、前端类型检查、浏览器流程及镜像检查后，才会构建统一应用镜像并发布到 GitHub Container Registry：
 `ghcr.io/<GitHub 所有者>/<仓库名>`。镜像会带有上海时区构建时间标签
 `YYYYMMDD-HHmmss`、提交 SHA 标签；默认分支还会发布 `latest`。
 
@@ -95,6 +95,7 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 
 ```bash
 export SHIYU_IMAGE=ghcr.io/rodert/shiyuadmin:latest
+# 正式环境建议改用已验证的 sha-... 标签或镜像 digest，并记录用于回退。
 docker compose pull shiyu-app
 docker compose up -d --no-build
 ```
@@ -168,12 +169,24 @@ git status --short
 - `*.log`、`npm-debug.log*`、`yarn-error.log*`、`pnpm-debug.log*`
 - `.DS_Store`、`.idea/`、`.vscode/`
 
-## 默认账号
+## 首次安装（0.2 起）
 
-| 角色 | 用户名 | 密码 | 权限 |
-| --- | --- | --- | --- |
-| 管理员 | `admin` | `Admin@123` | 全部菜单和接口权限 |
-| 普通用户 | `user` | `User@123` | 欢迎页、仪表盘（无系统管理等配置权限） |
+新安装不再创建公开默认账号。启动后打开 <http://localhost:18000/setup>，设置系统名称及管理员账号密码。
+
+安装授权码保存在服务器数据目录，默认部署可运行：
+
+```bash
+docker compose exec shiyu-app cat /app/data/setup-token
+```
+
+使用 SQLite 等独立配置时加上相应的 `-f` 参数。本地开发读取后端 `data/setup-token`。安装页面会检查数据库与文件存储；完成后不能重复初始化。
+
+- JWT 密钥自动生成并保存在 `/app/data/jwt.key`，也可通过 `SHIYU_JWT_SECRET` 提供独立强密钥。
+- 应用数据卷保存密钥和默认上传文件；SQLite 数据库仍保存在独立的 `/data` 卷。
+- 普通管理员只能操作授权范围内的用户，私有文件按上传者隔离；组织与权限配置的写操作仅超级管理员可执行。
+- 登录后点击页脚“版本与升级”，查看应用版本、数据库版本、发布说明和回退指引。
+- **旧版升级前必须先备份容器里的 `/app/data`。** 旧配置通常未持久化上传目录，直接重建会丢文件。详见[升级与回退](./docs/升级与回退.md)。
+- 旧默认密码的超级管理员需先改密；使用默认密码的普通账号会停用。旧登录令牌在升级后失效。
 
 ## GitHub Pages 项目主页
 

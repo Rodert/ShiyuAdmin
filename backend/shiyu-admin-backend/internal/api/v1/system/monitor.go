@@ -37,7 +37,7 @@ func registerMonitorRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permiss
 
 // getCacheStats returns basic Redis/cache statistics.
 func getCacheStats(c *gin.Context, monitorSvc interfaces.MonitorService) {
-	stats, err := monitorSvc.GetCacheStats(c)
+	stats, err := monitorSvc.GetCacheStats(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -50,7 +50,7 @@ func getCacheStats(c *gin.Context, monitorSvc interfaces.MonitorService) {
 
 // getDatabaseStats returns basic database statistics.
 func getDatabaseStats(c *gin.Context, monitorSvc interfaces.MonitorService) {
-	stats, err := monitorSvc.GetDatabaseStats(c)
+	stats, err := monitorSvc.GetDatabaseStats(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -63,7 +63,7 @@ func getDatabaseStats(c *gin.Context, monitorSvc interfaces.MonitorService) {
 
 // listOnlineUsers returns current online users.
 func listOnlineUsers(c *gin.Context, monitorSvc interfaces.MonitorService) {
-	items, err := monitorSvc.ListOnlineUsers(c)
+	items, err := monitorSvc.ListOnlineUsers(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -80,7 +80,7 @@ func forceLogoutOnlineUser(c *gin.Context, monitorSvc interfaces.MonitorService)
 		response.Error(c, http.StatusBadRequest, "会话编号不能为空")
 		return
 	}
-	if err := monitorSvc.ForceLogout(c, sessionID); err != nil {
+	if err := monitorSvc.ForceLogout(c.Request.Context(), sessionID); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}

@@ -228,7 +228,11 @@ const Login: React.FC = () => {
   const fetchUserInfoAndMenu = async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
     if (!userInfo) {
-      return;
+      return false;
+    }
+    if (userInfo.requirePasswordChange) {
+      flushSync(() => setInitialState((s) => ({ ...s, currentUser: userInfo, menuData: [] })));
+      return true;
     }
     let menuData: MenuDataItem[] = [];
     try {
@@ -246,6 +250,7 @@ const Login: React.FC = () => {
         menuData,
       }));
     });
+    return false;
   };
   const handleSubmit = async (values: API.LoginParams) => {
     try {
@@ -257,7 +262,7 @@ const Login: React.FC = () => {
       if (msg.status === 'ok') {
         const defaultLoginSuccessMessage = '登录成功！';
         message.success(defaultLoginSuccessMessage);
-        await fetchUserInfoAndMenu();
+        if (await fetchUserInfoAndMenu()) { history.replace('/account/password'); return; }
         const urlParams = new URL(window.location.href).searchParams;
         const redirect = urlParams.get('redirect');
         // 使用 history.push 而不是 window.location.href，这样会考虑 base 配置
@@ -285,7 +290,7 @@ const Login: React.FC = () => {
       <Helmet>
         <title>
           {'登录'}
-          {Settings.title && ` - ${Settings.title}`}
+          {` - ${initialState?.installation?.name || Settings.title}`}
         </title>
       </Helmet>
       <section className={styles.infoPanel}>
@@ -310,7 +315,7 @@ const Login: React.FC = () => {
           <div className={styles.brand}>
             <img className={styles.logo} alt="Shiyu Admin logo" src="/logo.png" />
             <div>
-              <h2 className={styles.brandTitle}>Shiyu Admin</h2>
+              <h2 className={styles.brandTitle}>{initialState?.installation?.name || 'Shiyu Admin'}</h2>
               <div className={styles.brandSubtitle}>仕宇通用管理后台</div>
             </div>
           </div>
@@ -320,8 +325,6 @@ const Login: React.FC = () => {
           <ProForm
             className={styles.loginForm}
             initialValues={{
-              username: 'admin',
-              password: 'Admin@123',
               autoLogin: true,
             }}
             submitter={{

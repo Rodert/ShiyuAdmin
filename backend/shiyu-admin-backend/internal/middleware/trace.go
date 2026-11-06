@@ -1,10 +1,8 @@
 package middleware
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/hex"
-	"io"
 	"strconv"
 	"time"
 
@@ -29,68 +27,20 @@ func Trace() gin.HandlerFunc {
 	}
 }
 
+// RequestLogger records metadata only. Bodies may contain passwords, tokens or
+// multi-gigabyte files and must never be buffered by logging middleware.
 func RequestLogger() gin.HandlerFunc {
-	const maxBodyLogLength = 2048
 	return func(c *gin.Context) {
 		start := time.Now()
-
-		// Read request body (for non-GET) with limit; restore body so handlers can read it.
-		var requestBody string
-		method := c.Request.Method
-		if method == "GET" || method == "HEAD" {
-			requestBody = c.Request.URL.RawQuery
-		} else if c.Request.Body != nil {
-			bodyBytes, err := io.ReadAll(c.Request.Body)
-			if err == nil {
-				c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-				if len(bodyBytes) > maxBodyLogLength {
-					requestBody = string(bodyBytes[:maxBodyLogLength]) + "..." 
-				} else {
-					requestBody = string(bodyBytes)
-				}
-			}
-		}
-
-		// Wrap ResponseWriter to capture response body
-		blw := &bodyLogWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
-		c.Writer = blw
-
 		c.Next()
-
-		latency := time.Since(start).Milliseconds()
 		path := c.FullPath()
 		if path == "" {
 			path = c.Request.URL.Path
 		}
-		status := c.Writer.Status()
-		clientIP := c.ClientIP()
-		ua := c.Request.UserAgent()
-		responseBody := blw.body.String()
-		if len(responseBody) > maxBodyLogLength {
-			responseBody = responseBody[:maxBodyLogLength] + "..." 
-		}
-		ctx := c.Request.Context()
-		logger.Info(ctx, "http_request",
-			"method", method,
-			"path", path,
-			"status", status,
-			"latency_ms", latency,
-			"ip", clientIP,
-			"user_agent", ua,
-			"request_body", requestBody,
-			"response_body", responseBody,
-		)
+		logger.Info(c.Request.Context(), "http_request",
+			"method", c.Request.Method, "path", path, "status", c.Writer.Status(),
+			"latency_ms", time.Since(start).Milliseconds(), "ip", c.ClientIP())
 	}
-}
-
-type bodyLogWriter struct {
-	gin.ResponseWriter
-	body *bytes.Buffer
-}
-
-func (w *bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
-	return w.ResponseWriter.Write(b)
 }
 
 func newTraceID() string {

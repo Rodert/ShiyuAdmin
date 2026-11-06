@@ -1,3 +1,4 @@
+import { getInstallation, type InstallationStatus } from '@/services/shiyu-api/installation';
 import {
   AvatarDropdown,
   AvatarName,
@@ -53,12 +54,25 @@ function saveThemeSettings(settings: Partial<LayoutSettings>) {
  * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
+  installation?: InstallationStatus;
   currentUser?: API.CurrentUser;
   menuData?: MenuDataItem[];
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
   const settings = getThemeSettings();
+  let installation: InstallationStatus;
+  try { installation = (await getInstallation()).data; }
+  catch {
+    if (history.location.pathname !== '/setup') history.replace('/setup');
+    return { settings };
+  }
+  if (!installation.installed) {
+    if (history.location.pathname !== '/setup') history.replace('/setup');
+    return { settings, installation };
+  }
+  if (history.location.pathname === '/setup') history.replace('/user/login');
+  settings.title = installation.name;
   const buildMenuData = (menus: APIMenu[]): MenuDataItem[] => {
     return (menus || [])
       .filter((m) => m.status === 1 && m.menu_type !== 'F')
@@ -90,6 +104,11 @@ export async function getInitialState(): Promise<{
     }
     return undefined;
   };
+  // Public entry pages must not request authenticated APIs before login.
+  if (!localStorage.getItem('shiyu_token')) {
+    if (history.location.pathname !== loginPath) history.replace(loginPath);
+    return { fetchUserInfo, installation, settings };
+  }
   // 如果不是登录页面，执行
   const { location } = history;
   if (
@@ -98,9 +117,10 @@ export async function getInitialState(): Promise<{
     )
   ) {
     const currentUser = await fetchUserInfo();
-    const menuData = await fetchMenuData();
+    const menuData = currentUser && !currentUser.requirePasswordChange ? await fetchMenuData() : [];
     return {
       fetchUserInfo,
+      installation,
       currentUser,
       menuData,
       settings,
@@ -108,6 +128,7 @@ export async function getInitialState(): Promise<{
   }
   return {
     fetchUserInfo,
+    installation,
     settings,
   };
 }
@@ -133,6 +154,13 @@ export const layout: RunTimeLayoutConfig = ({
     onPageChange: () => {
       const { location } = history;
       // 如果没有登录，重定向到 login
+      if (!initialState?.installation?.installed) {
+        if (location.pathname !== '/setup') history.replace('/setup');
+        return;
+      }
+      if (initialState?.currentUser?.requirePasswordChange && location.pathname !== '/account/password') {
+        history.replace('/account/password'); return;
+      }
       if (!initialState?.currentUser && location.pathname !== loginPath) {
         history.push(loginPath);
       }
@@ -200,6 +228,7 @@ export const layout: RunTimeLayoutConfig = ({
       );
     },
     ...initialState?.settings,
+    title: initialState?.installation?.name || defaultSettings.title,
   };
 };
 

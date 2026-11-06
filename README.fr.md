@@ -61,7 +61,7 @@ Services exposés :
 
 - Backend : `http://localhost:8080`
 - Frontend : `http://localhost:8000`
-- Compte administrateur par défaut : `admin` / `Admin@123`
+- Première installation : ouvrez `/setup` pour créer votre compte administrateur. Le code d’installation est enregistré dans `/app/data/setup-token` dans le conteneur. Aucun compte par défaut n’est créé.
 
 Les autres modes de lancement (développement local, intégration dans un projet existant, etc.)
 sont décrits dans le `README.md` chinois.

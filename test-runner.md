@@ -1,3 +1,34 @@
+# 当前验证入口（0.2）
+
+后端：
+
+```bash
+cd backend/shiyu-admin-backend
+go test -race -count=1 ./...
+go vet ./...
+```
+
+前端和完整浏览器流程：
+
+```bash
+cd frontend/shiyu-admin-web
+npm ci --legacy-peer-deps
+npm run tsc
+npm run build
+npx playwright install chromium
+npm run test:p0
+```
+
+浏览器测试自动启动临时 SQLite 后端和构建产物预览，使用 18800/18808 端口，需要可用的 Go 编译器（或设置 `GO_BIN`）。测试数据与开发数据库隔离。退出时清理临时运行目录；失败截图和追踪位于 `.p0-test-results/`。
+
+后端集成测试使用 SQLite；CI 使用 `TEST_CONFIG_FILE` 选择独立测试数据库，禁止将此变量指向生产数据库。
+
+CI 定义：`.github/workflows/validate.yml`。镜像发布依赖此工作流通过。CI 会验证四种数据库，并通过容器重建检查密钥和文件持久化。
+
+以下保留的是旧版测试笔记，其中默认账号及旧 Playwright/Jest 模板流程不再适用于 0.2。
+
+---
+
 # 自动化测试指南
 
 ## 前置条件

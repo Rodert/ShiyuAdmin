@@ -35,3 +35,9 @@ pnpm-debug.log*
 # docusaurus
 .docusaurus/
 **/.docusaurus/
+
+# Persistent runtime secrets, files and databases
+/backend/shiyu-admin-backend/data/
+*.db
+*.db-shm
+*.db-wal

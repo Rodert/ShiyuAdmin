@@ -9,7 +9,7 @@ services:
       MSSQL_PID: "Developer"
       MSSQL_SA_PASSWORD: "ShiyuAdmin@123"
     ports:
-      - "11433:1433"
+      - "127.0.0.1:11433:1433"
     volumes:
       - shiyu-sqlserver-data:/var/opt/mssql
     healthcheck:
@@ -56,8 +56,11 @@ services:
     image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
     container_name: shiyu-app
     restart: unless-stopped
+    volumes:
+      - shiyu-app-data:/app/data
     environment:
       TZ: Asia/Shanghai
+      SHIYU_JWT_SECRET: ${SHIYU_JWT_SECRET:-}
       CONFIG_FILE: configs/config.sqlserver.yaml
     ports:
       - "18000:80"
@@ -73,5 +76,6 @@ networks:
     driver: bridge
 
 volumes:
+  shiyu-app-data:
   shiyu-sqlserver-data:
   shiyu-redis-data:

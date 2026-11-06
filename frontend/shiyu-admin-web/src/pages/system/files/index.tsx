@@ -13,7 +13,7 @@ const formatSize = (size: number) => {
 };
 
 const FilesPage: React.FC = () => {
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<ActionType | undefined>(undefined);
   const [recycled, setRecycled] = useState(false);
   const [preview, setPreview] = useState<{ file: MediaFile; url: string }>();
   const { initialState } = useModel('@@initialState');

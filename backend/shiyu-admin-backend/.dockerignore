@@ -8,3 +8,8 @@ bin/
 .vscode
 .idea
 
+
+!internal/release/*.md
+data/
+*.db
+*.log

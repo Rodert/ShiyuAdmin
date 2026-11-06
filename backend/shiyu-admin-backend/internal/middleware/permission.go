@@ -45,6 +45,11 @@ func RequirePermission(permissionSvc interfaces.PermissionService, perms string)
 			return
 		}
 
+		if IsSecurityAdministration(perms) {
+			response.Error(c, http.StatusForbidden, "权限与组织配置仅超级管理员可修改")
+			c.Abort()
+			return
+		}
 		// Check permission
 		hasPerm, err := permissionSvc.CheckPermission(c.Request.Context(), claims.UserCode, perms)
 		if err != nil {
@@ -197,4 +202,16 @@ func ExtractPermissionFromPath(path string) string {
 		return strings.Join(parts[1:3], ":")
 	}
 	return ""
+}
+
+func IsSecurityAdministration(permission string) bool {
+	if permission == "system:user:assign-role" {
+		return true
+	}
+	for _, prefix := range []string{"system:role:", "system:menu:", "system:dept:"} {
+		if strings.HasPrefix(permission, prefix) && !strings.HasSuffix(permission, ":list") {
+			return true
+		}
+	}
+	return false
 }

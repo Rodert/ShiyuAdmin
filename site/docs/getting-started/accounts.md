@@ -1,29 +1,30 @@
 ---
-title: 默认账号
-description: Shiyu Admin 默认账号与权限说明
+title: 首次安装与账号
+description: Shiyu Admin 安装向导与账号安全
 ---
 
-# 默认账号
+# 首次安装与账号
 
-| 角色 | 用户名 | 密码 | 权限 |
-| --- | --- | --- | --- |
-| 管理员 | `admin` | `Admin@123` | 全部菜单和接口权限 |
-| 普通用户 | `user` | `User@123` | 欢迎页、仪表盘，无系统管理配置权限 |
+从 0.2 起，新安装不再提供默认账号。打开 `/setup`，填写系统名称、管理员账号和 12–72 字节的独立密码。
 
-## 超级管理员
+默认 Docker 部署通过下面的命令读取安装授权码：
 
-默认管理员账号来自后端配置：
-
-- `backend/shiyu-admin-backend/configs/config.yaml`
-- `backend/shiyu-admin-backend/configs/config.docker.yaml`
-
-相关字段：
-
-```yaml
-bootstrap:
-  admin_username: "admin"
-  admin_password: "Admin@123"
-  admin_nickname: "超级管理员"
+```bash
+docker compose exec shiyu-app cat /app/data/setup-token
 ```
 
-服务启动时会确保配置中的管理员用户存在，并同步 `is_super_admin = true`。超级管理员登录后，JWT 中会携带 `is_super_admin` 标记，权限中间件会放行所有已挂权限校验的接口。
+独立数据库配置需添加相应 `-f` 参数。本地开发从后端 `data/setup-token` 获取。安装向导会检查数据库连接及文件目录权限；完成后拒绝再次初始化。
+
+## 会话和权限
+
+- 账号停用、删除、改密后旧会话失效，重新启用账号不会恢复旧令牌。
+- 退出登录保存在数据库中，不依赖 Redis。
+- 组织、角色、菜单及角色分配的修改由超级管理员执行。
+- 用户管理的写操作受数据范围限制，普通用户不能修改超级管理员。
+- 默认私有文件仅上传者及超级管理员可访问。
+
+## 旧版升级
+
+旧默认密码的超级管理员必须先改密；默认密码的普通账号将停用。旧版的上传目录可能在容器内部，重建前必须备份。
+
+在应用页脚打开“版本与升级”查看完整步骤；源码说明见仓库 `docs/升级与回退.md`。

@@ -7,3 +7,12 @@ site
 docs
 img
 test-results
+
+**/data
+**/*.db
+**/*.log
+**/playwright-report
+**/test-results
+
+**/.p0-test-results
+**/.p0-e2e.json

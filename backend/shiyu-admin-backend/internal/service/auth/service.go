@@ -47,7 +47,7 @@ func (s *Service) Login(ctx context.Context, req *dto.LoginRequest) (*vo.TokenVO
 		return nil, errors.New("账号已停用")
 	}
 
-	token, err := jwtutil.GenerateToken(s.jwtSecret, s.jwtIssuer, user.UserCode, user.Username, user.IsSuperAdmin, s.jwtExpireIn)
+	token, err := jwtutil.GenerateToken(s.jwtSecret, s.jwtIssuer, user.UserCode, user.Username, user.IsSuperAdmin, s.jwtExpireIn, jwtutil.CredentialStamp(s.jwtSecret, user.Password, user.SessionVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -57,4 +57,3 @@ func (s *Service) Login(ctx context.Context, req *dto.LoginRequest) (*vo.TokenVO
 		ExpireIn:  s.jwtExpireIn,
 	}, nil
 }
-

@@ -37,7 +37,7 @@ func registerDeptRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permission
 }
 
 func listDepts(c *gin.Context, svc interfaces.DeptService) {
-	depts, err := svc.List(c)
+	depts, err := svc.List(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -50,7 +50,7 @@ func listDepts(c *gin.Context, svc interfaces.DeptService) {
 }
 
 func listDeptTree(c *gin.Context, svc interfaces.DeptService) {
-	depts, err := svc.ListTree(c)
+	depts, err := svc.ListTree(c.Request.Context())
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -60,7 +60,7 @@ func listDeptTree(c *gin.Context, svc interfaces.DeptService) {
 }
 
 func getDept(c *gin.Context, svc interfaces.DeptService) {
-	dept, err := svc.GetByCode(c, c.Param("code"))
+	dept, err := svc.GetByCode(c.Request.Context(), c.Param("code"))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -78,7 +78,7 @@ func createDept(c *gin.Context, svc interfaces.DeptService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	dept, err := svc.Create(c, &req)
+	dept, err := svc.Create(c.Request.Context(), &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -92,7 +92,7 @@ func updateDept(c *gin.Context, svc interfaces.DeptService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	dept, err := svc.Update(c, c.Param("code"), &req)
+	dept, err := svc.Update(c.Request.Context(), c.Param("code"), &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -105,7 +105,7 @@ func updateDept(c *gin.Context, svc interfaces.DeptService) {
 }
 
 func deleteDept(c *gin.Context, svc interfaces.DeptService) {
-	if err := svc.Delete(c, c.Param("code")); err != nil {
+	if err := svc.Delete(c.Request.Context(), c.Param("code")); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}

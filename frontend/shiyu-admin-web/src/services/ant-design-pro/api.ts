@@ -26,6 +26,7 @@ export async function currentUser(options?: { [key: string]: any }) {
       }[];
       permissions?: string[];
       is_super_admin?: boolean;
+      require_password_change?: boolean;
       iat?: number;
     };
     message?: string;
@@ -52,6 +53,7 @@ export async function currentUser(options?: { [key: string]: any }) {
     permissions: res.data.permissions || [],
     access: res.data.is_super_admin ? "admin" : "user",
     isSuperAdmin: res.data.is_super_admin,
+    requirePasswordChange: res.data.require_password_change,
     loginAt: res.data.iat,
   };
 

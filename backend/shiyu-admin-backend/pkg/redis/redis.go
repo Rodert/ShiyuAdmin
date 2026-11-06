@@ -21,6 +21,9 @@ func NewClient(cfg *config.Config) (*Client, error) {
 		return nil, fmt.Errorf("config is required")
 	}
 
+	if cfg.Redis.Host == "" {
+		return nil, nil
+	}
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
 		Password: cfg.Redis.Password,
@@ -31,6 +34,7 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {
+		_ = rdb.Close()
 		return nil, fmt.Errorf("redis connection failed: %w", err)
 	}
 

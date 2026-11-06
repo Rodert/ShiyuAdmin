@@ -91,11 +91,13 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
-	return r.db.WithContext(ctx).
-		Model(&entity.User{}).
-		Where("user_code = ?", user.UserCode).
-		Select("nickname", "email", "phone", "avatar", "password", "dept_code", "status").
-		Updates(user).Error
+	return r.db.WithContext(ctx).Model(&entity.User{}).Where("user_code = ?", user.UserCode).
+		Updates(map[string]any{
+			"nickname": user.Nickname, "email": user.Email, "phone": user.Phone, "avatar": user.Avatar,
+			"password": user.Password, "dept_code": user.DeptCode, "status": user.Status,
+			"require_password_change": user.RequirePasswordChange,
+			"auth_version":            gorm.Expr("auth_version + CASE WHEN status <> ? OR password <> ? THEN 1 ELSE 0 END", user.Status, user.Password),
+		}).Error
 }
 
 func (r *UserRepository) DeleteByCode(ctx context.Context, userCode string) error {

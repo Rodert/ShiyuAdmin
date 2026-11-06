@@ -19,6 +19,7 @@ import (
 	"shiyu-admin-backend/internal/middleware"
 	"shiyu-admin-backend/internal/model/entity"
 	"shiyu-admin-backend/internal/service/interfaces"
+	"shiyu-admin-backend/pkg/jwtutil"
 	"shiyu-admin-backend/pkg/response"
 )
 
@@ -97,12 +98,12 @@ func listFiles(c *gin.Context, db *gorm.DB, deleted bool) {
 	}
 	var items []entity.MediaFile
 	var total int64
-	q := db.Model(&entity.MediaFile{})
+	q := fileScope(c, db).Model(&entity.MediaFile{})
 	if deleted {
 		q = q.Unscoped().Where("deleted_at IS NOT NULL")
 	}
 	if keyword := strings.TrimSpace(c.Query("keyword")); keyword != "" {
-		q = q.Where("original_name ILIKE ?", "%"+keyword+"%")
+		q = q.Where("LOWER(original_name) LIKE LOWER(?)", "%"+keyword+"%")
 	}
 	if err := q.Count(&total).Error; err != nil {
 		response.Error(c, 500, err.Error())
@@ -170,7 +171,7 @@ func uploadFile(c *gin.Context, db *gorm.DB) {
 	probe := make([]byte, 512)
 	probeSize, _ := probeFile.Read(probe)
 	probeFile.Close()
-	mimeType := http.DetectContentType(probe[:probeSize])
+	mimeType, _, _ := mime.ParseMediaType(http.DetectContentType(probe[:probeSize]))
 	if !allowedMIMETypes[mimeType] {
 		os.Remove(tmp.Name())
 		response.Error(c, 400, "不允许的文件类型: "+mimeType)
@@ -192,7 +193,7 @@ func uploadFile(c *gin.Context, db *gorm.DB) {
 
 func downloadFile(c *gin.Context, db *gorm.DB) {
 	var f entity.MediaFile
-	if db.Where("file_code = ?", c.Param("code")).First(&f).Error != nil {
+	if fileScope(c, db).Where("file_code = ?", c.Param("code")).First(&f).Error != nil {
 		response.Error(c, 404, "文件不存在")
 		return
 	}
@@ -207,7 +208,7 @@ func downloadFile(c *gin.Context, db *gorm.DB) {
 
 func previewFile(c *gin.Context, db *gorm.DB) {
 	var f entity.MediaFile
-	if db.Where("file_code = ?", c.Param("code")).First(&f).Error != nil {
+	if fileScope(c, db).Where("file_code = ?", c.Param("code")).First(&f).Error != nil {
 		response.Error(c, 404, "文件不存在")
 		return
 	}
@@ -221,15 +222,25 @@ func previewFile(c *gin.Context, db *gorm.DB) {
 	c.File(filepath.Join(s.BasePath, f.ObjectKey))
 }
 func deleteFile(c *gin.Context, db *gorm.DB) {
-	if err := db.Where("file_code = ?", c.Param("code")).Delete(&entity.MediaFile{}).Error; err != nil {
+	result := fileScope(c, db).Where("file_code = ?", c.Param("code")).Delete(&entity.MediaFile{})
+	if result.Error != nil {
 		response.Error(c, 500, "删除失败")
+		return
+	}
+	if result.RowsAffected == 0 {
+		response.Error(c, 404, "文件不存在或不可访问")
 		return
 	}
 	response.Success(c, gin.H{"deleted": true})
 }
 func restoreFile(c *gin.Context, db *gorm.DB) {
-	if err := db.Unscoped().Model(&entity.MediaFile{}).Where("file_code = ?", c.Param("code")).Update("deleted_at", nil).Error; err != nil {
+	result := fileScope(c, db).Unscoped().Model(&entity.MediaFile{}).Where("file_code = ? AND deleted_at IS NOT NULL", c.Param("code")).Update("deleted_at", nil)
+	if result.Error != nil {
 		response.Error(c, 500, "恢复失败")
+		return
+	}
+	if result.RowsAffected == 0 {
+		response.Error(c, 404, "文件不存在或不可恢复")
 		return
 	}
 	response.Success(c, gin.H{"restored": true})
@@ -247,4 +258,17 @@ func newFileCode() string {
 	b := make([]byte, 6)
 	_, _ = rand.Read(b)
 	return "FIL" + time.Now().Format("20060102150405") + strings.ToUpper(hex.EncodeToString(b))
+}
+
+func fileScope(c *gin.Context, db *gorm.DB) *gorm.DB {
+	q := db.WithContext(c.Request.Context())
+	value, _ := c.Get(middleware.CurrentUserCtxKey)
+	claims, ok := value.(*jwtutil.Claims)
+	if !ok || claims == nil {
+		return q.Where("1 = 0")
+	}
+	if claims.IsSuperAdmin {
+		return q
+	}
+	return q.Where("uploader_code = ?", claims.UserCode)
 }

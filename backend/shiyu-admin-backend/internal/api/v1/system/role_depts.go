@@ -25,7 +25,7 @@ func registerRoleDeptRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permis
 }
 
 func getRoleDepts(c *gin.Context, svc interfaces.RoleDeptService) {
-	depts, err := svc.GetRoleDepts(c, c.Param("code"))
+	depts, err := svc.GetRoleDepts(c.Request.Context(), c.Param("code"))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -43,7 +43,7 @@ func setRoleDepts(c *gin.Context, svc interfaces.RoleDeptService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	if err := svc.SetRoleDepts(c, c.Param("code"), req.DeptCodes); err != nil {
+	if err := svc.SetRoleDepts(c.Request.Context(), c.Param("code"), req.DeptCodes); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}

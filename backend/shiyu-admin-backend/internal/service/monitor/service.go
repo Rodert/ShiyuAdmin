@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"shiyu-admin-backend/internal/model/entity"
 
 	"shiyu-admin-backend/internal/model/vo"
 	monitorinterfaces "shiyu-admin-backend/internal/service/interfaces"
@@ -177,8 +179,22 @@ func (s *Service) UpdateOnlineUser(ctx context.Context, sessionID, userCode, use
 }
 
 func (s *Service) ForceLogout(ctx context.Context, sessionID string) error {
-	if s.redisClient == nil || sessionID == "" {
+	if sessionID == "" {
 		return nil
+	}
+	if s.db != nil {
+		entry := entity.RevokedSession{SessionID: sessionID, ExpiresAt: time.Now().Add(s.revokedTTL)}
+		if err := s.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&entry).Error; err != nil {
+			return err
+		}
+		_ = s.db.WithContext(ctx).Where("expires_at < ?", time.Now()).Delete(&entity.RevokedSession{}).Error
+		if s.redisClient != nil {
+			_ = s.redisClient.Delete(ctx, onlineUserKey(sessionID))
+		}
+		return nil
+	}
+	if s.redisClient == nil {
+		return fmt.Errorf("session storage unavailable")
 	}
 	if err := s.redisClient.Delete(ctx, onlineUserKey(sessionID)); err != nil {
 		return err
@@ -187,6 +203,11 @@ func (s *Service) ForceLogout(ctx context.Context, sessionID string) error {
 }
 
 func (s *Service) IsSessionRevoked(ctx context.Context, sessionID string) (bool, error) {
+	if s.db != nil {
+		var count int64
+		err := s.db.WithContext(ctx).Model(&entity.RevokedSession{}).Where("session_id = ? AND expires_at > ?", sessionID, time.Now()).Count(&count).Error
+		return count > 0, err
+	}
 	if s.redisClient == nil || sessionID == "" {
 		return false, nil
 	}

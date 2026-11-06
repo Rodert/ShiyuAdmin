@@ -17,19 +17,32 @@ import (
 )
 
 // RegisterRoutes wires system routes under /system.
-func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, dataScopeSvc interfaces.DataScopeService, profileSvc interfaces.ProfileService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService, cacheSvc interfaces.CacheService, db *gorm.DB) {
+func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMiddleware gin.HandlerFunc, permissionSvc interfaces.PermissionService, dataScopeSvc interfaces.DataScopeService, profileSvc interfaces.ProfileService, userSvc interfaces.UserService, roleSvc interfaces.RoleService, menuSvc interfaces.MenuService, deptSvc interfaces.DeptService, userRoleSvc interfaces.UserRoleService, roleMenuSvc interfaces.RoleMenuService, roleDeptSvc interfaces.RoleDeptService, operationLogSvc interfaces.OperationLogService, monitorSvc interfaces.MonitorService, dataManageSvc interfaces.DataManageService, cacheSvc interfaces.CacheService, db *gorm.DB, guards ...gin.HandlerFunc) {
 	r := rg.Group("/system")
 	r.GET("/ping", ping)
-	r.GET("/health", health)
+	r.GET("/health", func(c *gin.Context) {
+		if db != nil {
+			sqlDB, err := db.DB()
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+			defer cancel()
+			if err != nil || sqlDB.PingContext(ctx) != nil {
+				response.Error(c, 503, "数据库不可用")
+				return
+			}
+		}
+		health(c)
+	})
 
 	auth := r.Group("/auth")
-	auth.POST("/login", func(c *gin.Context) {
+	auth.POST("/login", middleware.LoginLimit(), func(c *gin.Context) {
 		login(c, authSvc, operationLogSvc)
 	})
 
 	protected := r.Group("/")
 	if authMiddleware != nil {
 		protected.Use(authMiddleware)
+		protected.Use(guards...)
+		protected.GET("/version", versionInfo)
 		if operationLogSvc != nil {
 			protected.Use(middleware.OperationLogger(operationLogSvc))
 		}
@@ -52,12 +65,12 @@ func RegisterRoutes(rg *gin.RouterGroup, authSvc interfaces.AuthService, authMid
 		registerRoleRoutes(protected, permissionSvc, roleSvc)
 		registerMenuRoutes(protected, permissionSvc, menuSvc, userRoleSvc, roleMenuSvc)
 		registerDeptRoutes(protected, permissionSvc, deptSvc)
-		registerUserRoleRoutes(protected, permissionSvc, userRoleSvc)
+		registerUserRoleRoutes(protected, permissionSvc, userRoleSvc, userSvc, dataScopeSvc)
 		registerRoleMenuRoutes(protected, permissionSvc, roleMenuSvc)
 		registerRoleDeptRoutes(protected, permissionSvc, roleDeptSvc)
 		registerOperationLogRoutes(protected, permissionSvc, dataScopeSvc, operationLogSvc)
 		registerMonitorRoutes(protected, permissionSvc, monitorSvc)
-		registerDashboardRoutes(protected, permissionSvc, operationLogSvc)
+		registerDashboardRoutes(protected, permissionSvc, operationLogSvc, dataScopeSvc)
 		registerDataManageRoutes(protected, dataManageSvc)
 		registerCacheRoutes(protected, permissionSvc, cacheSvc)
 		registerMediaRoutes(protected, permissionSvc, db)
@@ -88,7 +101,7 @@ func profile(c *gin.Context, profileSvc interfaces.ProfileService) {
 		response.Success(c, claims)
 		return
 	}
-	data, err := profileSvc.Get(c, userCode)
+	data, err := profileSvc.Get(c.Request.Context(), userCode)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -115,7 +128,7 @@ func updateProfile(c *gin.Context, profileSvc interfaces.ProfileService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	data, err := profileSvc.Update(c, userCode, &req)
+	data, err := profileSvc.Update(c.Request.Context(), userCode, &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -142,7 +155,7 @@ func changePassword(c *gin.Context, profileSvc interfaces.ProfileService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	if err := profileSvc.ChangePassword(c, userCode, &req); err != nil {
+	if err := profileSvc.ChangePassword(c.Request.Context(), userCode, &req); err != nil {
 		writeServiceError(c, err)
 		return
 	}
@@ -166,6 +179,7 @@ func currentUserCode(claims any) string {
 
 // login handles user login.
 func login(c *gin.Context, authSvc interfaces.AuthService, operationLogSvc interfaces.OperationLogService) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
 	start := time.Now()
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -174,7 +188,7 @@ func login(c *gin.Context, authSvc interfaces.AuthService, operationLogSvc inter
 		return
 	}
 
-	tokenVO, err := authSvc.Login(c, &req)
+	tokenVO, err := authSvc.Login(c.Request.Context(), &req)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, err.Error())
 		recordLoginOperation(c, operationLogSvc, req.Username, 0, err.Error(), start)
@@ -187,7 +201,7 @@ func login(c *gin.Context, authSvc interfaces.AuthService, operationLogSvc inter
 func logout(c *gin.Context, monitorSvc interfaces.MonitorService) {
 	sessionID, _ := c.Get("sessionID")
 	if monitorSvc != nil {
-		if err := monitorSvc.ForceLogout(c, stringValue(sessionID)); err != nil {
+		if err := monitorSvc.ForceLogout(c.Request.Context(), stringValue(sessionID)); err != nil {
 			response.Error(c, http.StatusInternalServerError, err.Error())
 			return
 		}

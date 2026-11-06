@@ -1,4 +1,5 @@
 export default [
+  { path: "/setup", layout: false, component: "./setup" },
   {
     path: '/user',
     layout: false,
@@ -11,6 +12,7 @@ export default [
     routes: [
       { path: '/account/center', component: './account/center' },
       { path: '/account/password', component: './account/password' },
+      { path: '/account/version', component: './account/version' },
     ],
   },
   {

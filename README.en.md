@@ -58,7 +58,7 @@ After startup you will have:
 
 - Backend: `http://localhost:8080`
 - Frontend: `http://localhost:8000`
-- Default admin account: `admin` / `Admin@123`
+- First installation: open `/setup` and create your administrator. Read the installation token from `/app/data/setup-token` in the application container. No default account is created.
 
 More detailed guides (local development, integrating with an existing project, etc.)
 are available in the Chinese `README.md`.

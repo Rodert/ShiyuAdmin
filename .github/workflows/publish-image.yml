@@ -8,7 +8,10 @@ permissions:
   packages: write
 
 jobs:
+  validate:
+    uses: ./.github/workflows/validate.yml
   publish:
+    needs: validate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -38,5 +41,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            COMMIT=${{ github.sha }}
+            BUILD_TIME=${{ github.event.head_commit.timestamp }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}

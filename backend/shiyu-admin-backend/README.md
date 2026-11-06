@@ -66,40 +66,14 @@ type User struct {
 
 ## 3. 超级管理员（Super Admin）
 
-### 3.1 默认超管账号来源
+### 3.1 管理员初始化
 
-配置文件：
+从 0.2 起通过 `/setup` 安装向导创建首位超级管理员，不再从 bootstrap 配置创建公开默认账号。
 
-- `configs/config.yaml`
-- `configs/config.docker.yaml`
-
-字段：
-
-```yaml
-bootstrap:
-  admin_username: "admin"
-  admin_password: "Admin@123"
-  admin_nickname: "超级管理员"
-```
-
-初始化逻辑：`internal/bootstrap/bootstrap.go` → `EnsureAdminUser`
-
-行为：
-
-1. 启动时会根据 `bootstrap.admin_username` 查询用户表：
-   - 如果已存在该用户名：
-     - 只做 **同步超管标记**：
-       - `is_super_admin = true`
-   - 如果不存在该用户名：
-     - 创建一条新用户记录：
-       - `username = admin`（或配置中的值）
-       - `password = Admin@123`（BCrypt 加密后存储）
-       - `nickname = "超级管理员"`
-       - `status = 1`
-       - `is_super_admin = true`
-2. 配合 `AutoMigrate`，会自动为 `sys_users` 增加 `is_super_admin` 列（如不存在）。
-
-> 结论：默认情况下，配置中的 `admin` 账号会被视为**系统级超级管理员**。
+- `internal/bootstrap/migrations.go` 执行有版本记录的数据库迁移，保留旧用户及定制菜单。
+- `internal/api/v1/system/installation.go` 使用服务器安装授权码验证初始化请求，并在事务中创建管理员。
+- JWT 密钥自动持久化在 `data_dir/jwt.key`，也可通过 `SHIYU_JWT_SECRET` 注入。
+- 已安装系统拒绝重复初始化；旧默认密码账号按升级规则限制访问或停用。
 
 ### 3.2 JWT 中的超管标记
 
@@ -237,7 +211,13 @@ if user.Status != 1 {
 - 此逻辑对所有用户生效，**包括超级管理员**：
   - 也就是说，可以通过将超管账号的 `status` 设为 `0` 来临时锁定该账号。
 
-### 4.3 推荐使用方式
+### 4.3 当前请求校验
+
+每次认证请求都会读取当前账号状态。停用、删除、改密会使旧令牌失效；改密和状态变更会递增 `auth_version`，重新启用不能恢复旧会话。超管身份以数据库当前记录为准。
+
+退出登录写入 `sys_revoked_sessions`，SQLite 无 Redis 时同样生效。系统接口禁止删除或停用超级管理员，避免通过管理页面锁死系统。数据库层的紧急操作需要自行保证另有恢复入口。
+
+### 4.4 推荐使用方式
 
 - **禁用账号**：
   - 推荐通过更新 `status = 0` 的方式实现，而不是物理删除用户记录。

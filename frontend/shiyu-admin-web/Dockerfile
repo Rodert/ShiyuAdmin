@@ -19,7 +19,7 @@ COPY package*.json ./
 # --prefer-offline 优先使用缓存
 # --no-audit 跳过安全审计以加快速度
 # --loglevel=error 减少日志输出
-RUN npm install --legacy-peer-deps --prefer-offline --no-audit --loglevel=error
+RUN npm ci --legacy-peer-deps --prefer-offline --no-audit --loglevel=error
 
 # 复制源代码
 COPY . .

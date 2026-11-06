@@ -114,15 +114,6 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 		return err
 	}
 
-	viewerUser, err := ensureDefaultViewerUser(ctx, db)
-	if err != nil {
-		return err
-	}
-
-	if err := ensureUserRole(ctx, db, viewerUser.UserCode, viewerRole.RoleCode); err != nil {
-		return err
-	}
-
 	menus := []entity.Menu{
 		{
 			MenuCode:  "welcome",
@@ -456,36 +447,6 @@ func EnsureRBACSeed(db *gorm.DB, cfg *config.Config) error {
 			} else {
 				return fmt.Errorf("query menu %s failed: %w", m.MenuCode, err)
 			}
-		} else {
-			if err := db.WithContext(ctx).Model(&entity.Menu{}).
-				Where("menu_code = ?", m.MenuCode).
-				Updates(map[string]interface{}{
-					"parent_code": m.ParentCode,
-					"menu_type":   m.MenuType,
-					"menu_name":   m.MenuName,
-					"perms":       m.Perms,
-					"path":        m.Path,
-					"component":   m.Component,
-					"status":      m.Status,
-					"sort_order":  m.SortOrder,
-				}).Error; err != nil {
-				return fmt.Errorf("sync menu %s failed: %w", m.MenuCode, err)
-			}
-		}
-	}
-
-	// 将种子菜单的排序写回数据库（含已存在行），保证「首页 → 仪表盘 → 系统管理」等顺序可随版本校正。
-	seedMenuSort := map[string]int{
-		"welcome": 10, "dashboard": 20, "system": 30, "system-monitor": 40,
-		"system-user": 31, "system-role": 32, "system-menu": 33, "system-dept": 34,
-		"system-operation-log": 35, "monitor-online-users": 41, "monitor-service": 42,
-		"system-cache": 43, "system-data-manage": 44,
-	}
-	for code, ord := range seedMenuSort {
-		if err := db.WithContext(ctx).Model(&entity.Menu{}).
-			Where("menu_code = ?", code).
-			Update("sort_order", ord).Error; err != nil {
-			return fmt.Errorf("sync menu sort %s failed: %w", code, err)
 		}
 	}
 

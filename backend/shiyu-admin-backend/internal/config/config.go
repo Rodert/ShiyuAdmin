@@ -13,7 +13,8 @@ import (
 
 // Config holds application configuration.
 type Config struct {
-	Server struct {
+	DataDir string `mapstructure:"data_dir"`
+	Server  struct {
 		Port         string        `mapstructure:"port"`
 		Mode         string        `mapstructure:"mode"`
 		ReadTimeout  time.Duration `mapstructure:"read_timeout"`
@@ -62,6 +63,7 @@ func Load(path string) (*Config, error) {
 	v := viper.New()
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
 	if err := v.ReadInConfig(); err != nil {
@@ -92,6 +94,15 @@ func Load(path string) (*Config, error) {
 		cfg.Server.Port = port
 	}
 
+	if v := os.Getenv("SHIYU_DATA_DIR"); v != "" {
+		cfg.DataDir = v
+	}
+	if v := os.Getenv("SHIYU_JWT_SECRET"); v != "" {
+		cfg.JWT.Secret = v
+	}
+	if cfg.DataDir == "" {
+		cfg.DataDir = "./data"
+	}
 	return &cfg, nil
 }
 

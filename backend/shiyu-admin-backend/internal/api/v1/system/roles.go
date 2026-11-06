@@ -47,7 +47,7 @@ func listRoles(c *gin.Context, svc interfaces.RoleService) {
 	if req.PageSize <= 0 || req.PageSize > 100 {
 		req.PageSize = 10
 	}
-	roles, total, err := svc.List(c, req.Page, req.PageSize)
+	roles, total, err := svc.List(c.Request.Context(), req.Page, req.PageSize)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -65,7 +65,7 @@ func listRoles(c *gin.Context, svc interfaces.RoleService) {
 }
 
 func getRole(c *gin.Context, svc interfaces.RoleService) {
-	role, err := svc.Get(c, c.Param("code"))
+	role, err := svc.Get(c.Request.Context(), c.Param("code"))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -83,7 +83,7 @@ func createRole(c *gin.Context, svc interfaces.RoleService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	role, err := svc.Create(c, &req)
+	role, err := svc.Create(c.Request.Context(), &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -97,7 +97,7 @@ func updateRole(c *gin.Context, svc interfaces.RoleService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	role, err := svc.Update(c, c.Param("code"), &req)
+	role, err := svc.Update(c.Request.Context(), c.Param("code"), &req)
 	if err != nil {
 		writeServiceError(c, err)
 		return
@@ -110,7 +110,7 @@ func updateRole(c *gin.Context, svc interfaces.RoleService) {
 }
 
 func deleteRole(c *gin.Context, svc interfaces.RoleService) {
-	if err := svc.Delete(c, c.Param("code")); err != nil {
+	if err := svc.Delete(c.Request.Context(), c.Param("code")); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}

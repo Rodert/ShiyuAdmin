@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: shiyu
       POSTGRES_PASSWORD: shiyu123
     ports:
-      - "15432:5432"
+      - "127.0.0.1:15432:5432"
     volumes:
       - shiyu-pg-data:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,7 @@ services:
     container_name: shiyu-redis
     restart: unless-stopped
     ports:
-      - "16379:6379"
+      - "127.0.0.1:16379:6379"
     volumes:
       - shiyu-redis-data:/data
     command: redis-server --appendonly yes
@@ -43,11 +43,14 @@ services:
     image: ${SHIYU_IMAGE:-ghcr.io/rodert/shiyuadmin:latest}
     container_name: shiyu-app
     restart: unless-stopped
+    volumes:
+      - shiyu-app-data:/app/data
     ports:
       - "18000:80"
     environment:
       - TZ=Asia/Shanghai
       - CONFIG_FILE=configs/config.docker.yaml
+      - SHIYU_JWT_SECRET=${SHIYU_JWT_SECRET:-}
     depends_on:
       shiyu-postgres:
         condition: service_healthy
@@ -82,6 +85,7 @@ networks:
     driver: bridge
 
 volumes:
+  shiyu-app-data:
   shiyu-pg-data:
     driver: local
   shiyu-redis-data:

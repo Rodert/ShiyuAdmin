@@ -25,7 +25,7 @@ func registerRoleMenuRoutes(rg *gin.RouterGroup, permissionSvc interfaces.Permis
 }
 
 func getRoleMenus(c *gin.Context, svc interfaces.RoleMenuService) {
-	menus, err := svc.GetRoleMenus(c, c.Param("code"))
+	menus, err := svc.GetRoleMenus(c.Request.Context(), c.Param("code"))
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -43,7 +43,7 @@ func setRoleMenus(c *gin.Context, svc interfaces.RoleMenuService) {
 		response.Error(c, http.StatusBadRequest, "参数错误")
 		return
 	}
-	if err := svc.SetRoleMenus(c, c.Param("code"), req.MenuCodes); err != nil {
+	if err := svc.SetRoleMenus(c.Request.Context(), c.Param("code"), req.MenuCodes); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}

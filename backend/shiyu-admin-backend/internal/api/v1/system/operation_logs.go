@@ -9,7 +9,6 @@ import (
 	"shiyu-admin-backend/internal/model/dto"
 	"shiyu-admin-backend/internal/model/vo"
 	"shiyu-admin-backend/internal/service/interfaces"
-	"shiyu-admin-backend/pkg/jwtutil"
 	"shiyu-admin-backend/pkg/response"
 )
 
@@ -38,19 +37,11 @@ func listOperationLogs(c *gin.Context, logSvc interfaces.OperationLogService, da
 		req.PageSize = 10
 	}
 
-	var scope *interfaces.UserDataScope
-	if dataScopeSvc != nil {
-		claimsVal, _ := c.Get(middleware.CurrentUserCtxKey)
-		if claims, ok := claimsVal.(*jwtutil.Claims); ok && claims != nil {
-			resolved, err := dataScopeSvc.ResolveUserScope(c, claims.UserCode, claims.IsSuperAdmin)
-			if err != nil {
-				response.Error(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			scope = resolved
-		}
+	scope, ok := requestScope(c, dataScopeSvc)
+	if !ok {
+		return
 	}
-	result, err := logSvc.PageWithScope(c, &req, scope)
+	result, err := logSvc.PageWithScope(c.Request.Context(), &req, scope)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
